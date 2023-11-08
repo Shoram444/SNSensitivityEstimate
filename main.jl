@@ -1,4 +1,5 @@
 using DrWatson, StatsPlots, UnROOT, DataFramesMeta, LaTeXStrings, Revise, StatsBase, FHist
+@quickactivate "SensitivityEstimate"
 
 push!(LOAD_PATH, srcdir())
 using SensitivityModule
@@ -47,30 +48,37 @@ K40SumE      = Process(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2, "K4
 Pa234mSumE   = Process(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2, "Pa234m", :false, 0.1, SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 bbSumE       = Process(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2, "2nubb", :true, 1, SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 
-
+savename(Bi214SumE, allowedtypes = (String, StepRange), "png")
 
 let 
     default(xlabel = "min sum energy [keV]", ylabel = "max sum energy [keV]", c = :coolwarm, size = (1600, 1000), thickness_scaling = 1.4, right_margin = 16Plots.mm)
     plot_efficiency(Bi214SumE, sumEParams[:binning], title ="sum E Efficiency for "* Bi214SumE.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_sumE_$(Bi214SumE.isotopeName)_$(step(sumEParams[:binning]))-degree_binning.png"))
+    savefig(plotsdir(savename("efficiency_sumE_", Bi214SumE, allowedtypes = (String, StepRange), "png")))
+    # $(Bi214SumE.isotopeName)_$(step(sumEParams[:binning]))-degree_binning.png")
 
     plot_efficiency(Tl208SumE, sumEParams[:binning], title ="sum E Efficiency for "* Tl208SumE.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_sumE_$(Tl208SumE.isotopeName)_$(step(sumEParams[:binning]))-degree_binning.png"))
+    savefig(plotsdir(savename("efficiency_sumE_", Tl208SumE, allowedtypes = (String, StepRange), "png")))
+    # $(Tl208SumE.isotopeName)_$(step(sumEParams[:binning]))-degree_binning.png")
 
     plot_efficiency(K40SumE, sumEParams[:binning], title ="sum E Efficiency for "* K40SumE.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_sumE_$(K40SumE.isotopeName)_ph$(step(sumEParams[:binning]))-degree_binning.png"))
+    savefig(plotsdir(savename("efficiency_sumE_", K40SumE, allowedtypes = (String, StepRange), "png")))
+    # $(K40SumE.isotopeName)_ph$(step(sumEParams[:binning]))-degree_binning.png")
 
     plot_efficiency(Pa234mSumE, sumEParams[:binning], title ="sum E Efficiency for "* Pa234mSumE.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_sumE_$(Pa234mSumE.isotopeName)_phi$(step(sumEParams[:binning]))-degree_binning.png"))
+    savefig(plotsdir(savename("efficiency_sumE_", Pa234mSumE, allowedtypes = (String, StepRange), "png")))
+    # $(Pa234mSumE.isotopeName)_phi$(step(sumEParams[:binning]))-degree_binning.ng"))
 
     plot_efficiency(bbSumE, sumEParams[:binning], title ="sum E Efficiency for "* bbSumE.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_sumE_$(bbSumE.isotopeName)_phi$(step(sumEParams[:binning]))-degree_binning.png"))
+    savefig(plotsdir(savename("efficiency_sumE_", bbSumE, allowedtypes = (String, StepRange), "png")))
+    # $(bbSumE.isotopeName)_phi$(step(sumEParams[:binning]))-degree_binning.png")
 end
 
 
 plot_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE; c=:coolwarm)
-maximum(get_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE))
+@show get_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE)
 
+
+get_bkg_counts(bbSumE, Bi214SumE, Tl208SumE,)
 
 lookup_efficiency(bbPhi, 0, 179)
 plot_efficiency(bbPhi, bbPhi.bins)

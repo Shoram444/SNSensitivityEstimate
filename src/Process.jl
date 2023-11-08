@@ -136,7 +136,9 @@ function get_bkg_counts(processes::Process...)
         if(p.signal)
             @warn("get_bkg_counts(): passed isotope $(p.isotopeName) is a signal process!!")
         else
+            @show p.efficiency[1,:]
             backgroundCounts .+= p.activity* p.timeMeas *p.efficiency
+            @show backgroundCounts[1,:]
         end
     end
     return backgroundCounts
@@ -163,11 +165,9 @@ function get_sToBRatio(processes::Process...)
         throw(ArgumentError("Input matrices must have the same dimensions"))
     end
 
-    sToB = similar(signalCounts) # initialize empty
-    for i in 1:size(signalCounts, 1)
-        for j in 1:size(signalCounts, 2)
-            sToB[i, j] = signalCounts[i, j] / backgroundCounts[i, j]
-        end
+    sToB = zeros(size(signalCounts)) # initialize empty
+    for i in eachindex(signalCounts)
+        sToB[i] = signalCounts[i] / backgroundCounts[i] # in each cell divide signal by bkg
     end
     
     return sToB
