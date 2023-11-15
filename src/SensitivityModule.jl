@@ -7,7 +7,8 @@ include("Misc.jl")
 export 
     generate_raw_plots,
     fill_from_root_file,
-    get_max_bin
+    get_max_bin,
+    halfLife_to_activity
 
 include("Process.jl")
 export 

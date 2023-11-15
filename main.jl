@@ -5,6 +5,8 @@ push!(LOAD_PATH, srcdir())
 using SensitivityModule
 Revise.track(SensitivityModule)
 
+include(scriptsdir("Params.jl"))
+
 Bi214file = ROOTFile("data/sims/Bi214_1e8E_EnePhiDist_J23.root")
 Tl208file = ROOTFile("data/sims/Tl208_1e8E_EnePhiDist_J23.root")
 K40file = ROOTFile("data/sims/K40_1e8E_EnePhiDist_J23.root")
@@ -18,15 +20,6 @@ K40 = fill_from_root_file(K40file, "tree", ["phi", "reconstructedEnergy1", "reco
 Pa234m = fill_from_root_file(Pa234mfile, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"]) 
 bb = fill_from_root_file(bbfile, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"]) 
 
-#### SN sensitivity parameters ####
-SNparams = Dict(
-    "Nₐ" => 6.02214e23, # Avogadro's number in 1/mol
-    "W" => 0.08192,     # Se82 molar mass in kg/mol
-    "a" => 0.99,        # abundance/foil enrichment; check number
-    "m" => 6.25,        # foil mass in kg
-    "t" => 2.5,         # measurement time in yr
-)
-
 #### Plotting of spectra
 
 # generate_raw_plots(Bi214, "Bi214")
@@ -35,61 +28,44 @@ SNparams = Dict(
 # generate_raw_plots(Pa234m, "Pa234m")
 # generate_raw_plots(bb, "2nubb")
 
-
-
 ###########################################
 ###########################################
 ###########################################
 ###########################################
 ###########################################
 #### Sum energy spectra
-sumEParams = Dict(
-    :binning => 0:100:3500,
-    :nTotalSim => 1e8
-)
-
-
-BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-6295-x
-    :Bi214 => 1.50 / 1000 * SNparams["m"], # [mBq/kg] converted to [Bq]
-    :Tl208 => 0.39 / 1000 * SNparams["m"], # [mBq/kg] converted to [Bq]
-    :Pa234m => 17.3 / 1000 * SNparams["m"], # [mBq/kg] converted to [Bq]
-    :K40 => 58.7 / 1000 * SNparams["m"] # [mBq/kg] converted to [Bq]
-)
-
 Bi214SumE    = Process(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 Bi214SumE2    = Process(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 Tl208SumE    = Process(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2, "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 K40SumE      = Process(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2, "K40", :false, BkgActivityParams[:K40], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 Pa234mSumE   = Process(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2, "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-bbSumE       = Process(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2, "2nubb", :true, 1, SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
+bbSumE       = Process(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2, "2nubb", :true, SigActivityParams[:bb2Standard], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 
 let 
     default(xlabel = "min sum energy [keV]", ylabel = "max sum energy [keV]", c = :coolwarm, size = (1600, 1000), thickness_scaling = 1.4, right_margin = 16Plots.mm)
-    plot_efficiency(Bi214SumE, sumEParams[:binning], title ="sum E Efficiency for "* Bi214SumE.isotopeName)
+    plot(Bi214SumE.efficiency, title ="sum E Efficiency for "* Bi214SumE.isotopeName)
     savefig(plotsdir(savename("efficiency_sumE_", Bi214SumE, allowedtypes = (String, StepRange), "png")))
-    # $(Bi214SumE.isotopeName)_$(step(sumEParams[:binning]))-degree_binning.png")
 
-    plot_efficiency(Tl208SumE, sumEParams[:binning], title ="sum E Efficiency for "* Tl208SumE.isotopeName)
+    plot(Tl208SumE.efficiency, title ="sum E Efficiency for "* Tl208SumE.isotopeName)
     savefig(plotsdir(savename("efficiency_sumE_", Tl208SumE, allowedtypes = (String, StepRange), "png")))
-    # $(Tl208SumE.isotopeName)_$(step(sumEParams[:binning]))-degree_binning.png")
 
-    plot_efficiency(K40SumE, sumEParams[:binning], title ="sum E Efficiency for "* K40SumE.isotopeName)
+    plot(K40SumE.efficiency, title ="sum E Efficiency for "* K40SumE.isotopeName)
     savefig(plotsdir(savename("efficiency_sumE_", K40SumE, allowedtypes = (String, StepRange), "png")))
-    # $(K40SumE.isotopeName)_ph$(step(sumEParams[:binning]))-degree_binning.png")
 
-    plot_efficiency(Pa234mSumE, sumEParams[:binning], title ="sum E Efficiency for "* Pa234mSumE.isotopeName)
+    plot(Pa234mSumE.efficiency, title ="sum E Efficiency for "* Pa234mSumE.isotopeName)
     savefig(plotsdir(savename("efficiency_sumE_", Pa234mSumE, allowedtypes = (String, StepRange), "png")))
-    # $(Pa234mSumE.isotopeName)_phi$(step(sumEParams[:binning]))-degree_binning.ng"))
 
-    plot_efficiency(bbSumE, sumEParams[:binning], title ="sum E Efficiency for "* bbSumE.isotopeName)
+    plot(bbSumE.efficiency, title ="sum E Efficiency for "* bbSumE.isotopeName)
     savefig(plotsdir(savename("efficiency_sumE_", bbSumE, allowedtypes = (String, StepRange), "png")))
-    # $(bbSumE.isotopeName)_phi$(step(sumEParams[:binning]))-degree_binning.png")
 end
 
-stbSum = @show get_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE)
-best_stbSum= maximum(stbSum) |> round
-minSumE, maxSumE = bbSumE.bins[argmax(stbSum)[1]], bbSumE.bins[argmax(stbSum)[2]]
-plot_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE; c=:coolwarm, title ="signal to background ratio for SumE channel 2nubb \nmax_stb = $best_stbSum at ($minSumE - $maxSumE)keV")
+stbSum = get_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE)
+best_stbSum= get_max_bin(stbSum)
+plot(
+    stbSum;
+    c=:coolwarm, 
+    title ="signal to background ratio for SumE channel 2nubb \nmax_stb = $(best_stbSum[:maxBinCount] |> round) at ($(best_stbSum[:minBinEdge]) - $(best_stbSum[:maxBinEdge]))keV"
+)
 savefig(plotsdir(savename("StoB_SumE_binning",bbSumE.bins,"png")))
 
 
@@ -99,18 +75,6 @@ savefig(plotsdir(savename("StoB_SumE_binning",bbSumE.bins,"png")))
 ###########################################
 ###########################################
 #### Single energy spectra
-singleEParams = Dict(
-    :binning => 0:100:3500,
-    :nTotalSim => 2e8 # because we have 2 electrons per event
-)
-
-BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-6295-x
-    :Bi214 => 1.50 / 1000 * SNparams["m"], # [mBq/kg] converted to [Bq]
-    :Tl208 => 0.39 / 1000 * SNparams["m"], # [mBq/kg] converted to [Bq]
-    :Pa234m => 17.3 / 1000 * SNparams["m"], # [mBq/kg] converted to [Bq]
-    :K40 => 58.7 / 1000 * SNparams["m"] # [mBq/kg] converted to [Bq]
-)
-
 Bi214SingleE    = Process(vcat(Bi214.reconstructedEnergy1,  Bi214.reconstructedEnergy2), "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 Tl208SingleE    = Process(vcat(Tl208.reconstructedEnergy1,  Tl208.reconstructedEnergy2), "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 K40SingleE      = Process(vcat(K40.reconstructedEnergy1,  K40.reconstructedEnergy2), "K40", :false, BkgActivityParams[:K40], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
@@ -152,12 +116,6 @@ savefig(plotsdir(savename("StoB_singleE_binning",bbSingleE.bins,"png")))
 ###########################################
 ###########################################
 #### Angular Study
-phiParams = Dict(
-    :binning => 0:3:180,
-    :nTotalSim => 1e8
-)
-
-
 Bi214Phi    = Process(Bi214.phi, "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
 Tl208Phi    = Process(Tl208.phi, "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
 K40Phi      = Process(K40.phi, "K40", :false, BkgActivityParams[:K40], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])

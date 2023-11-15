@@ -71,7 +71,15 @@ end
 FHist.binedges(h::Histogram) = h.edges[1]
 
 
-function get_max_bin(h2d)
+"""
+    get_max_bin(h2d::Hist2D)
+
+Returns a Dict with the following keys:
+    + :minBinEdge => minBinCenterEdge - binStepHalf ->  defines the lower edge of ROI
+    + :maxBinEdge => maxBinCenterEdge + binStepHalf ->  defines the upper edge of ROI
+    + :maxBinCount => maxBinCount ->  provides the maximum bin counts of the 2D histogram
+"""
+function get_max_bin(h2d::Hist2D)
     (step(binedges(h2d)[1]) != step(binedges(h2d)[1])) && error("bins must be the same!")
     binStepHalf = step(binedges(h2d)[1])/2
     BinID = argmax(bincounts(h2d))
@@ -83,4 +91,12 @@ function get_max_bin(h2d)
         :maxBinEdge => maxBinEdge + binStepHalf,
         :maxBinCount => maxBinCount
     )
+end
+
+
+"""
+    halfLife_to_activity( NA::Real, W::Real, Thalf::Real ) -> returns activity in [Bq/kg]
+"""
+function halfLife_to_activity( NA::Real, W::Real, Thalf::Real )
+    return (log(2) * NA) / (W * Thalf) 
 end
