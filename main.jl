@@ -151,7 +151,7 @@ savefig(plotsdir(savename("StoB_singleE_binning",bbSingleE.bins,"png")))
 ###########################################
 #### Angular Study
 phiParams = Dict(
-    :binning => 0:5:180,
+    :binning => 0:3:180,
     :nTotalSim => 1e8
 )
 
@@ -178,7 +178,7 @@ let
     plot_efficiency(Pa234mPhi, phiParams[:binning], title ="Angular Efficiency for "* Pa234mPhi.isotopeName)
     savefig(joinpath(plotsdir(), "efficiency_anglular_$(Pa234mPhi.isotopeName)_phi$(step(phiParams[:binning]))-degree_binning.png"))
 
-    plot_efficiency(bb, phiParams[:binning], title ="Angular Efficiency for "* bb.isotopeName)
+    plot_efficiency(bbPhi, phiParams[:binning], title ="Angular Efficiency for "* bbPhi.isotopeName)
     savefig(joinpath(plotsdir(), "efficiency_anglular_$(Pa234mPhi.isotopeName)_phi$(step(phiParams[:binning]))-degree_binning.png"))
 end
 
