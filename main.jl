@@ -48,6 +48,7 @@ sumEParams = Dict(
     :nTotalSim => 1e8
 )
 
+
 BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-6295-x
     :Bi214 => 1.50 / 1000 * SNparams["m"], # [mBq/kg] converted to [Bq]
     :Tl208 => 0.39 / 1000 * SNparams["m"], # [mBq/kg] converted to [Bq]
@@ -56,6 +57,7 @@ BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-
 )
 
 Bi214SumE    = Process(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
+Bi214SumE2    = Process(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 Tl208SumE    = Process(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2, "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 K40SumE      = Process(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2, "K40", :false, BkgActivityParams[:K40], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 Pa234mSumE   = Process(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2, "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
@@ -187,4 +189,5 @@ best_stbPhi= maximum(stbPhi) |> round
 minPhi, maxPhi = bbPhi.bins[argmax(stbPhi)[1]], bbPhi.bins[argmax(stbPhi)[2]]
 plot_sToBRatio(bbPhi, Bi214Phi, Tl208Phi, Pa234mPhi; c=:coolwarm, title ="signal to background ratio for angular for 2nubb \nmax_stb = $best_stbPhi at ($minPhi - $maxPhi)°")
 savefig(plotsdir(savename("StoB_Angular_binning",bbPhi.bins,"png")))
+
 

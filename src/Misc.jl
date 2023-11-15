@@ -69,3 +69,18 @@ function fill_from_root_file(inFile::ROOTFile, treeName::String, fieldNames)
 end
 
 FHist.binedges(h::Histogram) = h.edges[1]
+
+
+function get_max_bin(h2d)
+    (step(binedges(h2d)[1]) != step(binedges(h2d)[1])) && error("bins must be the same!")
+    binStepHalf = step(binedges(h2d)[1])/2
+    BinID = argmax(bincounts(h2d))
+    minBinEdge, maxBinEdge = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
+    maxBinCount = lookup(h2d, minBinEdge, maxBinEdge)
+
+    return Dict(
+        :minBinEdge => minBinEdge - binStepHalf,
+        :maxBinEdge => maxBinEdge + binStepHalf,
+        :maxBinCount => maxBinCount
+    )
+end
