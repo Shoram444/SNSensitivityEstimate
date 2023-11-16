@@ -19,6 +19,7 @@ export
     get_sig_rate,           # obtain the rate of sig processes per ROI: s_rate = sum_i A_i * eff_i  (where i is the individual sig process)
     get_sToBRatio           # sig_rate / bkg_rate
 
+include("PlotsRecipes.jl")
 
 
 end # module

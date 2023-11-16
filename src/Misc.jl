@@ -25,7 +25,8 @@ function generate_raw_plots(inDf::DataFrame, isotope; kwargs...)
         ylabel="counts/" * L"5\degree",
         title= "angular distribution of $isotope",
         label = "",
-        plot_args...
+        plot_args,
+        kwargs...
     )
 
     hEne = stephist(
@@ -35,25 +36,25 @@ function generate_raw_plots(inDf::DataFrame, isotope; kwargs...)
         ylabel="counts/" * "100 keV",
         title= "single electron energy distribution of $isotope",
         label = "energy 1",
-        plot_args...
+        plot_args,
         )
 
     stephist!(
         e2;
         nbins=0:100:3500,
         label = "energy 2",
-        plot_args...
+        plot_args,
     )
 
     stephist!(
         vcat(e1,e2);
         nbins=0:100:3500,
         label = "both electrons",
-        plot_args...
+        plot_args,
     )
     
-    safesave(plotsdir( "Raw", "$(isotope)_raw_angdist.png"), hPhi )
-    safesave(plotsdir("Raw", "$(isotope)_raw_enedist.png"), hEne)
+    safesave(plotsdir( "Raw", "Angular", "$(isotope)_raw_angdist.png"), hPhi )
+    safesave(plotsdir("Raw", "Single","$(isotope)_raw_enedist.png"), hEne)
 
     plot(hPhi, hEne, size = (1800, 600))
 

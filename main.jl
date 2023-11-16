@@ -20,43 +20,6 @@ K40 = fill_from_root_file(K40file, "tree", ["phi", "reconstructedEnergy1", "reco
 Pa234m = fill_from_root_file(Pa234mfile, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"]) 
 bb = fill_from_root_file(bbfile, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"]) 
 
-#### Plotting of raw spectra
-
-# generate_raw_plots(Bi214, "Bi214")
-# generate_raw_plots(Tl208, "Tl208")
-# generate_raw_plots(K40, "K40")
-# generate_raw_plots(Pa234m, "Pa234m")
-# generate_raw_plots(bb, "2nubb")
-
-h1Bi214Single = Hist1D(vcat(Bi214.reconstructedEnergy1, Bi214.reconstructedEnergy1 ),singleEParams[:binning])
-h1Tl208Single = Hist1D(vcat(Tl208.reconstructedEnergy1, Tl208.reconstructedEnergy1 ),singleEParams[:binning])
-h1Pa234mSingle = Hist1D(vcat(Pa234m.reconstructedEnergy1, Pa234m.reconstructedEnergy1 ),singleEParams[:binning])
-h1K40Single = Hist1D(vcat(K40.reconstructedEnergy1, K40.reconstructedEnergy1 ),singleEParams[:binning])
-h1bbSingle = Hist1D(vcat(bb.reconstructedEnergy1, bb.reconstructedEnergy1 ),singleEParams[:binning])
-
-plot( binedges(h1Bi214Single), bincounts(h1Bi214Single) .* BkgActivityParams[:Bi214], st =:stepbins )
-plot( binedges(h1Bi214Single), bincounts(h1Bi214Single) .* BkgActivityParams[:Bi214], st =:stepbins )
-
-function stacked_hist(histos, wgts, labels; kwargs...)
-    (length(histos) != length(wgts)) && error("Vectors must be same size!")
-    edges = binedges(histos[1])
-    cts = bincounts(histos[1]) .* wgts[1]
-    @show length(histos)
-    if(length(histos) > 1)
-        for i=2:length(histos)
-            hcat(cts, bincounts(histos[i]) .* wgts[i])
-        end
-    end
-    return cts
-end
-
-bb =stacked_hist([h1Bi214Single, h1Tl208Single], [BkgActivityParams[:Bi214], BkgActivityParams[:Tl208]], ["bi208", "tl"])
-bb
-
-
-###########################################
-###########################################
-###########################################
 ###########################################
 ###########################################
 #### Sum energy spectra
