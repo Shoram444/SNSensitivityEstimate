@@ -14,7 +14,7 @@ The data used as of 16th November is described by the following:
 2. The following data-cuts were applied to data:
    1. two negatively charged particle tracks reconstructed,
    2. two vertices on the source foil,
-   3. sum of reconstructed electron energies within the range: $0~\mathrm{keV}~\leq~E_{sum}~\leq~3500~\mathrm{keV}$,
+   3. sum of reconstructed electron energies within the range: $(0 - 3500) keV$,
    4. two individual OM hits,
    5. two associated OM hits. 
 3. The following variables are extracted from the simulation:
