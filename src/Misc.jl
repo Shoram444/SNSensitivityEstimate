@@ -52,8 +52,8 @@ function generate_raw_plots(inDf::DataFrame, isotope; kwargs...)
         plot_args...
     )
     
-    savefig(hPhi, joinpath(plotsdir(), "$(isotope)_raw_angdist.png") )
-    savefig(hEne, joinpath(plotsdir(), "$(isotope)_raw_enedist.png") )
+    safesave(plotsdir( "Raw", "$(isotope)_raw_angdist.png"), hPhi )
+    safesave(plotsdir("Raw", "$(isotope)_raw_enedist.png"), hEne)
 
     plot(hPhi, hEne, size = (1800, 600))
 
@@ -100,3 +100,4 @@ end
 function halfLife_to_activity( NA::Real, W::Real, Thalf::Real )
     return (log(2) * NA) / (W * Thalf) 
 end
+

@@ -75,11 +75,12 @@ function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange)
     h2d = Hist2D(Float64, bins=(bins, bins))#prepare empty 2d Histogram
 
     binCenters = collect(bincenters(h1d))
+    binStep = step(bins)
     for (i, xVal) in enumerate(binCenters)
-        for (j, yVal) in enumerate(binCenters[i+1:end])
-            j += i
-
-            integral = sum(lookup.(h1d, binCenters[i:j]))#xVal:yVal))  
+        # for (j, yVal) in enumerate(binCenters[i+1:end])
+        for (j, yVal) in enumerate(binCenters[i:end])
+            # j += i
+            integral = sum(lookup.(h1d, xVal:binStep:yVal))
             push!(h2d, xVal, yVal, integral)
         end
     end
@@ -130,3 +131,5 @@ function get_sToBRatio(processes::Process...)
     return StoB
 end
 
+DrWatson.default_allowed(::Process) = (Real, String, Bool, AbstractRange)
+DrWatson.allaccess(::Process) = (:isotopeName, :signal, :bins)

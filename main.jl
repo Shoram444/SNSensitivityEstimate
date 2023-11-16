@@ -20,13 +20,39 @@ K40 = fill_from_root_file(K40file, "tree", ["phi", "reconstructedEnergy1", "reco
 Pa234m = fill_from_root_file(Pa234mfile, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"]) 
 bb = fill_from_root_file(bbfile, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"]) 
 
-#### Plotting of spectra
+#### Plotting of raw spectra
 
 # generate_raw_plots(Bi214, "Bi214")
 # generate_raw_plots(Tl208, "Tl208")
 # generate_raw_plots(K40, "K40")
 # generate_raw_plots(Pa234m, "Pa234m")
 # generate_raw_plots(bb, "2nubb")
+
+h1Bi214Single = Hist1D(vcat(Bi214.reconstructedEnergy1, Bi214.reconstructedEnergy1 ),singleEParams[:binning])
+h1Tl208Single = Hist1D(vcat(Tl208.reconstructedEnergy1, Tl208.reconstructedEnergy1 ),singleEParams[:binning])
+h1Pa234mSingle = Hist1D(vcat(Pa234m.reconstructedEnergy1, Pa234m.reconstructedEnergy1 ),singleEParams[:binning])
+h1K40Single = Hist1D(vcat(K40.reconstructedEnergy1, K40.reconstructedEnergy1 ),singleEParams[:binning])
+h1bbSingle = Hist1D(vcat(bb.reconstructedEnergy1, bb.reconstructedEnergy1 ),singleEParams[:binning])
+
+plot( binedges(h1Bi214Single), bincounts(h1Bi214Single) .* BkgActivityParams[:Bi214], st =:stepbins )
+plot( binedges(h1Bi214Single), bincounts(h1Bi214Single) .* BkgActivityParams[:Bi214], st =:stepbins )
+
+function stacked_hist(histos, wgts, labels; kwargs...)
+    (length(histos) != length(wgts)) && error("Vectors must be same size!")
+    edges = binedges(histos[1])
+    cts = bincounts(histos[1]) .* wgts[1]
+    @show length(histos)
+    if(length(histos) > 1)
+        for i=2:length(histos)
+            hcat(cts, bincounts(histos[i]) .* wgts[i])
+        end
+    end
+    return cts
+end
+
+bb =stacked_hist([h1Bi214Single, h1Tl208Single], [BkgActivityParams[:Bi214], BkgActivityParams[:Tl208]], ["bi208", "tl"])
+bb
+
 
 ###########################################
 ###########################################
@@ -35,7 +61,6 @@ bb = fill_from_root_file(bbfile, "tree", ["phi", "reconstructedEnergy1", "recons
 ###########################################
 #### Sum energy spectra
 Bi214SumE    = Process(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-Bi214SumE2    = Process(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 Tl208SumE    = Process(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2, "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 K40SumE      = Process(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2, "K40", :false, BkgActivityParams[:K40], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 Pa234mSumE   = Process(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2, "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
@@ -44,19 +69,19 @@ bbSumE       = Process(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2, "2nub
 let 
     default(xlabel = "min sum energy [keV]", ylabel = "max sum energy [keV]", c = :coolwarm, size = (1600, 1000), thickness_scaling = 1.4, right_margin = 16Plots.mm)
     plot(Bi214SumE.efficiency, title ="sum E Efficiency for "* Bi214SumE.isotopeName)
-    savefig(plotsdir(savename("efficiency_sumE_", Bi214SumE, allowedtypes = (String, StepRange), "png")))
+    safesave(plotsdir("SumE", savename("efficiency_sumE_", Bi214SumE, allowedtypes = (String, StepRange), "png")), current())
 
     plot(Tl208SumE.efficiency, title ="sum E Efficiency for "* Tl208SumE.isotopeName)
-    savefig(plotsdir(savename("efficiency_sumE_", Tl208SumE, allowedtypes = (String, StepRange), "png")))
+    safesave(plotsdir("SumE", savename("efficiency_sumE_", Tl208SumE, allowedtypes = (String, StepRange), "png")), current())
 
     plot(K40SumE.efficiency, title ="sum E Efficiency for "* K40SumE.isotopeName)
-    savefig(plotsdir(savename("efficiency_sumE_", K40SumE, allowedtypes = (String, StepRange), "png")))
+    safesave(plotsdir("SumE", savename("efficiency_sumE_", K40SumE, allowedtypes = (String, StepRange), "png")), current())
 
     plot(Pa234mSumE.efficiency, title ="sum E Efficiency for "* Pa234mSumE.isotopeName)
-    savefig(plotsdir(savename("efficiency_sumE_", Pa234mSumE, allowedtypes = (String, StepRange), "png")))
+    safesave(plotsdir("SumE", savename("efficiency_sumE_", Pa234mSumE, allowedtypes = (String, StepRange), "png")), current())
 
     plot(bbSumE.efficiency, title ="sum E Efficiency for "* bbSumE.isotopeName)
-    savefig(plotsdir(savename("efficiency_sumE_", bbSumE, allowedtypes = (String, StepRange), "png")))
+    safesave(plotsdir("SumE", savename("efficiency_sumE_", bbSumE, allowedtypes = (String, StepRange), "png")), current())
 end
 
 stbSum = get_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE)
@@ -64,9 +89,10 @@ best_stbSum= get_max_bin(stbSum)
 plot(
     stbSum;
     c=:coolwarm, 
-    title ="signal to background ratio for SumE channel 2nubb \nmax_stb = $(best_stbSum[:maxBinCount] |> round) at ($(best_stbSum[:minBinEdge]) - $(best_stbSum[:maxBinEdge]))keV"
+    title ="signal to background ratio for SumE channel 2nubb 
+            max_stb = $(best_stbSum[:maxBinCount] |> round) at ($(best_stbSum[:minBinEdge]) - $(best_stbSum[:maxBinEdge]))keV"
 )
-savefig(plotsdir(savename("StoB_SumE_binning",bbSumE.bins,"png")))
+safesave(plotsdir("SumE", savename("StoB_SumE_binning",bbSumE ,"png")), current())
 
 
 ###########################################
@@ -79,36 +105,35 @@ Bi214SingleE    = Process(vcat(Bi214.reconstructedEnergy1,  Bi214.reconstructedE
 Tl208SingleE    = Process(vcat(Tl208.reconstructedEnergy1,  Tl208.reconstructedEnergy2), "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 K40SingleE      = Process(vcat(K40.reconstructedEnergy1,  K40.reconstructedEnergy2), "K40", :false, BkgActivityParams[:K40], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 Pa234mSingleE   = Process(vcat(Pa234m.reconstructedEnergy1,  Pa234m.reconstructedEnergy2), "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-bbSingleE       = Process(vcat(bb.reconstructedEnergy1,  bb.reconstructedEnergy2), "2nubb", :true, 1, SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
+bbSingleE       = Process(vcat(bb.reconstructedEnergy1,  bb.reconstructedEnergy2), "2nubb", :true, SigActivityParams[:bb2Standard], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 
 let 
     default(xlabel = "min single energy [keV]", ylabel = "max single energy [keV]", c = :coolwarm, size = (1600, 1000), thickness_scaling = 1.4, right_margin = 16Plots.mm)
-    plot_efficiency(Bi214SingleE, singleEParams[:binning], title ="single E Efficiency for "* Bi214SingleE.isotopeName)
-    savefig(plotsdir(savename("efficiency_singleE_", Bi214SingleE, allowedtypes = (String, StepRange), "png")))
-    # $(Bi214SingleE.isotopeName)_$(step(singleEParams[:binning]))-degree_binning.png")
+    plot(Bi214SingleE.efficiency, title ="single E Efficiency for "* Bi214SingleE.isotopeName)
+    safesave(plotsdir("SingleE", savename("efficiency_singleE_", Bi214SingleE, allowedtypes = (String, StepRange), "png")), current())
 
-    plot_efficiency(Tl208SingleE, singleEParams[:binning], title ="single E Efficiency for "* Tl208SingleE.isotopeName)
-    savefig(plotsdir(savename("efficiency_singleE_", Tl208SingleE, allowedtypes = (String, StepRange), "png")))
-    # $(Tl208SingleE.isotopeName)_$(step(singleEParams[:binning]))-degree_binning.png")
+    plot(Tl208SingleE.efficiency, title ="single E Efficiency for "* Tl208SingleE.isotopeName)
+    safesave(plotsdir("SingleE", savename("efficiency_singleE_", Tl208SingleE, allowedtypes = (String, StepRange), "png")), current())
 
-    plot_efficiency(K40SingleE, singleEParams[:binning], title ="single E Efficiency for "* K40SingleE.isotopeName)
-    savefig(plotsdir(savename("efficiency_singleE_", K40SingleE, allowedtypes = (String, StepRange), "png")))
-    # $(K40SingleE.isotopeName)_ph$(step(singleEParams[:binning]))-degree_binning.png")
+    plot(K40SingleE.efficiency, title ="single E Efficiency for "* K40SingleE.isotopeName)
+    safesave(plotsdir("SingleE", savename("efficiency_singleE_", K40SingleE, allowedtypes = (String, StepRange), "png")), current())
 
-    plot_efficiency(Pa234mSingleE, singleEParams[:binning], title ="single E Efficiency for "* Pa234mSingleE.isotopeName)
-    savefig(plotsdir(savename("efficiency_singleE_", Pa234mSingleE, allowedtypes = (String, StepRange), "png")))
-    # $(Pa234mSingleE.isotopeName)_phi$(step(singleEParams[:binning]))-degree_binning.ng"))
+    plot(Pa234mSingleE.efficiency, title ="single E Efficiency for "* Pa234mSingleE.isotopeName)
+    safesave(plotsdir("SingleE", savename("efficiency_singleE_", Pa234mSingleE, allowedtypes = (String, StepRange), "png")), current())
 
-    plot_efficiency(bbSingleE, singleEParams[:binning], title ="single E Efficiency for "* bbSingleE.isotopeName)
-    savefig(plotsdir(savename("efficiency_singleE_", bbSingleE, allowedtypes = (String, StepRange), "png")))
-    # $(bbSingleE.isotopeName)_phi$(step(singleEParams[:binning]))-degree_binning.png")
+    plot(bbSingleE.efficiency, title ="single E Efficiency for "* bbSingleE.isotopeName)
+    safesave(plotsdir("SingleE", savename("efficiency_singleE_", bbSingleE, allowedtypes = (String, StepRange), "png")), current())
 end
 
-stbSingle = @show get_sToBRatio(bbSingleE, Bi214SingleE, Tl208SingleE, Pa234mSingleE)
-best_stbSingle= maximum(stbSingle) |> round
-minSingleE, maxSingleE = bbSingleE.bins[argmax(stbSingle)[1]], bbSingleE.bins[argmax(stbSingle)[2]]
-plot_sToBRatio(bbSingleE, Bi214SingleE, Tl208SingleE, Pa234mSingleE; c=:coolwarm, title ="signal to background ratio for 2nubb \nmax_stb = $best_stbSingle at ($minSingleE - $maxSingleE)keV")
-savefig(plotsdir(savename("StoB_singleE_binning",bbSingleE.bins,"png")))
+stbSingle = get_sToBRatio(bbSingleE, Bi214SingleE, Tl208SingleE, Pa234mSingleE)
+best_stbSingle= get_max_bin(stbSingle)
+plot(
+    stbSingle; 
+    c=:coolwarm, 
+    title = "signal to background ratio for SingleE channel 2nubb 
+    max_stb = $(best_stbSingle[:maxBinCount] |> round) at ($(best_stbSingle[:minBinEdge]) - $(best_stbSingle[:maxBinEdge]))keV"
+)
+safesave(plotsdir("SingleE",savename("StoB_singleE_binning",bbSingleE,"png")), current())
 
 ###########################################
 ###########################################
@@ -120,32 +145,36 @@ Bi214Phi    = Process(Bi214.phi, "Bi214", :false, BkgActivityParams[:Bi214], SNp
 Tl208Phi    = Process(Tl208.phi, "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
 K40Phi      = Process(K40.phi, "K40", :false, BkgActivityParams[:K40], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
 Pa234mPhi   = Process(Pa234m.phi, "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
-bbPhi       = Process(bb.phi, "2nubb", :true, 1, SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
+bbPhi       = Process(bb.phi, "2nubb", :true, SigActivityParams[:bb2Standard], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
 
 
 
 let 
     default(xlabel = "min angle", ylabel = "max angle", c = :coolwarm, size = (1600, 1000), thickness_scaling = 1.4, right_margin = 16Plots.mm)
-    plot_efficiency(Bi214Phi, phiParams[:binning], title ="Angular Efficiency for "* Bi214Phi.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_anglular_$(Bi214Phi.isotopeName)_$(step(phiParams[:binning]))-degree_binning.png"))
+    plot(Bi214Phi.efficiency, title ="Angular Efficiency for "* Bi214Phi.isotopeName)
+    safesave(plotsdir("Angular", savename("efficiency_anglular_",Bi214Phi, "png")), current())
 
-    plot_efficiency(Tl208Phi, phiParams[:binning], title ="Angular Efficiency for "* Tl208Phi.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_anglular_$(Tl208Phi.isotopeName)_$(step(phiParams[:binning]))-degree_binning.png"))
+    plot(Tl208Phi.efficiency, title ="Angular Efficiency for "* Tl208Phi.isotopeName)
+    safesave(plotsdir("Angular", savename("efficiency_anglular_",Tl208Phi, "png")), current())
 
-    plot_efficiency(K40Phi, phiParams[:binning], title ="Angular Efficiency for "* K40Phi.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_anglular_$(K40Phi.isotopeName)_ph$(step(phiParams[:binning]))-degree_binning.png"))
+    plot(K40Phi.efficiency, title ="Angular Efficiency for "* K40Phi.isotopeName)
+    safesave(plotsdir("Angular", savename("efficiency_anglular_", K40Phi ,"png")), current())
 
-    plot_efficiency(Pa234mPhi, phiParams[:binning], title ="Angular Efficiency for "* Pa234mPhi.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_anglular_$(Pa234mPhi.isotopeName)_phi$(step(phiParams[:binning]))-degree_binning.png"))
+    plot(Pa234mPhi.efficiency, title ="Angular Efficiency for "* Pa234mPhi.isotopeName)
+    safesave(plotsdir("Angular", savename("efficiency_anglular_", Pa234mPhi, "png")), current())
 
-    plot_efficiency(bbPhi, phiParams[:binning], title ="Angular Efficiency for "* bbPhi.isotopeName)
-    savefig(joinpath(plotsdir(), "efficiency_anglular_$(Pa234mPhi.isotopeName)_phi$(step(phiParams[:binning]))-degree_binning.png"))
+    plot(bbPhi.efficiency, title ="Angular Efficiency for "* bbPhi.isotopeName)
+    safesave(plotsdir("Angular", savename("efficiency_anglular_", bbPhi, "png")), current())
 end
 
-stbPhi = @show get_sToBRatio(bbPhi, Bi214Phi, Tl208Phi, Pa234mPhi)
-best_stbPhi= maximum(stbPhi) |> round
-minPhi, maxPhi = bbPhi.bins[argmax(stbPhi)[1]], bbPhi.bins[argmax(stbPhi)[2]]
-plot_sToBRatio(bbPhi, Bi214Phi, Tl208Phi, Pa234mPhi; c=:coolwarm, title ="signal to background ratio for angular for 2nubb \nmax_stb = $best_stbPhi at ($minPhi - $maxPhi)°")
-savefig(plotsdir(savename("StoB_Angular_binning",bbPhi.bins,"png")))
+stbPhi = get_sToBRatio(bbPhi, Bi214Phi, Tl208Phi, Pa234mPhi)
+best_stbPhi= get_max_bin(stbPhi)
+plot(
+    stbPhi;
+    c=:coolwarm, 
+    title ="signal to background ratio for Angular channel 2nubb 
+    max_stb = $(best_stbPhi[:maxBinCount] |> round) at ($(best_stbPhi[:minBinEdge]) - $(best_stbPhi[:maxBinEdge]))keV"
+)
+safesave(plotsdir("Angular", savename("StoB_Angular_",bbPhi,"png")), current())
 
 
