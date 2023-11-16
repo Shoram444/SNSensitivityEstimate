@@ -146,11 +146,11 @@ let
         norm = :true,
         title = "Angular normalized spectra"
     )
-    stephist(Bi214.phi,label = "Bi214", fill =0, fa = 0)
-    stephist!(Tl208.phi,label = "Tl208", fill =0, fa = 0)
-    stephist!(K40.phi,label = "K40", fill =0, fa = 0)
-    stephist!(Pa234m.phi,label = "Pa234m", fill =0, fa = 0)
-    stephist!(bb.phi,label = L"2\nu\beta\beta", fill =0, fa = 0)
+    stephist(Bi214.phi,label = "Bi214", fill =0, fa = 0.2)
+    stephist!(Tl208.phi,label = "Tl208", fill =0, fa = 0.2)
+    stephist!(K40.phi,label = "K40", fill =0, fa = 0.2)
+    stephist!(Pa234m.phi,label = "Pa234m", fill =0, fa = 0.2)
+    stephist!(bb.phi,label = L"2\nu\beta\beta", fill =0, fa = 0.2)
     safesave(plotsdir("Raw", "Angular", "Normed_Together_angular.png"), current())
 end
 

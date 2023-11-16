@@ -34,6 +34,6 @@ singleEParams = Dict(
 
 #### Angular Study
 phiParams = Dict(
-    :binning => 0:3:180,
+    :binning => 0:5:180,
     :nTotalSim => 1e8
 )
