@@ -29,8 +29,7 @@ generate_raw_plots(Pa234m, "Pa234m", c = 4)
 generate_raw_plots(bb, "2nubb", c = 5)
 
 ### Single energy
-let 
-    default(
+with(
         xlabel = "E_single", 
         ylabel = "normalized countrate / 100keV", 
         legend =:best, 
@@ -41,7 +40,7 @@ let
         size =(1200, 800),
         norm = :true,
         title = "Single energy normalize spectra"
-    )
+    ) do
     stephist(vcat(Bi214.reconstructedEnergy1, Bi214.reconstructedEnergy2),label = "Bi214", fill =0, fa = 0.)
     stephist!(vcat(Tl208.reconstructedEnergy1, Tl208.reconstructedEnergy2),label = "Tl208", fill =0, fa = 0.)
     stephist!(vcat(K40.reconstructedEnergy1, K40.reconstructedEnergy2),label = "K40", fill =0, fa = 0.)
@@ -50,8 +49,7 @@ let
     safesave(plotsdir("Raw", "Single", "Normed_Together_single_energy.png"), current())
 end
 
-let 
-    default(
+with(
         xlabel = "E_single", 
         ylabel = "Estimated counts / 100keV", 
         legend =:best, 
@@ -62,7 +60,7 @@ let
         size =(1200, 800),
         norm = :true,
         title = "Estimated spectra based on Activity * Tmeas (2.5yr)"
-    )
+    ) do
     h1Bi214Single = Hist1D(vcat(Bi214.reconstructedEnergy1, Bi214.reconstructedEnergy1 ),singleEParams[:binning])
     h1Tl208Single = Hist1D(vcat(Tl208.reconstructedEnergy1, Tl208.reconstructedEnergy1 ),singleEParams[:binning])
     h1Pa234mSingle = Hist1D(vcat(Pa234m.reconstructedEnergy1, Pa234m.reconstructedEnergy1 ),singleEParams[:binning])
@@ -81,8 +79,7 @@ end
 
 
 ### Sum energy
-let 
-    default(
+with(
         xlabel = "E_sum", 
         ylabel = "normalized countrate / 100keV", 
         legend =:best, 
@@ -93,7 +90,7 @@ let
         size =(1200, 800),
         norm = :true,
         title = "Sum energy normalized spectra"
-    )
+    ) do
     stephist(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2,label = "Bi214", fill =0, fa = 0)
     stephist!(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2,label = "Tl208", fill =0, fa = 0)
     stephist!(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2,label = "K40", fill =0, fa = 0)
@@ -102,8 +99,7 @@ let
     safesave(plotsdir("Raw", "Sum", "Normed_Together_sum_energy.png"), current())
 end
 
-let 
-    default(
+with(
         xlabel = "E_sum", 
         ylabel = "Estimated counts / 100keV", 
         legend =:best, 
@@ -114,7 +110,7 @@ let
         size =(1200, 800),
         norm = :true,
         title = "Estimated spectra based on Activity * Tmeas (2.5yr)"
-    )
+    ) do
     h1Bi214Sum = Hist1D(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy1 ,sumEParams[:binning])
     h1Tl208Sum = Hist1D(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy1 ,sumEParams[:binning])
     h1Pa234mSum = Hist1D(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy1 ,sumEParams[:binning])
@@ -133,8 +129,7 @@ end
 
 
 ### Angular
-let 
-    default(
+with(
         xlabel = "angle", 
         ylabel = "normalized countrate / 5°", 
         legend =:best, 
@@ -145,7 +140,7 @@ let
         size =(1200, 800),
         norm = :true,
         title = "Angular normalized spectra"
-    )
+    ) do
     stephist(Bi214.phi,label = "Bi214", fill =0, fa = 0.2)
     stephist!(Tl208.phi,label = "Tl208", fill =0, fa = 0.2)
     stephist!(K40.phi,label = "K40", fill =0, fa = 0.2)
@@ -154,8 +149,7 @@ let
     safesave(plotsdir("Raw", "Angular", "Normed_Together_angular.png"), current())
 end
 
-let 
-    default(
+with(
         xlabel = "angle", 
         ylabel = "Estimated counts / 5°", 
         legend =:best, 
@@ -166,7 +160,7 @@ let
         size =(1200, 800),
         norm = :true,
         title = "Estimated spectra based on Activity * Tmeas (2.5yr)"
-    )
+    ) do
     h1Bi214Phi = Hist1D(Bi214.phi ,phiParams[:binning])
     h1Tl208Phi = Hist1D(Tl208.phi ,phiParams[:binning])
     h1Pa234mPhi = Hist1D(Pa234m.phi ,phiParams[:binning])

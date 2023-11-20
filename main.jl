@@ -29,8 +29,16 @@ K40SumE      = Process(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2, "K4
 Pa234mSumE   = Process(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2, "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 bbSumE       = Process(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2, "2nubb", :true, SigActivityParams[:bb2Standard], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 
-let 
-    default(xlabel = "min sum energy [keV]", ylabel = "max sum energy [keV]", c = :coolwarm, size = (1600, 1000), thickness_scaling = 1.4, right_margin = 16Plots.mm)
+with(
+    gr;
+    xlabel = "min sum energy [keV]", 
+    ylabel = "max sum energy [keV]", 
+    c = :coolwarm, 
+    size = (1600, 1000), 
+    thickness_scaling = 1.4, 
+    right_margin = 16Plots.mm
+)   do
+
     plot(Bi214SumE.efficiency, title ="sum E Efficiency for "* Bi214SumE.isotopeName)
     safesave(plotsdir("SumE", savename("efficiency_sumE_", Bi214SumE, allowedtypes = (String, StepRange), "png")), current())
 
@@ -47,7 +55,7 @@ let
     safesave(plotsdir("SumE", savename("efficiency_sumE_", bbSumE, allowedtypes = (String, StepRange), "png")), current())
 end
 
-stbSum = get_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE)
+stbSum = get_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE, K40SumE)
 best_stbSum= get_max_bin(stbSum)
 plot(
     stbSum;
@@ -57,6 +65,7 @@ plot(
 )
 safesave(plotsdir("SumE", savename("StoB_SumE_binning",bbSumE ,"png")), current())
 
+get_estimated_bkg_counts(best_stbSum, SNparams, Bi214SumE, Tl208SumE, Pa234mSumE, K40SumE)
 
 ###########################################
 ###########################################
@@ -70,8 +79,13 @@ K40SingleE      = Process(vcat(K40.reconstructedEnergy1,  K40.reconstructedEnerg
 Pa234mSingleE   = Process(vcat(Pa234m.reconstructedEnergy1,  Pa234m.reconstructedEnergy2), "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 bbSingleE       = Process(vcat(bb.reconstructedEnergy1,  bb.reconstructedEnergy2), "2nubb", :true, SigActivityParams[:bb2Standard], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
 
-let 
-    default(xlabel = "min single energy [keV]", ylabel = "max single energy [keV]", c = :coolwarm, size = (1600, 1000), thickness_scaling = 1.4, right_margin = 16Plots.mm)
+with(
+    xlabel = "min single energy [keV]", 
+    ylabel = "max single energy [keV]", 
+    c = :coolwarm, size = (1600, 1000), 
+    thickness_scaling = 1.4, 
+    right_margin = 16Plots.mm
+)   do
     plot(Bi214SingleE.efficiency, title ="single E Efficiency for "* Bi214SingleE.isotopeName)
     safesave(plotsdir("SingleE", savename("efficiency_singleE_", Bi214SingleE, allowedtypes = (String, StepRange), "png")), current())
 
@@ -112,8 +126,14 @@ bbPhi       = Process(bb.phi, "2nubb", :true, SigActivityParams[:bb2Standard], S
 
 
 
-let 
-    default(xlabel = "min angle", ylabel = "max angle", c = :coolwarm, size = (1600, 1000), thickness_scaling = 1.4, right_margin = 16Plots.mm)
+with(
+    xlabel = "min angle", 
+    ylabel = "max angle", 
+    c = :coolwarm, 
+    size = (1600, 1000), 
+    thickness_scaling = 1.4, 
+    right_margin = 16Plots.mm
+)   do
     plot(Bi214Phi.efficiency, title ="Angular Efficiency for "* Bi214Phi.isotopeName)
     safesave(plotsdir("Angular", savename("efficiency_anglular_",Bi214Phi, "png")), current())
 

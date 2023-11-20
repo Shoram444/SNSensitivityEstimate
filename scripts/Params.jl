@@ -1,4 +1,5 @@
-include(srcdir("SensitivityModule.jl")) # to get halfLife_to_activity
+# include(srcdir("SensitivityModule.jl")) # to get halfLife_to_activity
+import SensitivityModule.halfLife_to_activity
 #### SN sensitivity parameters ####
 SNparams = Dict(
     "Nₐ" => 6.02214e23,                         # Avogadro's number in [1/mol]

@@ -131,5 +131,17 @@ function get_sToBRatio(processes::Process...)
     return StoB
 end
 
+"""
+    get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
+==========
+Outputs the estimated bkg counts for the given ROI. 
+This process is obtained from looking up the `bkg_rate` at `best_ROI` and multiplying by mass and time.  
+"""
+function get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
+    bkg_cts = get_bkg_rate(processes...) * (SNparams["t"] * SNparams["m"])
+
+    return lookup(bkg_cts, best_ROI[:minBinEdge], best_ROI[:maxBinEdge])
+end
+
 DrWatson.default_allowed(::Process) = (Real, String, Bool, AbstractRange)
 DrWatson.allaccess(::Process) = (:isotopeName, :signal, :bins)
