@@ -8,7 +8,9 @@ export
     generate_raw_plots,
     fill_from_root_file,
     get_max_bin,
-    halfLife_to_activity
+    halfLife_to_activity,
+    get_tHalf,
+    annotatewithbox!
 
 include("Process.jl")
 export 

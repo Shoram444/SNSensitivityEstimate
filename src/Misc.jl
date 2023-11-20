@@ -102,3 +102,34 @@ function halfLife_to_activity( NA::Real, W::Real, Thalf::Real )
     return (log(2) * NA) / (W * Thalf) 
 end
 
+"""
+    get_tHalf(SNparams, efficiency, bkgCounts, α; approximate = :true) -> returns the sensitivity in yr. 
+"""
+function get_tHalf(SNparams, efficiency, bkgCounts, α; approximate = :true)
+    @unpack W, m, Nₐ, tYear, a = SNparams
+    if approximate
+        b = α√bkgCounts
+    end
+
+    tHalf = log(2) * (Nₐ / W) * efficiency * (m*a*tYear / b)
+end
+
+"""
+    Annotations with box: courtesy of https://discourse.julialang.org/t/how-to-change-annotate-background-color/40606.
+"""
+function annotatewithbox!(
+    fig::Plots.Plot,
+    text::Plots.PlotText,
+    x::Real, y::Real, Δx::Real, Δy::Real = Δx;
+    kwargs...)
+
+box = Plots.Shape(:rect)
+
+Plots.scale!(box, Δx, Δy)
+Plots.translate!(box, x, y)
+
+Plots.plot!(fig, box, c = :white, linestroke = :black, label = false; kwargs...)
+Plots.annotate!(fig, x, y, text)
+
+fig
+end

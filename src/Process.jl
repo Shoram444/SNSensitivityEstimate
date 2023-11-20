@@ -138,9 +138,19 @@ Outputs the estimated bkg counts for the given ROI.
 This process is obtained from looking up the `bkg_rate` at `best_ROI` and multiplying by mass and time.  
 """
 function get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
+    for p in processes
+        if(p.signal)
+            error("Isotope $(p.isotopeName) is a signal process! Please provide only background processes!")
+        end
+    end
+
     bkg_cts = get_bkg_rate(processes...) * (SNparams["t"] * SNparams["m"])
 
-    return lookup(bkg_cts, best_ROI[:minBinEdge], best_ROI[:maxBinEdge])
+    binStepHalf = step( processes[1].bins ) / 2              # get the binning step and divide by half
+    minBinCenter = best_ROI[:minBinEdge] + binStepHalf       # get the center of the minimal bin in ROI
+    maxBinCenter = best_ROI[:maxBinEdge] - binStepHalf       # get the center of the maximal bin in ROI
+
+    return lookup(bkg_cts, minBinCenter, maxBinCenter)
 end
 
 DrWatson.default_allowed(::Process) = (Real, String, Bool, AbstractRange)

@@ -57,15 +57,35 @@ end
 
 stbSum = get_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE, K40SumE)
 best_stbSum= get_max_bin(stbSum)
+expBkgESum = get_estimated_bkg_counts(best_stbSum, SNparams, Bi214SumE, Tl208SumE, Pa234mSumE, K40SumE)
+effbb = length(bb.reconstructedEnergy1) / 1e8 
+ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, 1.8), sigdigits = 3)
 plot(
     stbSum;
     c=:coolwarm, 
-    title ="signal to background ratio for SumE channel 2nubb 
-            max_stb = $(best_stbSum[:maxBinCount] |> round) at ($(best_stbSum[:minBinEdge]) - $(best_stbSum[:maxBinEdge]))keV"
+    title ="signal to background ratio for SumE channel 2nubb",
+    xlabel = "min ROI edge [keV]",
+    ylabel = "max ROI edge [keV]",
+    :colorbar_title => "counts",
+    right_margin = 10Plots.mm,
+    size =(1200, 800)
 )
+annotatewithbox!( 
+    current(),
+    text("\nbest s/b = $(best_stbSum[:maxBinCount] |> round) @ $(best_stbSum[:minBinEdge]) - $(best_stbSum[:maxBinEdge]) keV
+          expected b counts = $(expBkgESum |> round)
+          T12 ≥  $(ThalfbbESum) yr
+    "),
+    sumEParams[:binning][end-12],
+    sumEParams[:binning][10],
+    15*step(sumEParams[:binning]),
+    3*step(sumEParams[:binning]),
+ )
 safesave(plotsdir("SumE", savename("StoB_SumE_binning",bbSumE ,"png")), current())
 
-get_estimated_bkg_counts(best_stbSum, SNparams, Bi214SumE, Tl208SumE, Pa234mSumE, K40SumE)
+
+
+
 
 ###########################################
 ###########################################
@@ -104,13 +124,31 @@ end
 
 stbSingle = get_sToBRatio(bbSingleE, Bi214SingleE, Tl208SingleE, Pa234mSingleE)
 best_stbSingle= get_max_bin(stbSingle)
+expBkgSingle = get_estimated_bkg_counts(best_stbSingle, SNparams, Bi214SingleE, Tl208SingleE, Pa234mSingleE, K40SingleE)
+ThalfbbSingle = round(get_tHalf(SNparams, effbb, expBkgSingle, 1.8), sigdigits = 3)
 plot(
     stbSingle; 
     c=:coolwarm, 
-    title = "signal to background ratio for SingleE channel 2nubb 
-    max_stb = $(best_stbSingle[:maxBinCount] |> round) at ($(best_stbSingle[:minBinEdge]) - $(best_stbSingle[:maxBinEdge]))keV"
+    title ="signal to background ratio for SingleE channel 2nubb",
+    xlabel = "min ROI edge [keV]",
+    ylabel = "max ROI edge [keV]",
+    :colorbar_title => "counts",
+    right_margin = 10Plots.mm,
+    size =(1200, 800)
 )
+annotatewithbox!( 
+    current(),
+    text("\nbest s/b = $(best_stbSingle[:maxBinCount] |> round) @ $(best_stbSingle[:minBinEdge]) - $(best_stbSingle[:maxBinEdge]) keV
+          expected b counts = $(expBkgSingle |> round)
+          T12 ≥  $(ThalfbbSingle) yr
+    "),
+    singleEParams[:binning][end-12],
+    singleEParams[:binning][10],
+    15*step(singleEParams[:binning]),
+    3*step(singleEParams[:binning]),
+ )
 safesave(plotsdir("SingleE",savename("StoB_singleE_binning",bbSingleE,"png")), current())
+
 
 ###########################################
 ###########################################
@@ -151,13 +189,30 @@ with(
 end
 
 stbPhi = get_sToBRatio(bbPhi, Bi214Phi, Tl208Phi, Pa234mPhi)
-best_stbPhi= get_max_bin(stbPhi)
+best_stbPhi= get_max_bin(stbPhi) 
+expBkgPhi = get_estimated_bkg_counts(best_stbPhi, SNparams, Bi214Phi, Tl208Phi, Pa234mPhi, K40Phi)
+ThalfbbPhi = round(get_tHalf(SNparams, effbb, expBkgPhi, 1.8), sigdigits = 3)
 plot(
     stbPhi;
     c=:coolwarm, 
-    title ="signal to background ratio for Angular channel 2nubb 
-    max_stb = $(best_stbPhi[:maxBinCount] |> round) at ($(best_stbPhi[:minBinEdge]) - $(best_stbPhi[:maxBinEdge]))keV"
+    title ="signal to background ratio for Angular channel 2nubb ",
+    xlabel = "min ROI edge [°]",
+    ylabel = "max ROI edge [°]",
+    :colorbar_title => "counts",
+    right_margin = 10Plots.mm,
+    size =(1200, 800)
 )
+annotatewithbox!( 
+    current(),
+    text("\nbest s/b = $(best_stbPhi[:maxBinCount] |> round) @ $(best_stbPhi[:minBinEdge]) - $(best_stbPhi[:maxBinEdge]) keV
+          expected b counts = $(expBkgPhi |> round)
+          T12 ≥  $(ThalfbbPhi) yr
+    "),
+    phiParams[:binning][end-12],
+    phiParams[:binning][10],
+    15*step(phiParams[:binning]),
+    3*step(phiParams[:binning]),
+ )
 safesave(plotsdir("Angular", savename("StoB_Angular_",bbPhi,"png")), current())
 
 

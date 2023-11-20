@@ -7,6 +7,7 @@ SNparams = Dict(
     "a" => 0.99,                                # abundance/foil enrichment; check number
     "m" => 6.25,                                # foil mass in [kg]
     "t" => 2.5 * 365 * 24 * 3600,               # measurement time in [s]
+    "tYear" => 2.5,                             # measurement time in [y]
     "SeThalf" => 9.39*1e19 * 365 * 24 * 3600    # Se82 half life in [s], results from NEMO-3
 ) 
 
