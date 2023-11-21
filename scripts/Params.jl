@@ -24,7 +24,7 @@ SigActivityParams = Dict(
 
 #### Sum energy spectra
 sumEParams = Dict(
-    :binning => 0:100:3500, 
+    :binning => 0:500:3500, 
     :nTotalSim => 1e8
 )
 

@@ -153,5 +153,17 @@ function get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
     return lookup(bkg_cts, minBinCenter, maxBinCenter)
 end
 
+function get_estimated_bkg_counts(minBinCenter, maxBinCenter, SNparams, processes::Process...)
+    for p in processes
+        if(p.signal)
+            error("Isotope $(p.isotopeName) is a signal process! Please provide only background processes!")
+        end
+    end
+
+    bkg_cts = get_bkg_rate(processes...) * (SNparams["t"] * SNparams["m"])
+
+    return lookup(bkg_cts, minBinCenter, maxBinCenter)
+end
+
 DrWatson.default_allowed(::Process) = (Real, String, Bool, AbstractRange)
 DrWatson.allaccess(::Process) = (:isotopeName, :signal, :bins)

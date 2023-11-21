@@ -91,12 +91,12 @@ with(
         norm = :true,
         title = "Sum energy normalized spectra"
     ) do
-    stephist(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2,label = "Bi214", fill =0, fa = 0)
-    stephist!(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2,label = "Tl208", fill =0, fa = 0)
-    stephist!(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2,label = "K40", fill =0, fa = 0)
-    stephist!(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2,label = "Pa234m", fill =0, fa = 0)
-    stephist!(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2,label = L"2\nu\beta\beta", fill =0, fa = 0)
-    safesave(plotsdir("Raw", "Sum", "Normed_Together_sum_energy.png"), current())
+    stephist(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2,label = "Bi214", fill =0, fa = 0.2)
+    stephist!(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2,label = "Tl208", fill =0, fa = 0.2)
+    stephist!(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2,label = "K40", fill =0, fa = 0.2)
+    stephist!(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2,label = "Pa234m", fill =0, fa = 0.2)
+    stephist!(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2,label = L"2\nu\beta\beta", fill =0, fa = 0.2)
+    safesave(plotsdir("Presentation", "Sum", "Normed_Together_sum_energy.png"), current())
 end
 
 with(
@@ -121,9 +121,9 @@ with(
         [h1Bi214Sum, h1Tl208Sum, h1Pa234mSum, h1K40Sum, h1bbSum] ,
         [BkgActivityParams[:Bi214], BkgActivityParams[:Tl208], BkgActivityParams[:Pa234m], BkgActivityParams[:K40], SigActivityParams[:bb2Standard]] .* SNparams["t"] .* SNparams["m"],
         label= ["Bi215" "Tl208" "Pa234m" "K40" L"2\nu\beta\beta"],
-        yscale =:log10
+        # yscale =:log10
     )
-    safesave(plotsdir("Raw", "Sum", "Estimated_counts_together.png"), current())
+    safesave(plotsdir("Presentation", "Sum", "Estimated_counts_together.png"), current())
     current()
 end
 

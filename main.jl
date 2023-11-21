@@ -36,7 +36,9 @@ with(
     c = :coolwarm, 
     size = (1600, 1000), 
     thickness_scaling = 1.4, 
-    right_margin = 16Plots.mm
+    right_margin = 16Plots.mm,
+    left_margin = 16Plots.mm,
+    bottom_margin = 16Plots.mm,
 )   do
 
     plot(Bi214SumE.efficiency, title ="sum E Efficiency for "* Bi214SumE.isotopeName)
@@ -67,7 +69,9 @@ plot(
     xlabel = "min ROI edge [keV]",
     ylabel = "max ROI edge [keV]",
     :colorbar_title => "counts",
-    right_margin = 10Plots.mm,
+    right_margin = 16Plots.mm,
+    left_margin = 16Plots.mm,
+    bottom_margin = 16Plots.mm,
     size =(1200, 800)
 )
 annotatewithbox!( 
@@ -76,15 +80,12 @@ annotatewithbox!(
           expected b counts = $(expBkgESum |> round)
           T12 ≥  $(ThalfbbESum) yr
     "),
-    sumEParams[:binning][end-12],
-    sumEParams[:binning][10],
-    15*step(sumEParams[:binning]),
-    3*step(sumEParams[:binning]),
- )
+    sumEParams[:binning][6],
+    sumEParams[:binning][2],
+    2.5*step(sumEParams[:binning]),
+    1*step(sumEParams[:binning]),
+)
 safesave(plotsdir("SumE", savename("StoB_SumE_binning",bbSumE ,"png")), current())
-
-
-
 
 
 ###########################################
