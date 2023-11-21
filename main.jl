@@ -72,18 +72,19 @@ plot(
     right_margin = 16Plots.mm,
     left_margin = 16Plots.mm,
     bottom_margin = 16Plots.mm,
-    size =(1200, 800)
+    size =(1200, 800),
+    thickness_scaling = 1.6
 )
 annotatewithbox!( 
     current(),
-    text("\nbest s/b = $(best_stbSum[:maxBinCount] |> round) @ $(best_stbSum[:minBinEdge]) - $(best_stbSum[:maxBinEdge]) keV
-          expected b counts = $(expBkgESum |> round)
-          T12 ≥  $(ThalfbbESum) yr
-    "),
-    sumEParams[:binning][6],
-    sumEParams[:binning][2],
-    2.5*step(sumEParams[:binning]),
-    1*step(sumEParams[:binning]),
+    text("max s/b = $(best_stbSum[:maxBinCount] |> round) 
+    ROI: $(best_stbSum[:minBinEdge]) - $(best_stbSum[:maxBinEdge]) keV
+          b = $(expBkgESum |> round)
+          T12 ≥  $(ThalfbbESum) yr"),
+    sumEParams[:binning][10],
+    sumEParams[:binning][4],
+    7*step(sumEParams[:binning]),
+    3.5*step(sumEParams[:binning]),
 )
 safesave(plotsdir("SumE", savename("StoB_SumE_binning",bbSumE ,"png")), current())
 
