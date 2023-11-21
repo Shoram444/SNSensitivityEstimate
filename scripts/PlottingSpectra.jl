@@ -22,11 +22,11 @@ bb = fill_from_root_file(bbfile, "tree", ["phi", "reconstructedEnergy1", "recons
 
 ### Plotting raw spectra!
 ### Single and Angular unnormed
-generate_raw_plots(Bi214, "Bi214", c = 1)
-generate_raw_plots(Tl208, "Tl208", c = 2)
-generate_raw_plots(K40, "K40", c =3)
-generate_raw_plots(Pa234m, "Pa234m", c = 4)
-generate_raw_plots(bb, "2nubb", c = 5)
+# generate_raw_plots(Bi214, "Bi214", c = 1)
+# generate_raw_plots(Tl208, "Tl208", c = 2)
+# generate_raw_plots(K40, "K40", c =3)
+# generate_raw_plots(Pa234m, "Pa234m", c = 4)
+# generate_raw_plots(bb, "2nubb", c = 5)
 
 ### Single energy
 with(
@@ -41,11 +41,11 @@ with(
         norm = :true,
         title = "Single energy normalize spectra",
     ) do
-    stephist(vcat(Bi214.reconstructedEnergy1, Bi214.reconstructedEnergy2),label = "Bi214", fill =0, fa = 0.)
-    stephist!(vcat(Tl208.reconstructedEnergy1, Tl208.reconstructedEnergy2),label = "Tl208", fill =0, fa = 0.)
-    stephist!(vcat(Pa234m.reconstructedEnergy1, Pa234m.reconstructedEnergy2),label = "Pa234m", fill =0, fa = 0.)
-    stephist!(vcat(K40.reconstructedEnergy1, K40.reconstructedEnergy2),label = "K40", fill =0, fa = 0.)
-    stephist!(vcat(bb.reconstructedEnergy1, bb.reconstructedEnergy2),label = L"2\nu\beta\beta", fill =0, fa = 0.)
+    stephist(vcat(Bi214.reconstructedEnergy1, Bi214.reconstructedEnergy2),label = "Bi214", fill =0, fa = 0.3)
+    stephist!(vcat(Tl208.reconstructedEnergy1, Tl208.reconstructedEnergy2),label = "Tl208", fill =0, fa = 0.3)
+    stephist!(vcat(Pa234m.reconstructedEnergy1, Pa234m.reconstructedEnergy2),label = "Pa234m", fill =0, fa = 0.3)
+    stephist!(vcat(K40.reconstructedEnergy1, K40.reconstructedEnergy2),label = "K40", fill =0, fa = 0.3)
+    stephist!(vcat(bb.reconstructedEnergy1, bb.reconstructedEnergy2),label = L"2\nu\beta\beta", fill =0, fa = 0.3)
     safesave(plotsdir("Raw", "Single", "Normed_Together_single_energy.png"), current())
 end
 
@@ -55,12 +55,11 @@ with(
         legend =:best, 
         bins = singleEParams[:binning], 
         thickness_scaling = 1.4,
-        lw = 3,
+        lw = 4,
         right_margin=12Plots.mm,
         size =(1200, 800),
         norm = :true,
         title = "Estimated spectra based on Activity * Tmeas (2.5yr) * efficiency",
-
     ) do
     h1Bi214Single = Hist1D(vcat(Bi214.reconstructedEnergy1, Bi214.reconstructedEnergy1 ),singleEParams[:binning])
     h1Tl208Single = Hist1D(vcat(Tl208.reconstructedEnergy1, Tl208.reconstructedEnergy1 ),singleEParams[:binning])
@@ -72,9 +71,9 @@ with(
         [h1Bi214Single, h1Tl208Single, h1Pa234mSingle, h1K40Single, h1bbSingle] ,
         [BkgActivityParams[:Bi214], BkgActivityParams[:Tl208], BkgActivityParams[:Pa234m], BkgActivityParams[:K40], SigActivityParams[:bb2Standard]] .* SNparams["t"] .* SNparams["m"],
         label= ["Bi215" "Tl208" "Pa234m" "K40" L"2\nu\beta\beta"],
-        # yscale =:log10
+        yscale =:log10
     )
-    safesave(plotsdir("Raw", "Single", "Estimated_counts_together.png"), current())
+    safesave(plotsdir("Raw", "Single", "Estimated_counts_together_log.png"), current())
     current()
 end
 
@@ -86,18 +85,18 @@ with(
         legend =:best, 
         bins = sumEParams[:binning], 
         thickness_scaling = 1.4,
-        lw = 3,
+        lw = 4,
         right_margin=12Plots.mm,
         size =(1200, 800),
         norm = :true,
         title = "Sum energy normalized spectra",
 
     ) do
-    stephist(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2,label = "Bi214", fill =0, fa = 0)
-    stephist!(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2,label = "Tl208", fill =0, fa = 0)
-    stephist!(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2,label = "Pa234m", fill =0, fa = 0)
-    stephist!(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2,label = "K40", fill =0, fa = 0)
-    stephist!(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2,label = L"2\nu\beta\beta", fill =0, fa = 0)
+    stephist(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2,label = "Bi214", fill =0, fa = 0.3)
+    stephist!(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2,label = "Tl208", fill =0, fa = 0.3)
+    stephist!(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2,label = "Pa234m", fill =0, fa = 0.3)
+    stephist!(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2,label = "K40", fill =0, fa = 0.3)
+    stephist!(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2,label = L"2\nu\beta\beta", fill =0, fa = 0.3)
     safesave(plotsdir("Raw", "Sum", "Normed_Together_sum_energy.png"), current())
 end
 
@@ -107,7 +106,7 @@ with(
         legend =:best, 
         bins = sumEParams[:binning], 
         thickness_scaling = 1.4,
-        lw = 3,
+        lw = 4,
         right_margin=12Plots.mm,
         size =(1200, 800),
         norm = :true,
@@ -124,9 +123,9 @@ with(
         [h1Bi214Sum, h1Tl208Sum, h1Pa234mSum, h1K40Sum, h1bbSum] ,
         [BkgActivityParams[:Bi214], BkgActivityParams[:Tl208], BkgActivityParams[:Pa234m], BkgActivityParams[:K40], SigActivityParams[:bb2Standard]] .* SNparams["t"] .* SNparams["m"],
         label= ["Bi215" "Tl208" "Pa234m" "K40" L"2\nu\beta\beta"],
-        # yscale =:log10
+        yscale =:log10
     )
-    safesave(plotsdir("Raw", "Sum", "Estimated_counts_together.png"), current())
+    safesave(plotsdir("Raw", "Sum", "Estimated_counts_together_log.png"), current())
     current()
 end
 
@@ -138,18 +137,18 @@ with(
         legend =:best, 
         bins = phiParams[:binning], 
         thickness_scaling = 1.4,
-        lw = 3,
+        lw = 4,
         right_margin=12Plots.mm,
         size =(1200, 800),
         norm = :true,
         title = "Angular normalized spectra",
 
     ) do
-    stephist(Bi214.phi,label = "Bi214", fill =0, fa = 0)
-    stephist!(Tl208.phi,label = "Tl208", fill =0, fa = 0.)
-    stephist!(Pa234m.phi,label = "Pa234m", fill =0, fa = 0.)
-    stephist!(K40.phi,label = "K40", fill =0, fa = 0.)
-    stephist!(bb.phi,label = L"2\nu\beta\beta", fill =0, fa = 0.)
+    stephist(Bi214.phi,label = "Bi214", fill =0, fa = 0.3)
+    stephist!(Tl208.phi,label = "Tl208", fill =0, fa = 0.3)
+    stephist!(Pa234m.phi,label = "Pa234m", fill =0, fa = 0.3)
+    stephist!(K40.phi,label = "K40", fill =0, fa = 0.3)
+    stephist!(bb.phi,label = L"2\nu\beta\beta", fill =0, fa = 0.3)
     safesave(plotsdir("Raw", "Angular", "Normed_Together_angular.png"), current())
 end
 
@@ -159,7 +158,7 @@ with(
         legend =:best, 
         bins = phiParams[:binning], 
         thickness_scaling = 1.4,
-        lw = 3,
+        lw = 4,
         right_margin=12Plots.mm,
         size =(1200, 800),
         norm = :true,
@@ -176,7 +175,8 @@ with(
         [h1Bi214Phi, h1Tl208Phi, h1Pa234mPhi, h1K40Phi, h1bbPhi] ,
         [BkgActivityParams[:Bi214], BkgActivityParams[:Tl208], BkgActivityParams[:Pa234m], BkgActivityParams[:K40], SigActivityParams[:bb2Standard]] .* SNparams["t"] .* SNparams["m"],
         label= ["Bi215" "Tl208" "Pa234m" "K40" L"2\nu\beta\beta"],
+        yscale=:log10
     )
-    safesave(plotsdir("Raw", "Angular", "Estimated_counts_together.png"), current())
+    safesave(plotsdir("Raw", "Angular", "Estimated_counts_together_log.png"), current())
     current()
 end
