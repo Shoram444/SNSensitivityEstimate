@@ -55,11 +55,11 @@ with(
         legend =:best, 
         bins = singleEParams[:binning], 
         thickness_scaling = 1.4,
-        lw = 2,
+        lw = 3,
         right_margin=12Plots.mm,
         size =(1200, 800),
         norm = :true,
-        title = "Estimated spectra based on Activity * Tmeas (2.5yr)",
+        title = "Estimated spectra based on Activity * Tmeas (2.5yr) * efficiency",
 
     ) do
     h1Bi214Single = Hist1D(vcat(Bi214.reconstructedEnergy1, Bi214.reconstructedEnergy1 ),singleEParams[:binning])
@@ -86,7 +86,7 @@ with(
         legend =:best, 
         bins = sumEParams[:binning], 
         thickness_scaling = 1.4,
-        lw = 2,
+        lw = 3,
         right_margin=12Plots.mm,
         size =(1200, 800),
         norm = :true,
@@ -138,14 +138,14 @@ with(
         legend =:best, 
         bins = phiParams[:binning], 
         thickness_scaling = 1.4,
-        lw = 2,
+        lw = 3,
         right_margin=12Plots.mm,
         size =(1200, 800),
         norm = :true,
         title = "Angular normalized spectra",
 
     ) do
-    stephist(Bi214.phi,label = "Bi214", fill =0, fa = 0.5)
+    stephist(Bi214.phi,label = "Bi214", fill =0, fa = 0)
     stephist!(Tl208.phi,label = "Tl208", fill =0, fa = 0.)
     stephist!(Pa234m.phi,label = "Pa234m", fill =0, fa = 0.)
     stephist!(K40.phi,label = "K40", fill =0, fa = 0.)
@@ -163,7 +163,7 @@ with(
         right_margin=12Plots.mm,
         size =(1200, 800),
         norm = :true,
-        title = "Estimated spectra based on Activity * Tmeas (2.5yr)",
+        title = "Estimated spectra based on Activity * Tmeas (2.5yr) * efficiency",
 
     ) do
     h1Bi214Phi = Hist1D(Bi214.phi ,phiParams[:binning])
@@ -176,7 +176,6 @@ with(
         [h1Bi214Phi, h1Tl208Phi, h1Pa234mPhi, h1K40Phi, h1bbPhi] ,
         [BkgActivityParams[:Bi214], BkgActivityParams[:Tl208], BkgActivityParams[:Pa234m], BkgActivityParams[:K40], SigActivityParams[:bb2Standard]] .* SNparams["t"] .* SNparams["m"],
         label= ["Bi215" "Tl208" "Pa234m" "K40" L"2\nu\beta\beta"],
-        fa = [0.5 0 0 0 0]
     )
     safesave(plotsdir("Raw", "Angular", "Estimated_counts_together.png"), current())
     current()
