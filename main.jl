@@ -60,7 +60,7 @@ end
 stbSum = get_sToBRatio(bbSumE, Bi214SumE, Tl208SumE, Pa234mSumE, K40SumE)
 best_stbSum= get_max_bin(stbSum)
 expBkgESum = get_estimated_bkg_counts(best_stbSum, SNparams, Bi214SumE, Tl208SumE, Pa234mSumE, K40SumE)
-effbb = length(bb.reconstructedEnergy1) / 1e8 
+effbb = lookup( bbSumE.efficiency, best_stbSum[:minBinEdge], best_stbSum[:maxBinEdge] )
 ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, 1.8), sigdigits = 3)
 plot(
     stbSum;
@@ -81,10 +81,10 @@ annotatewithbox!(
     ROI: $(best_stbSum[:minBinEdge]) - $(best_stbSum[:maxBinEdge]) keV
           b = $(expBkgESum |> round)
           T12 ≥  $(ThalfbbESum) yr"),
-    sumEParams[:binning][10],
-    sumEParams[:binning][4],
-    7*step(sumEParams[:binning]),
-    3.5*step(sumEParams[:binning]),
+    sumEParams[:binning][end-11],
+    sumEParams[:binning][7],
+    18*step(sumEParams[:binning]),
+    8*step(sumEParams[:binning]),
 )
 safesave(plotsdir("SumE", savename("StoB_SumE_binning",bbSumE ,"png")), current())
 
@@ -126,8 +126,9 @@ end
 
 stbSingle = get_sToBRatio(bbSingleE, Bi214SingleE, Tl208SingleE, Pa234mSingleE)
 best_stbSingle= get_max_bin(stbSingle)
+effbbSingle = lookup( bbSingleE.efficiency, best_stbSingle[:minBinEdge], best_stbSingle[:maxBinEdge] )
 expBkgSingle = get_estimated_bkg_counts(best_stbSingle, SNparams, Bi214SingleE, Tl208SingleE, Pa234mSingleE, K40SingleE)
-ThalfbbSingle = round(get_tHalf(SNparams, effbb, expBkgSingle, 1.8), sigdigits = 3)
+ThalfbbSingle = round(get_tHalf(SNparams, effbbSingle, expBkgSingle, 1.8), sigdigits = 3)
 plot(
     stbSingle; 
     c=:coolwarm, 
@@ -136,18 +137,20 @@ plot(
     ylabel = "max ROI edge [keV]",
     :colorbar_title => "counts",
     right_margin = 10Plots.mm,
-    size =(1200, 800)
+    size =(1200, 800),
+    thickness_scaling = 1.6
+
 )
 annotatewithbox!( 
     current(),
-    text("\nbest s/b = $(best_stbSingle[:maxBinCount] |> round) @ $(best_stbSingle[:minBinEdge]) - $(best_stbSingle[:maxBinEdge]) keV
-          expected b counts = $(expBkgSingle |> round)
-          T12 ≥  $(ThalfbbSingle) yr
-    "),
+    text("$(best_stbSingle[:minBinEdge]) - $(best_stbSingle[:maxBinEdge]) keV
+          s/b = $(best_stbSingle[:maxBinCount] |> round) 
+          b = $(expBkgSingle |> round)
+          T12 ≥  $(ThalfbbSingle) yr"),
     singleEParams[:binning][end-12],
     singleEParams[:binning][10],
     15*step(singleEParams[:binning]),
-    3*step(singleEParams[:binning]),
+    7*step(singleEParams[:binning]),
  )
 safesave(plotsdir("SingleE",savename("StoB_singleE_binning",bbSingleE,"png")), current())
 
@@ -192,8 +195,9 @@ end
 
 stbPhi = get_sToBRatio(bbPhi, Bi214Phi, Tl208Phi, Pa234mPhi)
 best_stbPhi= get_max_bin(stbPhi) 
+effbbPhi = lookup( bbPhi.efficiency, best_stbPhi[:minBinEdge], best_stbPhi[:maxBinEdge]-2.5 )
 expBkgPhi = get_estimated_bkg_counts(best_stbPhi, SNparams, Bi214Phi, Tl208Phi, Pa234mPhi, K40Phi)
-ThalfbbPhi = round(get_tHalf(SNparams, effbb, expBkgPhi, 1.8), sigdigits = 3)
+ThalfbbPhi = round(get_tHalf(SNparams, effbbPhi, expBkgPhi, 1.8), sigdigits = 3)
 plot(
     stbPhi;
     c=:coolwarm, 
@@ -202,18 +206,19 @@ plot(
     ylabel = "max ROI edge [°]",
     :colorbar_title => "counts",
     right_margin = 10Plots.mm,
-    size =(1200, 800)
+    size =(1200, 800),
+    thickness_scaling = 1.6
 )
 annotatewithbox!( 
     current(),
-    text("\nbest s/b = $(best_stbPhi[:maxBinCount] |> round) @ $(best_stbPhi[:minBinEdge]) - $(best_stbPhi[:maxBinEdge]) keV
-          expected b counts = $(expBkgPhi |> round)
-          T12 ≥  $(ThalfbbPhi) yr
-    "),
+    text("$(best_stbPhi[:minBinEdge]) - $(best_stbPhi[:maxBinEdge]) keV
+          s/b = $(best_stbPhi[:maxBinCount] |> round)
+          b   = $(expBkgPhi |> round)
+          T12 ≥  $(ThalfbbPhi) yr"),
     phiParams[:binning][end-12],
     phiParams[:binning][10],
     15*step(phiParams[:binning]),
-    3*step(phiParams[:binning]),
+    7*step(phiParams[:binning]),
  )
 safesave(plotsdir("Angular", savename("StoB_Angular_",bbPhi,"png")), current())
 
