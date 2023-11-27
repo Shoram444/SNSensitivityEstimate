@@ -1,8 +1,8 @@
-using DrWatson, StatsPlots, UnROOT, DataFramesMeta, LaTeXStrings, Revise, StatsBase, FHist
+using DrWatson
 @quickactivate "SensitivityEstimate"
 
 push!(LOAD_PATH, srcdir())
-using SensitivityModule
+using SensitivityModule, StatsPlots, UnROOT, DataFramesMeta, LaTeXStrings, Revise, StatsBase, FHist
 Revise.track(SensitivityModule)
 
 include(scriptsdir("Params.jl"))

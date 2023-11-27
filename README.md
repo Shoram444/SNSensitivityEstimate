@@ -4,7 +4,7 @@ This code repository represents a small project within the SuperNEMO experiment.
 
 The data is available at `/sps/nemo/scratch/mpetro/Projects/SNSensitivityEstimate/data` and should be copied to the `data/` directory. 
 
-The methodology of calculating sensitivities is described in `docdb:4816` with a short presentation given in `docdb:5568`. The `plots/` folder in this repository contains all the relevant figures for finding ROI and shows the individual spectra.
+The methodology of calculating sensitivities is described in `docdb:4816` with a short presentation given in `docdb:5568` and more recently `docdb:5833`. The `plots/` folder in this repository contains all the relevant figures for finding ROI and shows the individual spectra.
 
 **Data**
 The data used as of 16th November is described by the following:

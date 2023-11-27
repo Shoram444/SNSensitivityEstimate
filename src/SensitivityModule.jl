@@ -1,6 +1,6 @@
 module SensitivityModule
 
-using StatsPlots, DataFramesMeta, LaTeXStrings, FHist, StatsBase, UnROOT, DrWatson
+using StatsPlots, DataFramesMeta, LaTeXStrings, FHist, StatsBase, UnROOT, DrWatson, MakieCore
 
 
 include("Misc.jl")
@@ -23,6 +23,11 @@ export
     get_estimated_bkg_counts    # obtain the estimated bkg numbers (scaled to mass and Tmeas)
 
 include("PlotsRecipes.jl")
+
+include("Makie_themes.jl")
+export 
+    dao 
+
 
 
 end # module

@@ -2,11 +2,13 @@ name = "SNSensitivityEstimate"
 authors = ["MPetro"]
 
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Debugger = "31a5f54b-26ea-5ae9-a837-f05ce5417438"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 FHist = "68837c9b-b678-4cd5-9925-8a54edc8f695"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+MakieCore = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
