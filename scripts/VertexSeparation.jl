@@ -37,10 +37,10 @@ with(
         normed = :true,
 
     ) do
-    stephist(Bi214.d,  c= 2,label = "Bi214", lw = 3)
-    stephist!(Tl208.d,  label = "Tl208", lw = 3)
-    stephist!(K40.d,  label = "K40", lw = 3)
-    stephist!(Pa234m.d, label = "Pa234m")
+    stephist(Bi214.d, c= 2,  label = "Bi214", lw = 3)
+    stephist!(Tl208.d, c = 3,  label = "Tl208", lw = 3)
+    stephist!(K40.d, c= 4, label = "K40", lw = 3)
+    stephist!(Pa234m.d, c=5, label = "Pa234m", lw = 3)
     stephist!(
         bb.d, 
         c =1,
@@ -70,9 +70,9 @@ with(
 
     ) do
     stephist(Bi214.dy,  c= 2,label = "Bi214", lw = 3)
-    stephist!(Tl208.dy,  label = "Tl208", lw = 3)
-    stephist!(K40.dy,  label = "K40", lw = 3)
-    stephist!(Pa234m.dy, label = "Pa234m")
+    stephist!(Tl208.dy,  c= 3, label = "Tl208", lw = 3)
+    stephist!(K40.dy,  c=4, label = "K40", lw = 3)
+    stephist!(Pa234m.dy, c=5 ,label = "Pa234m", lw = 3)
     stephist!(
         bb.dy, 
         c =1,
@@ -102,9 +102,9 @@ with(
 
     ) do
     stephist(Bi214.dz,  c= 2,label = "Bi214", lw = 3)
-    stephist!(Tl208.dz,  label = "Tl208", lw = 3)
-    stephist!(K40.dz,  label = "K40", lw = 3)
-    stephist!(Pa234m.dz, label = "Pa234m")
+    stephist!(Tl208.dz,  c= 3, label = "Tl208", lw = 3)
+    stephist!(K40.dz,  c=4, label = "K40", lw = 3)
+    stephist!(Pa234m.dz, c=5,label = "Pa234m", lw = 3)
     stephist!(
         bb.dz, 
         c =1,
