@@ -7,11 +7,11 @@ Revise.track(SensitivityModule)
 
 include(scriptsdir("Params.jl"))
 
-Bi214file = ROOTFile("data/sims/Bi214_1e8E_EnePhiDist_J23.root")
-Tl208file = ROOTFile("data/sims/Tl208_1e8E_EnePhiDist_J23.root")
-K40file = ROOTFile("data/sims/K40_1e8E_EnePhiDist_J23.root")
-Pa234mfile = ROOTFile("data/sims/Pa234m_1e8E_EnePhiDist_J23.root")
-bbfile = ROOTFile("data/sims/2nubb_1e8E_EnePhiDist_J23.root")   # Standard 2nubb
+Bi214file = ROOTFile("data/sims/Bi214_EnePhiDistPos_J23.root")
+Tl208file = ROOTFile("data/sims/Tl208_EnePhiDistPos_J23.root")
+K40file = ROOTFile("data/sims/K40_EnePhiDistPos_J23.root")
+Pa234mfile = ROOTFile("data/sims/Pa234m_EnePhiDistPos_J23.root")
+bbfile = ROOTFile("data/sims/2nubb_EnePhiDistPos_J23.root")   # Standard 2nubb
 
 
 Bi214 = fill_from_root_file(Bi214file, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])  

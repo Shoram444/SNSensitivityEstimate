@@ -10,7 +10,12 @@ export
     get_max_bin,
     halfLife_to_activity,
     get_tHalf,
-    annotatewithbox!
+    annotatewithbox!,
+    get_2D_vertex_separation,
+    get_1D_vertex_separation,
+    add_vertex_2D_separation_column!,
+    add_vertex_dy_separation_column!,
+    add_vertex_dz_separation_column!
 
 include("Process.jl")
 export 

@@ -43,7 +43,7 @@ function Process(
     timeMeas::Real, 
     nTotalSim::Real, 
     bins::AbstractRange
-) where {T<:Real}
+) 
     eff = get_efficiency(dataVector, bins, nTotalSim)
     return Process(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, eff)
 end

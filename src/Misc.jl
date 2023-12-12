@@ -64,7 +64,7 @@ function fill_from_root_file(inFile::ROOTFile, treeName::String, fieldNames)
     df = LazyTree(inFile, treeName, [fieldNames...]) |> DataFrame
 
     for k in fieldNames
-        filter!(string(k) => x -> !(ismissing(x) || isnothing(x) || isnan(x)), df)
+        filter!(string(k) => x -> !(ismissing(x) || isnothing(x) || isnan(x)), df) # filter rows with missing values
     end
     return df
 end
@@ -123,13 +123,44 @@ function annotatewithbox!(
     x::Real, y::Real, Δx::Real, Δy::Real = Δx;
     kwargs...)
 
-box = Plots.Shape(:rect)
+    box = Plots.Shape(:rect)
 
-Plots.scale!(box, Δx, Δy)
-Plots.translate!(box, x, y)
+    Plots.scale!(box, Δx, Δy)
+    Plots.translate!(box, x, y)
 
-Plots.plot!(fig, box, c = :white, linestroke = :black, label = false; kwargs...)
-Plots.annotate!(fig, x, y, text)
+    Plots.plot!(fig, box, c = :white, linestroke = :black, label = false; kwargs...)
+    Plots.annotate!(fig, x, y, text)
 
-fig
+    fig
+end
+
+function get_2D_vertex_separation( y1, z1, y2, z2 )
+    return sqrt( (y1 - y2)^2 + (z1 - z2)^2)
+end
+
+function get_1D_vertex_separation( x1, x2 )
+    return abs( x1 - x2 )
+end
+
+function add_vertex_2D_separation_column!(df)
+    @rtransform! df :d = get_2D_vertex_separation(
+    :y1Escaped, 
+    :z1Escaped, 
+    :y2Escaped, 
+    :z2Escaped 
+    )
+end
+
+function add_vertex_dy_separation_column!(df)
+    @rtransform! df :dy = get_1D_vertex_separation(
+        :y1Escaped,
+        :y2Escaped
+    )
+end
+
+function add_vertex_dz_separation_column!(df)
+    @rtransform! df :dz = get_1D_vertex_separation(
+        :z1Escaped,
+        :z2Escaped
+    )
 end
