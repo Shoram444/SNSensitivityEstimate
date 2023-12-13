@@ -23,11 +23,11 @@ bb = fill_from_root_file(bbfile, "tree", ["phi", "reconstructedEnergy1", "recons
 ###########################################
 ###########################################
 #### Sum energy spectra
-Bi214SumE    = Process(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-Tl208SumE    = Process(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2, "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-K40SumE      = Process(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2, "K40", :false, BkgActivityParams[:K40], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-Pa234mSumE   = Process(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2, "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-bbSumE       = Process(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2, "2nubb", :true, SigActivityParams[:bb2Standard], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
+Bi214SumE    = Process(Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, sumEBi214Params)
+Tl208SumE    = Process(Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2, sumETl208Params)
+K40SumE      = Process(K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2, sumEK40Params)
+Pa234mSumE   = Process(Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2, sumEPa234mParams)
+bbSumE       = Process(bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2, sumEbbParams)
 
 with(
     gr;
@@ -69,11 +69,8 @@ plot(
     xlabel = "min ROI edge [keV]",
     ylabel = "max ROI edge [keV]",
     :colorbar_title => "counts",
-    right_margin = 16Plots.mm,
-    left_margin = 16Plots.mm,
-    bottom_margin = 16Plots.mm,
+    right_margin = 6Plots.mm,
     size =(1200, 800),
-    thickness_scaling = 1.6
 )
 annotatewithbox!( 
     current(),
@@ -83,8 +80,8 @@ annotatewithbox!(
           T12 ≥  $(ThalfbbESum) yr"),
     sumEParams[:binning][end-11],
     sumEParams[:binning][7],
-    18*step(sumEParams[:binning]),
-    8*step(sumEParams[:binning]),
+    13*step(sumEParams[:binning]),
+    6*step(sumEParams[:binning]),
 )
 safesave(plotsdir("SumE", savename("StoB_SumE_binning",bbSumE ,"png")), current())
 
@@ -95,11 +92,11 @@ safesave(plotsdir("SumE", savename("StoB_SumE_binning",bbSumE ,"png")), current(
 ###########################################
 ###########################################
 #### Single energy spectra
-Bi214SingleE    = Process(vcat(Bi214.reconstructedEnergy1,  Bi214.reconstructedEnergy2), "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-Tl208SingleE    = Process(vcat(Tl208.reconstructedEnergy1,  Tl208.reconstructedEnergy2), "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-K40SingleE      = Process(vcat(K40.reconstructedEnergy1,  K40.reconstructedEnergy2), "K40", :false, BkgActivityParams[:K40], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-Pa234mSingleE   = Process(vcat(Pa234m.reconstructedEnergy1,  Pa234m.reconstructedEnergy2), "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
-bbSingleE       = Process(vcat(bb.reconstructedEnergy1,  bb.reconstructedEnergy2), "2nubb", :true, SigActivityParams[:bb2Standard], SNparams["t"], sumEParams[:nTotalSim], sumEParams[:binning])
+Bi214SingleE    = Process(vcat(Bi214.reconstructedEnergy1,  Bi214.reconstructedEnergy2), singleEBi214Params )
+Tl208SingleE    = Process(vcat(Tl208.reconstructedEnergy1,  Tl208.reconstructedEnergy2), singleETl208Params )
+K40SingleE      = Process(vcat(K40.reconstructedEnergy1,  K40.reconstructedEnergy2), singleEPa234mParams )
+Pa234mSingleE   = Process(vcat(Pa234m.reconstructedEnergy1,  Pa234m.reconstructedEnergy2), singleEK40Params )
+bbSingleE       = Process(vcat(bb.reconstructedEnergy1,  bb.reconstructedEnergy2), singleEbbParams )
 
 with(
     xlabel = "min single energy [keV]", 
@@ -136,10 +133,8 @@ plot(
     xlabel = "min ROI edge [keV]",
     ylabel = "max ROI edge [keV]",
     :colorbar_title => "counts",
-    right_margin = 10Plots.mm,
+    right_margin = 6Plots.mm,
     size =(1200, 800),
-    thickness_scaling = 1.6
-
 )
 annotatewithbox!( 
     current(),
@@ -148,7 +143,7 @@ annotatewithbox!(
           b = $(expBkgSingle |> round)
           T12 ≥  $(ThalfbbSingle) yr"),
     singleEParams[:binning][end-12],
-    singleEParams[:binning][10],
+    singleEParams[:binning][8],
     15*step(singleEParams[:binning]),
     7*step(singleEParams[:binning]),
  )
@@ -161,11 +156,11 @@ safesave(plotsdir("SingleE",savename("StoB_singleE_binning",bbSingleE,"png")), c
 ###########################################
 ###########################################
 #### Angular Study
-Bi214Phi    = Process(Bi214.phi, "Bi214", :false, BkgActivityParams[:Bi214], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
-Tl208Phi    = Process(Tl208.phi, "Tl208", :false, BkgActivityParams[:Tl208], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
-K40Phi      = Process(K40.phi, "K40", :false, BkgActivityParams[:K40], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
-Pa234mPhi   = Process(Pa234m.phi, "Pa234m", :false, BkgActivityParams[:Pa234m], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
-bbPhi       = Process(bb.phi, "2nubb", :true, SigActivityParams[:bb2Standard], SNparams["t"], phiParams[:nTotalSim], phiParams[:binning])
+Bi214Phi    = Process(Bi214.phi, phiBi214Params )
+Tl208Phi    = Process(Tl208.phi, phiTl208Params )
+K40Phi      = Process(K40.phi, phiPa234mParams )
+Pa234mPhi   = Process(Pa234m.phi, phiK40Params )
+bbPhi       = Process(bb.phi, phibbParams )
 
 
 
@@ -174,8 +169,7 @@ with(
     ylabel = "max angle", 
     c = :coolwarm, 
     size = (1600, 1000), 
-    thickness_scaling = 1.4, 
-    right_margin = 16Plots.mm
+    right_margin = 6Plots.mm
 )   do
     plot(Bi214Phi.efficiency, title ="Angular Efficiency for "* Bi214Phi.isotopeName)
     safesave(plotsdir("Angular", savename("efficiency_anglular_",Bi214Phi, "png")), current())
@@ -205,9 +199,8 @@ plot(
     xlabel = "min ROI edge [°]",
     ylabel = "max ROI edge [°]",
     :colorbar_title => "counts",
-    right_margin = 10Plots.mm,
+    right_margin = 6Plots.mm,
     size =(1200, 800),
-    thickness_scaling = 1.6
 )
 annotatewithbox!( 
     current(),
