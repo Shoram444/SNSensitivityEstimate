@@ -1,3 +1,6 @@
+INTRODUCTION
+==========
+
 This folder contains example notebooks for the sensitivity estimate analysis. There are always (unless I forget..) two pairs of files. One for the actual `Pluto` notebook with `*.jl` and another a `PDF` file for when you just want to see the notebook without running it. 
 
 EXAMPLES
