@@ -20,10 +20,6 @@ K40 = fill_from_root_file(K40file, "tree", keys(K40file["tree"]))           |> a
 Pa234m = fill_from_root_file(Pa234mfile, "tree", keys(Pa234mfile["tree"]))  |> add_vertex_2D_separation_column! |> add_vertex_dy_separation_column! |> add_vertex_dz_separation_column!
 bb = fill_from_root_file(bbfile, "tree", keys(bbfile["tree"]))              |> add_vertex_2D_separation_column! |> add_vertex_dy_separation_column! |> add_vertex_dz_separation_column!
 
-
-describe(bb)
-describe(Bi214)
-
 binWidth = 1
 with(   
         title = "2D Vertex separation; "* L"d = \sqrt{(y_1 - y_2)^2 + (z_1 - z_2)^2}",
@@ -85,20 +81,21 @@ with(
         xlabel = "vertexSeparation/mm", 
         ylabel = "normalized rate/$binWidth mm"
     )
-    safesave(plotsdir("VertexSeparation", "1Dhist_VertexSeparation_dy.png"), current())
+    # safesave(plotsdir("VertexSeparation", "1Dhist_VertexSeparation_dy.png"), current())
     current()
 end
 
 with(   
         title = "1D Vertex separation; "* L"d_z = |z_1 - z_2|",
         legend = :best,
-        thickness_scaling = 1.4,
+        thickness_scaling = 2.0,
         lw = 4,
         right_margin=12Plots.mm,
         bottom_margin=4Plots.mm,
         size = (1200, 800),
         nbins = 0:binWidth:100,
         normed = :true,
+        frame = :true
 
     ) do
     stephist(Bi214.dz,  c= 2,label = "Bi214", lw = 3)
@@ -117,7 +114,7 @@ with(
         xlabel = "vertexSeparation/mm", 
         ylabel = "normalized rate/$binWidth mm"
     )
-    safesave(plotsdir("VertexSeparation", "1Dhist_VertexSeparation_dz.png"), current())
+    # safesave(plotsdir("VertexSeparation", "1Dhist_VertexSeparation_dz.png"), current())
     current()
 end
 
@@ -134,10 +131,25 @@ with() do
         xlabel = "dy/mm",
         ylabel = "dz/mm",
         title = "2D histogram: bb",
-        thickness_scaling = 1.65,
+        thickness_scaling = 1.9,
         right_margin = 10Plots.mm,
         size = (1000, 800)
     )
-    safesave(plotsdir("VertexSeparation", "2D_Histogram_bb.png"), current())
+    # safesave(plotsdir("VertexSeparation", "2D_Histogram_bb.png"), current())
     current()
 end
+
+()
+h(x, y) = exp(x^2 + y^2)
+
+x = range(-3, 3, length=100)
+y = range(-3, 3, length=100)
+z = @. h(x', y)
+
+tv = 0:8
+tl = [L"10^{%$i}" for i in tv]
+contourf(x, y, log10.(z), color=:turbo, levels=8,
+    colorbar_ticks=(tv, tl), aspect_ratio=:equal,
+    title=L"\exp(x^{2} + y^{2})", xlabel=L"x", ylabel=L"y")
+
+pgfplotsx()
