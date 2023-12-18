@@ -38,8 +38,8 @@ with(
 
     ) do
     stephist(Bi214.d, c= 2,  label = "Bi214", lw = 4)
-    # stephist!(Bi214Surf.d, c= 6,  label = "Bi214Surf", lw = 4)
-    # stephist!(Bi214Bulk.d, c= 8,  label = "Bi214Bulk", lw = 4)
+    stephist!(Bi214Surf.d, c= 6,  label = "Bi214Surf", lw = 4)
+    stephist!(Bi214Bulk.d, c= 8,  label = "Bi214Bulk", lw = 4)
     stephist!(Tl208.d, c = 3,  label = "Tl208", lw = 4)
     stephist!(K40.d, c= 4, label = "K40", lw = 4)
     stephist!(Pa234m.d, c=5, label = "Pa234m", lw = 4)
@@ -119,7 +119,14 @@ with(
         fill = 0, 
         fa = 0.4, 
         ylims = (0, 0.05),
-        fillstyle =:cross,
+        fillstyle =:crocp = ["#00a0f9", "#ba3030", "#22ac74", "#707070", 
+        "#9452bd", "#80ff00", "#ffcc00", "#ff00ff", "#00ffff", "#cc9900"]
+        
+        plot(sin, c = cp[6])
+        plot!(sin, c = cp[7])
+        plot!(sin, c = cp[8])
+        plot!(sin, c = cp[9])
+        plot!(sin, c = cp[10])ss,
         xlabel = "vertexSeparation/mm", 
         ylabel = "normalized rate/$binWidth mm"
     )
@@ -147,3 +154,4 @@ with() do
     # safesave(plotsdir("VertexSeparation", "2D_Histogram_bb.png"), current())
     current()
 end
+
