@@ -155,3 +155,171 @@ with() do
     current()
 end
 
+let 
+    vertexDistances = range(0, 300, 100)
+    sigFrac = Float64[]
+    bkgFoilFrac = Float64[]
+    bkgWireFrac = Float64[]
+
+    bkgFoilDistances = vcat( 
+        Bi214.d,
+        Tl208.d,
+        K40.d,
+        Pa234m.d,
+    )
+
+    bkgWireDistances = vcat( 
+        Bi214Surf.d,
+        Bi214Bulk.d,
+    )
+
+    for d in vertexDistances
+        sigPass = filter(x -> x .< d, bb.d)
+        push!( sigFrac, length(sigPass)/length(bb.d) )
+
+        bkgFoilPass = filter(x -> x .< d, bkgFoilDistances)
+        push!( bkgFoilFrac, length(bkgFoilPass)/length(bkgFoilDistances) )
+
+        bkgWirePass = filter(x -> x .< d, bkgWireDistances)
+        push!( bkgWireFrac, length(bkgWirePass)/length(bkgWireDistances) )
+    end
+
+
+    plot( 
+        vertexDistances, 
+        sigFrac .* 100, 
+        ylims = (0,100), 
+        label = "signal"
+    )
+    plot!( 
+        vertexDistances, 
+        bkgFoilFrac .*100, 
+        label = "background sources from foil", 
+    )
+
+    plot!( 
+        vertexDistances, 
+        bkgWireFrac .*100, 
+        label = "background sources from wires", 
+        xlabel = "Vertex distance cut-off [mm]",
+        ylabel = "fraction passed [%]" ,
+        title = "Fraction of events that pass 2D Vertex cut",
+        right_margin = 8Plots.mm,
+        legend= :bottomright
+    )
+    safesave( plotsdir("VertexSeparation", "Fraction_pass_2DVertex_cut.png"), current())
+    current()
+end
+
+
+let 
+    vertexDistances = range(0, 300, 100)
+    sigFrac = Float64[]
+    bkgFoilFrac = Float64[]
+    bkgWireFrac = Float64[]
+
+    bkgFoilDistances = vcat( 
+        Bi214.dy,
+        Tl208.dy,
+        K40.dy,
+        Pa234m.dy,
+    )
+
+    bkgWireDistances = vcat( 
+        Bi214Surf.dy,
+        Bi214Bulk.dy,
+    )
+
+    for d in vertexDistances
+        sigPass = filter(x -> x .< d, bb.dy)
+        push!( sigFrac, length(sigPass)/length(bb.dy) )
+
+        bkgFoilPass = filter(x -> x .< d, bkgFoilDistances)
+        push!( bkgFoilFrac, length(bkgFoilPass)/length(bkgFoilDistances) )
+
+        bkgWirePass = filter(x -> x .< d, bkgWireDistances)
+        push!( bkgWireFrac, length(bkgWirePass)/length(bkgWireDistances) )
+    end
+
+
+    plot( 
+        vertexDistances, 
+        sigFrac .* 100, 
+        ylims = (0,100), 
+        label = "signal"
+    )
+    plot!( 
+        vertexDistances, 
+        bkgFoilFrac .*100, 
+        label = "background sources from foil", 
+    )
+
+    plot!( 
+        vertexDistances, 
+        bkgWireFrac .*100, 
+        label = "background sources from wires", 
+        xlabel = "Vertex distance cut-off [mm]",
+        ylabel = "fraction passed [%]" ,
+        title = "Fraction of events that pass 2D Vertex cut",
+        right_margin = 8Plots.mm,
+        legend= :bottomright
+    )
+    safesave( plotsdir("VertexSeparation", "Fraction_pass_dy_vertex_cut.png"), current())
+    current()
+end
+
+let 
+    vertexDistances = range(0, 300, 100)
+    sigFrac = Float64[]
+    bkgFoilFrac = Float64[]
+    bkgWireFrac = Float64[]
+
+    bkgFoilDistances = vcat( 
+        Bi214.dz,
+        Tl208.dz,
+        K40.dz,
+        Pa234m.dz,
+    )
+
+    bkgWireDistances = vcat( 
+        Bi214Surf.dz,
+        Bi214Bulk.dz,
+    )
+
+    for d in vertexDistances
+        sigPass = filter(x -> x .< d, bb.dz)
+        push!( sigFrac, length(sigPass)/length(bb.dz) )
+
+        bkgFoilPass = filter(x -> x .< d, bkgFoilDistances)
+        push!( bkgFoilFrac, length(bkgFoilPass)/length(bkgFoilDistances) )
+
+        bkgWirePass = filter(x -> x .< d, bkgWireDistances)
+        push!( bkgWireFrac, length(bkgWirePass)/length(bkgWireDistances) )
+    end
+
+
+    plot( 
+        vertexDistances, 
+        sigFrac .* 100, 
+        ylims = (0,100), 
+        label = "signal"
+    )
+    plot!( 
+        vertexDistances, 
+        bkgFoilFrac .*100, 
+        label = "background sources from foil", 
+    )
+
+    plot!( 
+        vertexDistances, 
+        bkgWireFrac .*100, 
+        label = "background sources from wires", 
+        xlabel = "Vertex distance cut-off [mm]",
+        ylabel = "fraction passed [%]" ,
+        title = "Fraction of events that pass 2D Vertex cut",
+        right_margin = 8Plots.mm,
+        legend= :bottomright
+    )
+    safesave( plotsdir("VertexSeparation", "Fraction_pass_dz_vertex_cut.png"), current())
+    current()
+end
