@@ -38,8 +38,8 @@ with(
 
     ) do
     stephist(Bi214.d, c= 2,  label = "Bi214", lw = 4)
-    stephist!(Bi214Surf.d, c= 6,  label = "Bi214Surf", lw = 4)
-    stephist!(Bi214Bulk.d, c= 8,  label = "Bi214Bulk", lw = 4)
+    # stephist!(Bi214Surf.d, c= 6,  label = "Bi214Surf", lw = 4)
+    # stephist!(Bi214Bulk.d, c= 8,  label = "Bi214Bulk", lw = 4)
     stephist!(Tl208.d, c = 3,  label = "Tl208", lw = 4)
     stephist!(K40.d, c= 4, label = "K40", lw = 4)
     stephist!(Pa234m.d, c=5, label = "Pa234m", lw = 4)
@@ -73,8 +73,8 @@ with(
 
     ) do
     stephist(Bi214.dy,  c= 2,label = "Bi214", lw = 3)
-    stephist!(Bi214Surf.dy,  c= 6,label = "Bi214Surf", lw = 3)
-    stephist!(Bi214Bulk.dy,  c= 8,label = "Bi214Bulk", lw = 3)
+    # stephist!(Bi214Surf.dy,  c= 6,label = "Bi214Surf", lw = 3)
+    # stephist!(Bi214Bulk.dy,  c= 8,label = "Bi214Bulk", lw = 3)
     stephist!(Tl208.dy,  c= 3, label = "Tl208", lw = 3)
     stephist!(K40.dy,  c=4, label = "K40", lw = 3)
     stephist!(Pa234m.dy, c=5 ,label = "Pa234m", lw = 3)
@@ -106,8 +106,8 @@ with(
         normed = :true,
     ) do
     stephist(Bi214.dz,  c= 2,label = "Bi214", lw = 3)
-    stephist!(Bi214Surf.dz,  c= 6,label = "Bi214Surf", lw = 3)
-    stephist!(Bi214Bulk.dz,  c= 8,label = "Bi214Bulk", lw = 3)
+    # stephist!(Bi214Surf.dz,  c= 6,label = "Bi214Surf", lw = 3)
+    # stephist!(Bi214Bulk.dz,  c= 8,label = "Bi214Bulk", lw = 3)
     stephist!(Tl208.dz,  c= 3, label = "Tl208", lw = 3)
     stephist!(K40.dz,  c=4, label = "K40", lw = 3)
     stephist!(Pa234m.dz, c=5,label = "Pa234m", lw = 3)
