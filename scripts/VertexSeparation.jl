@@ -36,6 +36,7 @@ with(
         nbins = 0:binWidth:100,
         normed = :true,
 
+
     ) do
     stephist(Bi214.d, c= 2,  label = "Bi214", lw = 4)
     # stephist!(Bi214Surf.d, c= 6,  label = "Bi214Surf", lw = 4)
@@ -53,7 +54,11 @@ with(
         fillstyle =:cross,
         ylims = (0, 0.04), 
         xlabel = "vertexSeparation/mm", 
-        ylabel = "normalized rate/$binWidth mm"
+        ylabel = "normalized rate/$binWidth mm",
+        widen = :false,
+        framestyle=:box,
+        minorgrid = :true,
+        thickness_scaling = 1.5
     )
     safesave(plotsdir("VertexSeparation", "1Dhist_VertexSeparation_d.png"), current())
     current()
