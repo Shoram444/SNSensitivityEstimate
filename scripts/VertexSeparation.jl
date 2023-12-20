@@ -38,8 +38,8 @@ with(
 
     ) do
     stephist(Bi214.d, c= 2,  label = "Bi214", lw = 4)
-    stephist!(Bi214Surf.d, c= 6,  label = "Bi214Surf", lw = 4)
-    stephist!(Bi214Bulk.d, c= 8,  label = "Bi214Bulk", lw = 4)
+    # stephist!(Bi214Surf.d, c= 6,  label = "Bi214Surf", lw = 4)
+    # stephist!(Bi214Bulk.d, c= 8,  label = "Bi214Bulk", lw = 4)
     stephist!(Tl208.d, c = 3,  label = "Tl208", lw = 4)
     stephist!(K40.d, c= 4, label = "K40", lw = 4)
     stephist!(Pa234m.d, c=5, label = "Pa234m", lw = 4)
@@ -118,15 +118,8 @@ with(
         lw = 3, 
         fill = 0, 
         fa = 0.4, 
+        fillstyle = :cross,
         ylims = (0, 0.05),
-        fillstyle =:crocp = ["#00a0f9", "#ba3030", "#22ac74", "#707070", 
-        "#9452bd", "#80ff00", "#ffcc00", "#ff00ff", "#00ffff", "#cc9900"]
-        
-        plot(sin, c = cp[6])
-        plot!(sin, c = cp[7])
-        plot!(sin, c = cp[8])
-        plot!(sin, c = cp[9])
-        plot!(sin, c = cp[10])ss,
         xlabel = "vertexSeparation/mm", 
         ylabel = "normalized rate/$binWidth mm"
     )
@@ -189,24 +182,38 @@ let
         vertexDistances, 
         sigFrac .* 100, 
         ylims = (0,100), 
-        label = "signal"
+        label = "signal",
+        lw = 3, 
+        widen = :false,
+        framestyle=:box
     )
     plot!( 
         vertexDistances, 
         bkgFoilFrac .*100, 
         label = "background sources from foil", 
+        lw = 3, 
+
     )
 
     plot!( 
         vertexDistances, 
         bkgWireFrac .*100, 
         label = "background sources from wires", 
-        xlabel = "Vertex distance cut-off [mm]",
+        xlabel = "vertex distance cut-off [mm]",
         ylabel = "fraction passed [%]" ,
-        title = "Fraction of events that pass 2D Vertex cut",
+        title = "fraction of events that pass 2D Vertex cut",
         right_margin = 8Plots.mm,
-        legend= :bottomright
+        legend= :bottomright,
+        lw = 3, 
+
     )
+    plot!(
+        vertexDistances,
+        sigFrac ./ ( bkgFoilFrac .+ bkgWireFrac ) .* 100,
+        label = "signal/background",
+        lw = 3
+    )
+
     safesave( plotsdir("VertexSeparation", "Fraction_pass_2DVertex_cut.png"), current())
     current()
 end
@@ -246,23 +253,34 @@ let
         vertexDistances, 
         sigFrac .* 100, 
         ylims = (0,100), 
-        label = "signal"
+        label = "signal",
+        framestyle = :box,
+        lw = 3
     )
     plot!( 
         vertexDistances, 
         bkgFoilFrac .*100, 
         label = "background sources from foil", 
+        lw = 3
     )
 
     plot!( 
         vertexDistances, 
         bkgWireFrac .*100, 
         label = "background sources from wires", 
-        xlabel = "Vertex distance cut-off [mm]",
+        xlabel = "vertex distance cut-off [mm]",
         ylabel = "fraction passed [%]" ,
-        title = "Fraction of events that pass 2D Vertex cut",
+        title = "fraction of events that pass dy Vertex cut",
         right_margin = 8Plots.mm,
-        legend= :bottomright
+        legend= :bottomright,
+        lw = 3
+
+    )
+    plot!(
+        vertexDistances,
+        sigFrac ./ ( bkgFoilFrac .+ bkgWireFrac ) .* 100,
+        label = "signal/background",
+        lw = 3
     )
     safesave( plotsdir("VertexSeparation", "Fraction_pass_dy_vertex_cut.png"), current())
     current()
@@ -302,24 +320,58 @@ let
         vertexDistances, 
         sigFrac .* 100, 
         ylims = (0,100), 
-        label = "signal"
+        label = "signal",
+        lw = 3,
+        framestyle =:box,
+        minorgrid = :true,
+        widen = :false
     )
     plot!( 
         vertexDistances, 
         bkgFoilFrac .*100, 
         label = "background sources from foil", 
+        lw = 3
     )
 
     plot!( 
         vertexDistances, 
         bkgWireFrac .*100, 
         label = "background sources from wires", 
-        xlabel = "Vertex distance cut-off [mm]",
+        xlabel = "vertex distance cut-off [mm]",
         ylabel = "fraction passed [%]" ,
-        title = "Fraction of events that pass 2D Vertex cut",
+        title = "fraction of events that pass dz Vertex cut",
         right_margin = 8Plots.mm,
-        legend= :bottomright
+        legend= :bottomright,
+        lw = 3
+    )
+    plot!(
+        vertexDistances,
+        sigFrac ./ ( bkgFoilFrac .+ bkgWireFrac ) .* 100,
+        label = "signal/background",
+        lw = 3
     )
     safesave( plotsdir("VertexSeparation", "Fraction_pass_dz_vertex_cut.png"), current())
     current()
 end
+
+
+a = 2.0  # Semi-major axis
+b = 1.0  # Semi-minor axis
+θ = 0  # Angle of rotation (in radians)
+
+# Function to parametrically represent the ellipse
+function ellipse(t)
+    x = a * cos(t)
+    y = b * sin(t)
+    return (x * cos(θ) - y * sin(θ), x * sin(θ) + y * cos(θ))
+end
+
+# Generate points on the ellipse
+t = range(0, stop=2π, length=100)
+points = [ellipse(angle) for angle in t]
+
+# Plot the ellipse
+plot(points, aspect_ratio=1, label="Ellipse")
+title!("Ellipse in Julia")
+xlabel!("X-axis")
+ylabel!("Y-axis")
