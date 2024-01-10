@@ -13,8 +13,14 @@ The methodology of calculating sensitivities is described in `docdb:4816` with a
 
 The data used as of **11th December** is described by the following:
 1. $10^8$ events were generated for each of the following processes: 
-   1. Internal Background processes: ${}^{214}Bi$ (source_foil_bulk), ${}^{208}Tl$ (source_foil_bulk), ${}^{214}Bi$ (anode_wires), ${}^{208}Tl$ (anode_wires), ${}^{234m}Pa$ (source_foil_bulk), ${}^{40}K$ (source_foil_bulk) - the activities of these is obtained from table 1 in [paper](https://link.springer.com/article/10.1140/epjc/s10052-018-6295-x)
-   2. Signal processes: "standard" $2\nu\beta\beta$, *refined* Xi spectra with $\xi_{31} = 0.378, \xi_{51} = 0.1397, K^{2\nu} = -0.66$
+   1. Internal Background processes:
+      - ${}^{214}Bi$ (source_foil_bulk)
+      - ${}^{208}Tl$ (source_foil_bulk)
+      - ${}^{214}Bi$ (anode_wires)
+      - ${}^{208}Tl$ (anode_wires)
+      - ${}^{234m}Pa$ (source_foil_bulk)
+      - ${}^{40}K$ (source_foil_bulk) - the activities of these is obtained from table 1 in [paper](https://link.springer.com/article/10.1140/epjc/s10052-018-6295-x)
+   3. Signal processes: "standard" $2\nu\beta\beta$, *refined* Xi spectra with $\xi_{31} = 0.378, \xi_{51} = 0.1397, K^{2\nu} = -0.66$
 2. The following data-cuts were applied to data:
    1. two negatively charged particle tracks reconstructed,
    2. two vertices on the source foil,
