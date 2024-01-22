@@ -1,3 +1,5 @@
+import Base: *, /
+
 function generate_raw_plots(inDf::DataFrame, isotope; kwargs...)
     phi, e1, e2 = inDf[!, :phi], inDf[!, :reconstructedEnergy1], inDf[!, :reconstructedEnergy2]
 
@@ -163,4 +165,22 @@ function add_vertex_dz_separation_column!(df)
         :z1Escaped,
         :z2Escaped
     )
+end
+
+function /(x::Real, h::Hist2D)
+    mat = zeros(size(bincounts(h)))
+
+    for i in eachindex(bincounts(h))
+        if(bincounts(h)[i] == 0)
+            continue
+        else
+            mat[i] = x/bincounts(h)[i]
+        end
+    end
+    h.hist.weights = mat
+    return h
+end
+
+function *(x::Real, h::Hist2D)
+    return *(h, x)
 end

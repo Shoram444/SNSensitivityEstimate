@@ -9,6 +9,7 @@ The following fields are defined:
     + timeMeas::Real - time of measurement in units [s]
     + nTotalSim::Real - total number of originally simulated events from Falaise
     + bins::AbstractRange - binning to be used in format (min:step:max)
+    + amount::Real - mass [kg] or volume [l / m³] of the object where the isotope is present: i.e. source foil
     + efficiency::Hist2D - the 2D histogram with efficiencies per bin 
 """
 mutable struct Process
@@ -19,6 +20,7 @@ mutable struct Process
     timeMeas::Real
     nTotalSim::Real
     bins::AbstractRange
+    amount::Real
     efficiency::Hist2D
 end
 
@@ -33,6 +35,7 @@ The following fields are defined:
     + timeMeas::Real - time of measurement in units [s]
     + nTotalSim::Real - total number of originally simulated events from Falaise
     + bins::AbstractRange - binning to be used in format (min:step:max)
+    + amount::Real - mass [kg] or volume [l / m³] of the object where the isotope is present: i.e. source foil
     + efficiency::Hist2D - the 2D histogram with efficiencies per bin 
 """
 function Process(
@@ -42,19 +45,20 @@ function Process(
     activity::Real, 
     timeMeas::Real, 
     nTotalSim::Real, 
-    bins::AbstractRange
+    bins::AbstractRange,
+    amount::Real
 ) 
     eff = get_efficiency(dataVector, bins, nTotalSim)
-    return Process(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, eff)
+    return Process(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount, eff)
 end
 
 function Process(
     dataVector::Vector{<:Real}, 
     processDict::Dict
 ) 
-    @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins = processDict
+    @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
     eff = get_efficiency(dataVector, bins, nTotalSim)
-    return Process(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, eff)
+    return Process(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount, eff)
 end
 
 """
@@ -107,7 +111,11 @@ function get_bkg_rate(processes::Process...)
         if (p.signal)
             @warn("get_bkg_rate(): passed isotope $(p.isotopeName) is a signal process!!")
         else
-            h2d += p.efficiency * p.activity.val
+            if( typeof(p.activity) <: Measurement ) # check if measurement with uncertainties
+                h2d += p.efficiency * p.activity.val
+            else
+                h2d += p.efficiency * p.activity.val
+            end
         end
     end
     return h2d
@@ -120,7 +128,11 @@ function get_sig_rate(processes::Process...)
         if (!p.signal)
             @warn("get_sig_rate(): passed isotope $(p.isotopeName) is a background process!!")
         else
-            h2d += p.efficiency * p.activity.val
+            if( typeof(p.activity) <: Measurement ) # check if measurement with uncertainties
+                h2d += p.efficiency * p.activity.val
+            else
+                h2d += p.efficiency * p.activity.val
+            end
         end
     end
     return h2d
@@ -147,7 +159,7 @@ end
 Outputs the estimated bkg counts for the given ROI. 
 This process is obtained from looking up the `bkg_rate` at `best_ROI` and multiplying by mass and time.  
 """
-function get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
+function get_estimated_bkg_counts(minBinCenter, maxBinCenter, SNparams, processes::Process...)
     for p in processes
         if(p.signal)
             error("Isotope $(p.isotopeName) is a signal process! Please provide only background processes!")
@@ -160,27 +172,21 @@ function get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
         if (p.signal)
             @warn("get_bkg_rate(): passed isotope $(p.isotopeName) is a signal process!!")
         else
-            bkg_cts_mat += bincounts(p.efficiency) * p.activity * SNparams["t"] * SNparams["m"]
+            bkg_cts_mat += bincounts(p.efficiency) * p.activity * p.amount * SNparams["t"] 
         end
     end
-    binStepHalf = step( processes[1].bins ) / 2              # get the binning step and divide by half
-    minBinCenter = best_ROI[:minBinEdge] + binStepHalf       # get the center of the minimal bin in ROI
-    maxBinCenter = best_ROI[:maxBinEdge] - binStepHalf       # get the center of the maximal bin in ROI
 
     return lookup(bkg_cts_mat, minBinCenter, maxBinCenter, processes[1].bins)
 end
 
-function get_estimated_bkg_counts(minBinCenter, maxBinCenter, SNparams, processes::Process...)
-    for p in processes
-        if(p.signal)
-            error("Isotope $(p.isotopeName) is a signal process! Please provide only background processes!")
-        end
-    end
+function get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
+    binStepHalf = step( processes[1].bins ) / 2              # get the binning step and divide by half
+    minBinCenter = best_ROI[:minBinEdge] + binStepHalf       # get the center of the minimal bin in ROI
+    maxBinCenter = best_ROI[:maxBinEdge] - binStepHalf       # get the center of the maximal bin in ROI
 
-    bkg_cts = get_bkg_rate(processes...) * (SNparams["t"] * SNparams["m"])
-
-    return lookup(bkg_cts, minBinCenter, maxBinCenter)
+    return get_estimated_bkg_counts(minBinCenter, maxBinCenter, SNparams, processes...)
 end
+
 
 DrWatson.default_allowed(::Process) = (Real, String, Bool, AbstractRange)
 DrWatson.allaccess(::Process) = (:isotopeName, :signal, :bins)
@@ -195,3 +201,4 @@ function FHist.lookup(weights::Matrix, x::Real, y::Real, binning)
 
     return weights[FHist._edge_binindex(rx, x), FHist._edge_binindex(ry, y)]
 end
+
