@@ -18,31 +18,6 @@ begin
 	include(scriptsdir("Params.jl"))
 end
 
-# ╔═╡ cf56ae15-6048-48fb-ae49-a8c7cd7390eb
-begin 
-	_palette = ["#00a0f9", "#ba3030", "#22ac74", "#707070", "#9452bd", "#d76055"]
-	theme(
-		:dao;
-		size = (1200, 800),
-		legend = :best,
-		guidefontsize = 16,
-		tickfontsize = 12,
-		titlefontsize = 16,
-		legendfontsize = 12,
-		left_margin = 4Plots.mm,
-		right_margin = 8Plots.mm,
-		top_margin = 4Plots.mm,
-		bottom_margin = 6Plots.mm,
-		thickness_scaling = 1.4,
-		:linewidth => 3,
-		dpi = 200,
-		widen = :true,
-		:markerstrokewidth => 1,
-		:markerstrokecolor => :black,
-		:palette => _palette
-	)
-end
-
 # ╔═╡ 8d36f771-6342-4237-a3fc-b10727fc18e0
 md"""
 ### First we load all the `.root` input simulation files:
@@ -135,6 +110,98 @@ md"""
 
 Below, the **normalized Sum Energy spectra** for each process are depicted. It can be seen that there is quite a bit of overlap over the whole range. However, the picture changes (slightly) if we scale the spectra according to their activities and measurement time, thus obtaining an **estimate** of the real spectrum, which SuperNEMO will measure. (Considering only the depicted processes...)
 """
+
+# ╔═╡ a43d43d8-5801-44ff-ac6d-6c4ca9d538c1
+md"""
+## Analysis
+
+To perform the analysis as described in `docdb:5833`. We must follow the steps: 
+1. calculate the efficiency maps
+2. calculate the corresponding s/b ratios
+3. determine best ROI
+4. extract ``\bar{b}`` and ``\varepsilon`` in the ROI 
+5. calculate ``T_{1/2}``
+
+In this analysis, I've created a data-type `Process` which holds the information about the individual studied processes and I've written a number of methods which calculate the efficiency maps, ROIs and T12. The following example shows the pipeline to obtain the T12:
+"""
+
+# ╔═╡ 3f78cca6-9419-451e-aedf-40b1db5795e4
+md"""
+First we instantiate the `Process`'s for each isotope:
+"""
+
+# ╔═╡ cb9eec23-3d92-4f52-a0f6-400363db5589
+begin
+	Bi214SumE = Process(
+		Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, sumEBi214Params
+	)
+	
+	Tl208SumE = Process(
+		Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2, sumETl208Params
+	)
+	
+	K40SumE = Process(
+		K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2, sumEK40Params
+	)
+	
+	Pa234mSumE = Process(
+		Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2, sumEPa234mParams
+	)
+	
+	bbSumE = Process(
+		bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2, sumEbbParams
+	)
+	nothing # so there's no cell output
+end
+
+# ╔═╡ ab82a10d-15ca-4528-95e2-e5edfa0dd1c5
+md"""
+### At construction, the efficiency maps are created as well:
+"""
+
+# ╔═╡ 6c2d1055-f674-42fa-892d-d35099105a91
+begin 
+	import Base: *, /
+	function /(x::Real, h::Hist2D)
+		mat = zeros(size(bincounts(h)))
+	
+		for i in eachindex(bincounts(h))
+			if(bincounts(h)[i] == 0)
+				continue
+			else
+				mat[i] = x/bincounts(h)[i]
+			end
+		end
+		h.hist.weights = mat
+		return h
+	end
+end
+	
+
+# ╔═╡ cf56ae15-6048-48fb-ae49-a8c7cd7390eb
+begin 
+	_palette = ["#00a0f9", "#ba3030", "#22ac74", "#707070", "#9452bd", "#d76055"]
+	theme(
+		:dao;
+		size = (1200, 800),
+		legend = :best,
+		guidefontsize = 16,
+		tickfontsize = 12,
+		titlefontsize = 16,
+		legendfontsize = 12,
+		left_margin = 4Plots.mm,
+		right_margin = 8Plots.mm,
+		top_margin = 4Plots.mm,
+		bottom_margin = 6Plots.mm,
+		thickness_scaling = 1.4,
+		:linewidth => 3,
+		dpi = 200,
+		widen = :true,
+		:markerstrokewidth => 1,
+		:markerstrokecolor => :black,
+		:palette => _palette
+	)
+end
 
 # ╔═╡ e1015a40-3307-46b4-8099-1cac469350a3
 with(
@@ -280,54 +347,6 @@ begin
 	
 end
 
-# ╔═╡ a43d43d8-5801-44ff-ac6d-6c4ca9d538c1
-md"""
-## Analysis
-
-To perform the analysis as described in `docdb:5833`. We must follow the steps: 
-1. calculate the efficiency maps
-2. calculate the corresponding s/b ratios
-3. determine best ROI
-4. extract ``\bar{b}`` and ``\varepsilon`` in the ROI 
-5. calculate ``T_{1/2}``
-
-In this analysis, I've created a data-type `Process` which holds the information about the individual studied processes and I've written a number of methods which calculate the efficiency maps, ROIs and T12. The following example shows the pipeline to obtain the T12:
-"""
-
-# ╔═╡ 3f78cca6-9419-451e-aedf-40b1db5795e4
-md"""
-First we instantiate the `Process`'s for each isotope:
-"""
-
-# ╔═╡ cb9eec23-3d92-4f52-a0f6-400363db5589
-begin
-	Bi214SumE = Process(
-		Bi214.reconstructedEnergy1 .+ Bi214.reconstructedEnergy2, sumEBi214Params
-	)
-	
-	Tl208SumE = Process(
-		Tl208.reconstructedEnergy1 .+ Tl208.reconstructedEnergy2, sumETl208Params
-	)
-	
-	K40SumE = Process(
-		K40.reconstructedEnergy1 .+ K40.reconstructedEnergy2, sumEK40Params
-	)
-	
-	Pa234mSumE = Process(
-		Pa234m.reconstructedEnergy1 .+ Pa234m.reconstructedEnergy2, sumEPa234mParams
-	)
-	
-	bbSumE = Process(
-		bb.reconstructedEnergy1 .+ bb.reconstructedEnergy2, sumEbbParams
-	)
-	nothing # so there's no cell output
-end
-
-# ╔═╡ ab82a10d-15ca-4528-95e2-e5edfa0dd1c5
-md"""
-### At construction, the efficiency maps are created as well:
-"""
-
 # ╔═╡ d9df2537-7a8a-42dd-a689-6f130d97b525
 let 
 	p1 = plot(bbSumE.efficiency, widen =:false, c =:coolwarm, xrotation=45, title= "Xi31")
@@ -335,6 +354,52 @@ let
 	p3 = plot(Tl208SumE.efficiency, widen =:false, c =:coolwarm, xrotation=45, title= "Tl208")
 	p4 = plot(Pa234mSumE.efficiency, widen =:false, c =:coolwarm, xrotation=45, title= "Pa234m")
 	p5 = plot(K40SumE.efficiency, widen =:false, c =:coolwarm, xrotation=45, title= "K40")
+
+	l = @layout [_ a{0.6w} _
+				b c
+				d e]
+	
+	plot(p1, p2, p3, p4, p5, 
+		size = (1400, 1600),layout = l, 
+		xlabel ="E_min", ylabel ="E_max", 
+		plot_title = "Efficiency maps", 
+		bottom_margins = 1Plots.px,
+		top_margins = 1Plots.px,
+		left_margins = 1Plots.px,
+		right_margins = 20Plots.px,
+	)
+end
+
+# ╔═╡ ac5e601c-65c7-430a-8a91-81864c12f906
+let 
+	p1 = plot(bbSumE.efficiency * bbSumE.nTotalSim, widen =:false, c =:coolwarm, xrotation=45, title= L"N_{passed}" *"Xi31")
+	p2 = plot(Bi214SumE.efficiency * Bi214SumE.nTotalSim, widen =:false, c =:coolwarm, xrotation=45, title= L"N_{passed}" *"Bi214")
+	p3 = plot(Tl208SumE.efficiency * Tl208SumE.nTotalSim, widen =:false, c =:coolwarm, xrotation=45, title= L"N_{passed}" *"Tl208")
+	p4 = plot(Pa234mSumE.efficiency * Pa234mSumE.nTotalSim, widen =:false, c =:coolwarm, xrotation=45, title= L"N_{passed}" *"Pa234m")
+	p5 = plot(K40SumE.efficiency * K40SumE.nTotalSim, widen =:false, c =:coolwarm, xrotation=45, title= L"N_{passed}" *"K40")
+
+	l = @layout [_ a{0.6w} _
+				b c
+				d e]
+	
+	plot(p1, p2, p3, p4, p5, 
+		size = (1400, 1600),layout = l, 
+		xlabel ="E_min", ylabel ="E_max", 
+		plot_title = "Efficiency maps", 
+		bottom_margins = 1Plots.px,
+		top_margins = 1Plots.px,
+		left_margins = 1Plots.px,
+		right_margins = 20Plots.px,
+	)
+end
+
+# ╔═╡ e39d676e-9fa0-4579-bf79-04b61b0c9196
+let 
+	p1 = plot(1/ bbSumE.efficiency , widen =:false, c =:coolwarm, xrotation=45, title= L"1/\varepsilon" *" Xi31")
+	p2 = plot(1/ Bi214SumE.efficiency , widen =:false, c =:coolwarm, xrotation=45, title= L"1/\varepsilon" *" Bi214")
+	p3 = plot(1/ Tl208SumE.efficiency , widen =:false, c =:coolwarm, xrotation=45, title= L"1/\varepsilon" *" Tl208")
+	p4 = plot(1/ Pa234mSumE.efficiency , widen =:false, c =:coolwarm, xrotation=45, title= L"1/\varepsilon" *" Pa234m")
+	p5 = plot(1/ K40SumE.efficiency , widen =:false, c =:coolwarm, xrotation=45, title= L"1/\varepsilon" *" K40")
 
 	l = @layout [_ a{0.6w} _
 				b c
@@ -424,6 +489,9 @@ ThalfbbESum = get_tHalf(SNparams, effbb, expBkgESum, 1.8)
 # ╠═cb9eec23-3d92-4f52-a0f6-400363db5589
 # ╟─ab82a10d-15ca-4528-95e2-e5edfa0dd1c5
 # ╠═d9df2537-7a8a-42dd-a689-6f130d97b525
+# ╠═ac5e601c-65c7-430a-8a91-81864c12f906
+# ╠═e39d676e-9fa0-4579-bf79-04b61b0c9196
+# ╠═6c2d1055-f674-42fa-892d-d35099105a91
 # ╟─ed3a655c-eb27-4cc2-bfb2-6541cd0ca4b5
 # ╠═ee5d0838-505b-42e3-89e2-5526de144235
 # ╠═897e4225-1e99-4840-a4fd-e7dd3bf30415
