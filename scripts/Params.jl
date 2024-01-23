@@ -8,8 +8,8 @@ SNparams = Dict(
     "a" => 0.99,                                # abundance/foil enrichment; check number
     "foilMass" => 6.25,                         # foil mass in [kg]
     "gasVolume" => 6*2*4,                       # tracker volume in [m3]
-    "PMTGlassMass" => 286,                       # PMT glass mass in [kg]
-    "wireBulkMass" => 20,                        # DUMMY VALUE!! mass of the tracker wires in [kg]
+    "PMTGlassMass" => 286,                      # PMT glass mass in [kg]
+    "wireBulkMass" => 20,                       # DUMMY VALUE!! mass of the tracker wires in [kg]
     "t" => 2.5 * 365 * 24 * 3600,               # measurement time in [s]
     "tYear" => 2.5,                             # measurement time in [y]
     "SeThalf" => (9.39 ± 0.17)*1e19 * 365 * 24 * 3600    # Se82 half life in [s], results from NEMO-3
@@ -24,6 +24,7 @@ BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-
     :Tl208_PMT_bulk => 41.4 / 286 ,             # [Bq/kg] originally the value is given as 41.4Bq, I just divide by PMT weight here
     :K40_PMT_bulk => 417 / 286,                 # [Bq/kg] originally the value is given as 417Bq, I just divide by PMT weight here
     :Bi214_radon => 150 / 1_000_000 ,           # [μBq/m3] converted to [Bq/m3] from SN measurements; upper limit 48m3 (4x6x2m3) 
+    :Bi214_wire_bulk => 0.00001                 # MOCK VALUE
 )
 
 SigActivityParams = Dict( 

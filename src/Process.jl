@@ -111,10 +111,10 @@ function get_bkg_rate(processes::Process...)
         if (p.signal)
             @warn("get_bkg_rate(): passed isotope $(p.isotopeName) is a signal process!!")
         else
-            if( typeof(p.activity) <: Measurement ) # check if measurement with uncertainties
+            if( eltype(p.activity) <: Measurement ) # check if measurement with uncertainties
                 h2d += p.efficiency * p.activity.val
             else
-                h2d += p.efficiency * p.activity.val
+                h2d += p.efficiency * p.activity
             end
         end
     end
@@ -128,10 +128,10 @@ function get_sig_rate(processes::Process...)
         if (!p.signal)
             @warn("get_sig_rate(): passed isotope $(p.isotopeName) is a background process!!")
         else
-            if( typeof(p.activity) <: Measurement ) # check if measurement with uncertainties
+            if( eltype(p.activity) <: Measurement ) # check if measurement with uncertainties
                 h2d += p.efficiency * p.activity.val
             else
-                h2d += p.efficiency * p.activity.val
+                h2d += p.efficiency * p.activity
             end
         end
     end
@@ -189,7 +189,7 @@ end
 
 
 DrWatson.default_allowed(::Process) = (Real, String, Bool, AbstractRange)
-DrWatson.allaccess(::Process) = (:isotopeName, :signal, :bins)
+DrWatson.allaccess(::Process) = (:isotopeName, :signal, :bins, :activity, :nTotalSim, :amount)
 
 function FHist.lookup(weights::Matrix, x::Real, y::Real, binning)
     h2d = Hist2D(Float64, bins=(binning, binning))

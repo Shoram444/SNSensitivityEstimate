@@ -108,12 +108,12 @@ end
     get_tHalf(SNparams, efficiency, bkgCounts, α; approximate = :true) -> returns the sensitivity in yr. 
 """
 function get_tHalf(SNparams, efficiency, bkgCounts, α; approximate = :true)
-    @unpack W, m, Nₐ, tYear, a = SNparams
+    @unpack W, foilMass, Nₐ, tYear, a = SNparams
     if approximate
         b = α√bkgCounts
     end
 
-    tHalf = log(2) * (Nₐ / W) * efficiency * (m*a*tYear / b)
+    tHalf = log(2) * (Nₐ / W) * efficiency * (foilMass*a*tYear / b)
 end
 
 """
@@ -180,6 +180,18 @@ function /(x::Real, h::Hist2D)
     h.hist.weights = mat
     return h
 end
+
+function /(h::Hist2D, x::Real)
+    mat = zeros(size(bincounts(h)))
+
+    for i in eachindex(bincounts(h))
+        mat[i] = bincounts(h)[i]/x
+    end
+    
+    h.hist.weights = mat
+    return h
+end
+
 
 function *(x::Real, h::Hist2D)
     return *(h, x)

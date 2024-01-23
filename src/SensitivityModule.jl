@@ -1,6 +1,6 @@
 module SensitivityModule
 
-using StatsPlots, DataFramesMeta, LaTeXStrings, FHist, StatsBase, UnROOT, DrWatson, MakieCore
+using StatsPlots, DataFramesMeta, LaTeXStrings, FHist, StatsBase, UnROOT, DrWatson, MakieCore, Measurements
 
 
 include("Misc.jl")
