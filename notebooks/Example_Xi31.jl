@@ -226,31 +226,73 @@ The estimated **total** counts for the full spectrum for each process can be cal
 
 With the previously summarized parameters this is:
 
-* Bi214 foil bulk: n = $(BkgActivityParams[:Bi214_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_foil_bulk) / SimulationParams[:Bi214_foil_bulk]) |> round)
+* Bi214 foil bulk: n = $(BkgActivityParams[:Bi214_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_foil_bulk) / SimulationParams[:Bi214_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Bi214_foil_bulk) / SimulationParams[:Bi214_foil_bulk]*100, sigdigits = 3))%
 
-* Bi214 foil surface: n = $(BkgActivityParams[:Bi214_radon] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_foil_surface) / SimulationParams[:Bi214_foil_surface]) |> round)
+* Bi214 foil surface: n = $(BkgActivityParams[:Bi214_radon] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_foil_surface) / SimulationParams[:Bi214_foil_surface]) |> round); ``\varepsilon`` =  $(round(nrow(Bi214_foil_surface) / SimulationParams[:Bi214_foil_surface]*100, sigdigits = 3))
 
-* Bi214 PMT bulk: n = $(BkgActivityParams[:Bi214_PMT_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_PMT_bulk) / SimulationParams[:Bi214_PMT_bulk]) |> round)
+* Bi214 PMT bulk: n = $(BkgActivityParams[:Bi214_PMT_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_PMT_bulk) / SimulationParams[:Bi214_PMT_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Bi214_PMT_bulk) / SimulationParams[:Bi214_PMT_bulk] *100, sigdigits = 3))%
 
-* Bi214 wire bulk: n = $(BkgActivityParams[:Bi214_wire_bulk] *SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_wire_bulk) / SimulationParams[:Bi214_wire_bulk]) |> round)
+* Bi214 wire bulk: n = $(BkgActivityParams[:Bi214_wire_bulk] *SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_wire_bulk) / SimulationParams[:Bi214_wire_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Bi214_wire_bulk) / SimulationParams[:Bi214_wire_bulk] *100, sigdigits = 3))%
 
-* Bi214 wire surface: n = $(BkgActivityParams[:Bi214_radon] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_wire_surface) / SimulationParams[:Bi214_wire_surface]) |> round)
+* Bi214 wire surface: n = $(BkgActivityParams[:Bi214_radon] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_wire_surface) / SimulationParams[:Bi214_wire_surface]) |> round); ``\varepsilon = `` $(round(nrow(Bi214_wire_surface) / SimulationParams[:Bi214_wire_surface]*100, sigdigits = 3))%
 
-* Tl208 foil bulk: n = $(BkgActivityParams[:Tl208_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Tl208_foil_bulk) / SimulationParams[:Tl208_foil_bulk]) |> round)
+* Tl208 foil bulk: n = $(BkgActivityParams[:Tl208_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Tl208_foil_bulk) / SimulationParams[:Tl208_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Tl208_foil_bulk) / SimulationParams[:Tl208_foil_bulk]*100, sigdigits = 3))%
 
-* Tl208 PMT bulk: n = $(BkgActivityParams[:Tl208_PMT_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Tl208_PMT_bulk) / SimulationParams[:Tl208_PMT_bulk]) |> round)
+* Tl208 PMT bulk: n = $(BkgActivityParams[:Tl208_PMT_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Tl208_PMT_bulk) / SimulationParams[:Tl208_PMT_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Tl208_PMT_bulk) / SimulationParams[:Tl208_PMT_bulk]*100, sigdigits = 3))%
 
-* Pa234m foil bulk: n = $(BkgActivityParams[:Pa234m_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Pa234m_foil_bulk) / SimulationParams[:Pa234m_foil_bulk]) |> round)
+* Pa234m foil bulk: n = $(BkgActivityParams[:Pa234m_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Pa234m_foil_bulk) / SimulationParams[:Pa234m_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Pa234m_foil_bulk) / SimulationParams[:Pa234m_foil_bulk]*100, sigdigits = 3))%
 
-* K40 PM bulk: n = $(BkgActivityParams[:K40_PMT_bulk] * SNparams["t"] * SNparams["PMTGlassMass"] *	(nrow(K40_PMT_bulk) / SimulationParams[:K40_PMT_bulk]) |> round)
+* K40 PM bulk: n = $(BkgActivityParams[:K40_PMT_bulk] * SNparams["t"] * SNparams["PMTGlassMass"] *	(nrow(K40_PMT_bulk) / SimulationParams[:K40_PMT_bulk]) |> round); ``\varepsilon = `` $(round(nrow(K40_PMT_bulk) / SimulationParams[:K40_PMT_bulk]*100, sigdigits = 3))%
 
-* K40 foil bulk: n = $(BkgActivityParams[:K40_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(K40_foil_bulk) / SimulationParams[:K40_foil_bulk]) |> round)
+* K40 foil bulk: n = $(BkgActivityParams[:K40_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(K40_foil_bulk) / SimulationParams[:K40_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(K40_foil_bulk) / SimulationParams[:K40_foil_bulk]*100, sigdigits = 3))%
 
-* Xi31 foil bulk: n = $(SigActivityParams[:Xi037] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Xi31_foil_bulk) / SimulationParams[:Xi037_foil_bulk]) |> round)
+* Xi31 foil bulk: n = $(SigActivityParams[:Xi037] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Xi31_foil_bulk) / SimulationParams[:Xi037_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Xi31_foil_bulk) / SimulationParams[:Xi037_foil_bulk]*100, sigdigits = 3))%
 
 
 Notice that the main contributions to the background for $2\nu\beta\beta$ come from K40 and Pa234m processes mainly in the lower energy region. 
 """
+
+# ╔═╡ 5850cf44-5016-4d84-96c9-a63f79182086
+occursin("foil_bulk", string(:Bi214_foil_bulk))
+
+# ╔═╡ f7a645da-67f1-4b9c-b615-25b777b45e71
+begin
+	isotope = :Bi214_foil_bulk
+	m = if( occursin("foil_bulk", string(isotope)) )
+		SNparams["foilMass"]
+	elseif( occursin("surface", string(isotope)) )
+		SNparams["gasVolume"]
+	elseif( occursin("PMT_bulk", string(isotope)) )
+		SNparams["PMTGlassMass"]
+	elseif( occursin("wire_bulk", string(isotope)) )
+		SNparams["wireBulkMass"]
+	end
+	m
+end
+
+# ╔═╡ 01fdc8b3-e467-401e-8ccb-8397b72d057a
+function get_isotope_details( activityParams, SNParams, simParams, isotope, dfData )
+	a = activityParams[isotope]
+	m = if( occursin("foil_bulk", string(isotope)) )
+		SNParams["foilMass"]
+	elseif( occursin("surface", string(isotope)) )
+		SNParams["gasVolume"]
+	elseif( occursin("PMT_bulk", string(isotope)) )
+		SNParams["PMTGlassMass"]
+	elseif( occursin("wire_bulk", string(isotope)) )
+		SNParams["wireBulkMass"]
+	end
+	t = SNParams["t"]
+	nTotSim = simParams[isotope]
+	ε = nrow(dfData) / nTotSim
+
+	return a, m, t, ε
+end
+	
+		
+
+# ╔═╡ a5f981b8-aa70-4d1d-a82b-491feb1a1017
+#a, m, t, ε = get_isotope_details( , SNParams, simParams, isotope, dfData )
 
 # ╔═╡ 94e2f24b-8fb6-4ce3-adfc-532f876a0a5d
 #scale histogram to estimated counts
@@ -653,7 +695,11 @@ ThalfbbESum = get_tHalf(SNparams, effbb, expBkgESum, 1.8)
 # ╟─ed904b40-d638-44a3-8e01-1bd86dd1a919
 # ╟─86932308-47bf-4ec9-bd53-8cc6b132d32b
 # ╠═e1015a40-3307-46b4-8099-1cac469350a3
-# ╟─86db346d-5e02-444e-aa1a-892e64bc42b3
+# ╠═86db346d-5e02-444e-aa1a-892e64bc42b3
+# ╠═5850cf44-5016-4d84-96c9-a63f79182086
+# ╠═f7a645da-67f1-4b9c-b615-25b777b45e71
+# ╠═01fdc8b3-e467-401e-8ccb-8397b72d057a
+# ╠═a5f981b8-aa70-4d1d-a82b-491feb1a1017
 # ╠═94e2f24b-8fb6-4ce3-adfc-532f876a0a5d
 # ╠═cdf251a6-dc5e-4b21-8789-1daafbb676a5
 # ╠═8eb7a4e3-5072-43e2-b3c7-d7bdf42eb04b

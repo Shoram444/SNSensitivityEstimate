@@ -23,7 +23,7 @@ BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-
     :Bi214_PMT_bulk => 140 / 286 ,              # [Bq/kg] originally the value is given as 140Bq, I just divide by PMT weight here
     :Tl208_PMT_bulk => 41.4 / 286 ,             # [Bq/kg] originally the value is given as 41.4Bq, I just divide by PMT weight here
     :K40_PMT_bulk => 417 / 286,                 # [Bq/kg] originally the value is given as 417Bq, I just divide by PMT weight here
-    :Bi214_radon => 150 / 1_000_000 ,           # [μBq/m3] converted to [Bq/m3] from SN measurements; upper limit 48m3 (4x6x2m3) 
+    :Bi214_wire_surface => 150 / 1_000_000 ,           # [μBq/m3] converted to [Bq/m3] from SN measurements; upper limit 48m3 (4x6x2m3) 
     :Bi214_wire_bulk => 0.00001                 # MOCK VALUE
 )
 
