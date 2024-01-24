@@ -99,7 +99,7 @@ begin
 		ROOTFile(datadir("sims/K40_PMT_bulk_1e8E.root")) |> ffrf
 
 #Xi31
-	Xi31_foil_bulk = 
+	Xi037_foil_bulk = 
 		ROOTFile(datadir("sims/Xi037_foil_bulk_1e8E.root")) |> ffrf 
 end
 
@@ -138,7 +138,7 @@ The file `Params.jl` contains all the input constants that will be used in the a
     * :Bi214 wires => $(BkgActivityParams[:Bi214_wire_surface]) Bq/kg
 
   * **Signal** 
-    * :Xi037 => $(SigActivityParams[:Xi037]) Bq/kg # a mock value is used here, the activity in reality is the free parameter of this analysis
+    * :Xi037_foil_bulk => $(SigActivityParams[:Xi037_foil_bulk]) Bq/kg # a mock value is used here, the activity in reality is the free parameter of this analysis
 
 * **Histogram Parameters** which depend on the analysis channel:
   * Sum energy => $(sumEParams[:binning])
@@ -170,7 +170,7 @@ with(
     ) do
 	
 	stephist(
-		Xi31_foil_bulk.reconstructedEnergy1 .+ Xi31_foil_bulk.reconstructedEnergy2,
+		Xi037_foil_bulk.reconstructedEnergy1 .+ Xi037_foil_bulk.reconstructedEnergy2,
 		label = "refined "*L"2\nu\beta\beta", 
 		fill =0, 
 		fa = 0.7, 
@@ -225,31 +225,6 @@ The estimated **total** counts for the full spectrum for each process can be cal
  ``$n = A * t * m * \varepsilon$``
 
 With the previously summarized parameters this is:
-
-* Bi214 foil bulk: n = $(BkgActivityParams[:Bi214_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_foil_bulk) / SimulationParams[:Bi214_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Bi214_foil_bulk) / SimulationParams[:Bi214_foil_bulk]*100, sigdigits = 3))%
-
-* Bi214 foil surface: n = $(BkgActivityParams[:Bi214_foil_surface] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_foil_surface) / SimulationParams[:Bi214_foil_surface]) |> round); ``\varepsilon`` =  $(round(nrow(Bi214_foil_surface) / SimulationParams[:Bi214_foil_surface]*100, sigdigits = 3))
-
-* Bi214 PMT bulk: n = $(BkgActivityParams[:Bi214_PMT_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_PMT_bulk) / SimulationParams[:Bi214_PMT_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Bi214_PMT_bulk) / SimulationParams[:Bi214_PMT_bulk] *100, sigdigits = 3))%
-
-* Bi214 wire bulk: n = $(BkgActivityParams[:Bi214_wire_bulk] *SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_wire_bulk) / SimulationParams[:Bi214_wire_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Bi214_wire_bulk) / SimulationParams[:Bi214_wire_bulk] *100, sigdigits = 3))%
-
-* Bi214 wire surface: n = $(BkgActivityParams[:Bi214_foil_surface] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Bi214_wire_surface) / SimulationParams[:Bi214_wire_surface]) |> round); ``\varepsilon = `` $(round(nrow(Bi214_wire_surface) / SimulationParams[:Bi214_wire_surface]*100, sigdigits = 3))%
-
-* Tl208 foil bulk: n = $(BkgActivityParams[:Tl208_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Tl208_foil_bulk) / SimulationParams[:Tl208_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Tl208_foil_bulk) / SimulationParams[:Tl208_foil_bulk]*100, sigdigits = 3))%
-
-* Tl208 PMT bulk: n = $(BkgActivityParams[:Tl208_PMT_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Tl208_PMT_bulk) / SimulationParams[:Tl208_PMT_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Tl208_PMT_bulk) / SimulationParams[:Tl208_PMT_bulk]*100, sigdigits = 3))%
-
-* Pa234m foil bulk: n = $(BkgActivityParams[:Pa234m_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Pa234m_foil_bulk) / SimulationParams[:Pa234m_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Pa234m_foil_bulk) / SimulationParams[:Pa234m_foil_bulk]*100, sigdigits = 3))%
-
-* K40 PM bulk: n = $(BkgActivityParams[:K40_PMT_bulk] * SNparams["t"] * SNparams["PMTGlassMass"] *	(nrow(K40_PMT_bulk) / SimulationParams[:K40_PMT_bulk]) |> round); ``\varepsilon = `` $(round(nrow(K40_PMT_bulk) / SimulationParams[:K40_PMT_bulk]*100, sigdigits = 3))%
-
-* K40 foil bulk: n = $(BkgActivityParams[:K40_foil_bulk] * SNparams["t"] * SNparams["foilMass"] *	(nrow(K40_foil_bulk) / SimulationParams[:K40_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(K40_foil_bulk) / SimulationParams[:K40_foil_bulk]*100, sigdigits = 3))%
-
-* Xi31 foil bulk: n = $(SigActivityParams[:Xi037] * SNparams["t"] * SNparams["foilMass"] *	(nrow(Xi31_foil_bulk) / SimulationParams[:Xi037_foil_bulk]) |> round); ``\varepsilon = `` $(round(nrow(Xi31_foil_bulk) / SimulationParams[:Xi037_foil_bulk]*100, sigdigits = 3))%
-
-
-Notice that the main contributions to the background for $2\nu\beta\beta$ come from K40 and Pa234m processes mainly in the lower energy region. 
 """
 
 # ╔═╡ 01fdc8b3-e467-401e-8ccb-8397b72d057a
@@ -289,7 +264,7 @@ end
 
 # ╔═╡ 89852571-c350-4f50-84e0-5eeba29b5da7
 begin
-	isotope_df = DataFrame(isotope = String, n_expected = Float64, ε = Float64, activity = Float64, amount = Float64, n_simulated = Int64)
+	isotope_df = DataFrame()
 	bkgIsotopes = [
 		:Bi214_foil_bulk,
 		:Bi214_foil_surface,
@@ -316,17 +291,23 @@ begin
 	]
 	for (i, d) in zip(bkgIsotopes, bkgDfs)
 		(a, m, t, ε, nExpTot, nTotSim) = get_isotope_details( BkgActivityParams, SNparams, SimulationParams, i, d )
-		push!(isotope_df, (isotope = string(i), n_expected = nExpTot, ε = ε, activity = a, amount = m, n_simulated = nTotSim), promote=:true)
+		push!(isotope_df, (isotope = string(i), n_expected = Measurements.value(nExpTot), ε = ε*100, activity = Measurements.value(a), amount = m, n_simulated = nTotSim), promote=:true)
 	end
 
-	header = (
-	["isotope", "expected counts", L"\varepsilon", "activity", "amount", "simulated events"],
-	["", " ", "[%]", "[Bq/amount]", L"[\textrm{kg or m^3 or l}]", " "]
-	)
-	pretty_table(
-		isotope_df,
-		header =header
-	)
+	(a, m, t, ε, nExpTot, nTotSim) = get_isotope_details( SigActivityParams, SNparams, SimulationParams, :Xi037_foil_bulk, Xi037_foil_bulk )
+	push!(isotope_df, (isotope = string(:Xi037_foil_bulk), n_expected = Measurements.value(nExpTot), ε = ε*100, activity = Measurements.value(a), amount = m, n_simulated = nTotSim), promote=:true)
+	
+	isotope_df
+	
+	# header = (
+	# ["isotope", "expected counts", L"\varepsilon", "activity", "amount", "simulated events"],
+	# ["", " ", "[%]", "[Bq/amount]", L"[\textrm{kg or m^3 or l}]", " "]
+	# )
+	# pretty_table(
+	# 	isotope_df,
+	# 	header =header,
+	# 	backend = Val(:markdown)
+	# )
 end
 
 # ╔═╡ 94e2f24b-8fb6-4ce3-adfc-532f876a0a5d
@@ -356,9 +337,9 @@ end
 # ╔═╡ cdf251a6-dc5e-4b21-8789-1daafbb676a5
 begin 
 	# First we normalize histograms to probability
-	h1Xi31 = estimated_counts_hist1D( 
-		Xi31_foil_bulk, 
-		SigActivityParams[:Xi037], 
+	h1Xi037_foil_bulk = estimated_counts_hist1D( 
+		Xi037_foil_bulk, 
+		SigActivityParams[:Xi037_foil_bulk], 
 		SNparams["foilMass"], 
 		SNparams["t"], 
 		sumEParams[:binning], 
@@ -456,7 +437,7 @@ begin
 	)
 
 	histos = [
-		h1Xi31,
+		h1Xi037_foil_bulk,
 		h1Bi214_foil_bulk,
 		h1Bi214_foil_surface,
 		h1Bi214_PMT_bulk,
@@ -469,7 +450,7 @@ begin
 		h1K40_PMT_bulk,
 	]
 	names = [
-		"Xi31",
+		"Xi037_foil_bulk",
 		"Bi214_foil_bulk",
 		"Bi214_foil_surface",
 		"Bi214_PMT_bulk",
@@ -507,7 +488,7 @@ begin
 	for i in 1:length(histos)
 	plot!(p, 
 		histos[i], fa = 0.3, lw = 0, label = names[i]
-		#midpoints(binedges(h1Xi31)), bincounts(h1Xi31), st = :step, l = names[1] 
+		#midpoints(binedges(h1Xi037_foil_bulk)), bincounts(h1Xi037_foil_bulk), st = :step, l = names[1] 
 	)
 	end
 	
@@ -574,8 +555,8 @@ begin
 		Process(K40_PMT_bulk.reconstructedEnergy1 .+ K40_PMT_bulk.reconstructedEnergy2, sumEK40_PMT_bulk_Params)
 	
 	
-	Xi31_foil_bulk_SumE     = 
-		Process(Xi31_foil_bulk.reconstructedEnergy1 .+ Xi31_foil_bulk.reconstructedEnergy2, sumEXiParams)
+	Xi037_foil_bulk_SumE     = 
+		Process(Xi037_foil_bulk.reconstructedEnergy1 .+ Xi037_foil_bulk.reconstructedEnergy2, sumEXiParams)
 	
 
 	nothing # so there's no cell output
@@ -627,10 +608,10 @@ with(
     	ylabel = "max sum energy [keV]", 
 	)
 
-#Xi31
+#Xi037
     p11 = plot(
-		Xi31_foil_bulk_SumE.efficiency, 
-		title ="$(Xi31_foil_bulk_SumE.isotopeName)", 
+		Xi037_foil_bulk_SumE.efficiency, 
+		title ="$(Xi037_foil_bulk_SumE.isotopeName)", 
 		xlabel = "min sum energy [keV]", 
     	ylabel = "max sum energy [keV]", 
 	)
@@ -646,7 +627,7 @@ md"""
 
 # ╔═╡ ee5d0838-505b-42e3-89e2-5526de144235
 stbSum = get_sToBRatio(
-	Xi31_foil_bulk_SumE,
+	Xi037_foil_bulk_SumE,
 	Bi214_foil_bulk_SumE,
 	Bi214_foil_surface_SumE,
 	Bi214_PMT_bulk_SumE,
@@ -700,7 +681,7 @@ md"""
 """
 
 # ╔═╡ df9d6770-a7f0-4e7f-8599-e50703b114c1
-effbb = lookup( Xi31_foil_bulk_SumE.efficiency, best_stbSum[:minBinEdge], best_stbSum[:maxBinEdge]);
+effbb = lookup( Xi037_foil_bulk_SumE.efficiency, best_stbSum[:minBinEdge], best_stbSum[:maxBinEdge]);
 
 # ╔═╡ 315e3d2e-a8de-4f56-ac15-0931c3dbfc6f
 md"""
@@ -727,12 +708,12 @@ ThalfbbESum = get_tHalf(SNparams, effbb, expBkgESum, 1.8)
 # ╠═f93ae5c5-0702-4ec2-9294-7d506153c81e
 # ╠═3a279499-3b4c-4636-b9a6-6183868c3ab9
 # ╠═d9102629-c1d6-4a05-aae4-af49d9c9ddbb
-# ╟─ed904b40-d638-44a3-8e01-1bd86dd1a919
+# ╠═ed904b40-d638-44a3-8e01-1bd86dd1a919
 # ╟─86932308-47bf-4ec9-bd53-8cc6b132d32b
 # ╠═e1015a40-3307-46b4-8099-1cac469350a3
-# ╠═86db346d-5e02-444e-aa1a-892e64bc42b3
-# ╠═01fdc8b3-e467-401e-8ccb-8397b72d057a
-# ╠═a5f981b8-aa70-4d1d-a82b-491feb1a1017
+# ╟─86db346d-5e02-444e-aa1a-892e64bc42b3
+# ╟─01fdc8b3-e467-401e-8ccb-8397b72d057a
+# ╟─a5f981b8-aa70-4d1d-a82b-491feb1a1017
 # ╠═89852571-c350-4f50-84e0-5eeba29b5da7
 # ╠═94e2f24b-8fb6-4ce3-adfc-532f876a0a5d
 # ╠═cdf251a6-dc5e-4b21-8789-1daafbb676a5

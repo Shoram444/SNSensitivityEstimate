@@ -30,7 +30,7 @@ BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-
 
 SigActivityParams = Dict( 
     :bb2Standard => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf"]), # activity calculated from 2nubb Half-life in [Bq/kg]
-    :Xi037 => (1.5 ± 0.1) / 1000 # mock value
+    :Xi037_foil_bulk => (1.5 ± 0.1) / 1000 # mock value
 )
 
 SimulationParams = Dict(
@@ -191,9 +191,9 @@ sumEbbParams = Dict(
 
 ### Xi31
 sumEXiParams = Dict(
-    :isotopeName => "Xi31", 
+    :isotopeName => "Xi037_foil_bulk", 
     :signal => :true, 
-    :activity => SigActivityParams[:Xi037], 
+    :activity => SigActivityParams[:Xi037_foil_bulk], 
     :timeMeas => SNparams["t"], 
     :nTotalSim => SimulationParams[:Xi037_foil_bulk],
     :bins => sumEParams[:binning],
@@ -345,9 +345,9 @@ singleEbbParams = Dict(
 
 ### Xi31
 singleEXiParams = Dict(
-    :isotopeName => "Xi31", 
+    :isotopeName => "Xi037_foil_bulk", 
     :signal => :true, 
-    :activity => SigActivityParams[:Xi037], 
+    :activity => SigActivityParams[:Xi037_foil_bulk], 
     :timeMeas => SNparams["t"], 
     :nTotalSim => SimulationParams[:Xi037_foil_bulk],
     :bins => singleEParams[:binning],
@@ -494,9 +494,9 @@ phibbParams = Dict(
 
 ### Xi31
 phiXiParams = Dict(
-    :isotopeName => "Xi31", 
+    :isotopeName => "Xi037_foil_bulk", 
     :signal => :true, 
-    :activity => SigActivityParams[:Xi037], 
+    :activity => SigActivityParams[:Xi037_foil_bulk], 
     :timeMeas => SNparams["t"], 
     :nTotalSim => SimulationParams[:Xi037_foil_bulk],
     :bins => phiParams[:binning],
