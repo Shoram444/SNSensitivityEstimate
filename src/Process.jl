@@ -112,9 +112,9 @@ function get_bkg_rate(processes::Process...)
             @warn("get_bkg_rate(): passed isotope $(p.isotopeName) is a signal process!!")
         else
             if( eltype(p.activity) <: Measurement ) # check if measurement with uncertainties
-                h2d += p.efficiency * p.activity.val
+                h2d += p.efficiency * p.activity.val * p.amount * p.timeMeas
             else
-                h2d += p.efficiency * p.activity
+                h2d += p.efficiency * p.activity * p.amount * p.timeMeas
             end
         end
     end
@@ -129,9 +129,9 @@ function get_sig_rate(processes::Process...)
             @warn("get_sig_rate(): passed isotope $(p.isotopeName) is a background process!!")
         else
             if( eltype(p.activity) <: Measurement ) # check if measurement with uncertainties
-                h2d += p.efficiency * p.activity.val
+                h2d += p.efficiency * p.activity.val * p.amount * p.timeMeas
             else
-                h2d += p.efficiency * p.activity
+                h2d += p.efficiency * p.activity * p.amount * p.timeMeas
             end
         end
     end
@@ -172,7 +172,7 @@ function get_estimated_bkg_counts(minBinCenter, maxBinCenter, SNparams, processe
         if (p.signal)
             @warn("get_bkg_rate(): passed isotope $(p.isotopeName) is a signal process!!")
         else
-            bkg_cts_mat += bincounts(p.efficiency) * p.activity * p.amount * SNparams["t"] 
+            bkg_cts_mat += bincounts(p.efficiency) * p.activity * p.amount * p.timeMeas
         end
     end
 
