@@ -8,6 +8,11 @@ The data is available at `/sps/nemo/scratch/mpetro/Projects/SNSensitivityEstimat
 
 The methodology of calculating sensitivities is described in `docdb:4816` with a short presentation given in `docdb:5568` and **more recently** `docdb:5833`. The `plots/` folder in this repository contains all the relevant figures for finding ROI and shows the individual spectra.
 
+**EXAMPLES**
+========
+
+There are example notebooks in the `notebooks/` folder. 
+
 **DATA**
 ========
 
