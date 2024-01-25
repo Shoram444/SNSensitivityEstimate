@@ -41,6 +41,7 @@ SimulationParams = Dict(
     :Bi214_wire_surface => 1e7,
 
     :Tl208_foil_bulk => 1e8,
+    :Tl208_foil_surface => 117e6,
     :Tl208_PMT_bulk => 1e8,
 
     :Pa234m_foil_bulk => 1e8,
