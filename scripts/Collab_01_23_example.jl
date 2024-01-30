@@ -152,4 +152,28 @@ expBkgESum = get_estimated_bkg_counts(
 effbb = lookup(Xi037_foil_bulk_SumE.efficiency, best_stbSum[:minBinEdge], best_stbSum[:maxBinEdge])
 ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, 1.8), sigdigits=3)
 
-plot(stbSum)
+with(
+    gr;
+    c=:coolwarm,
+    size=(1600, 1000),
+    thickness_scaling=1.7,
+    right_margin=16Plots.mm,
+    left_margin=16Plots.mm,
+    bottom_margin=16Plots.mm,
+) do
+    plot(
+        stbSum, 
+        title= "signal-to-background ratio: " * L"\frac{\varepsilon(ROI)}{\bar{b}(ROI)}", 
+        xlabel="min sum energy [keV]",
+        ylabel="max sum energy [keV]",
+        c = :coolwarm,
+        label ="$(best_stbSum[:minBinEdge]) - $(best_stbSum[:maxBinEdge]) keV \ns/b = $(best_stbSum[:maxBinCount] |> round) \nb   = $(expBkgESum |> round) \nT12 ≥  $(ThalfbbESum) yr",
+        legend=:bottomright
+    )
+
+    safesave(plotsdir("SumE", "signal_to_background.png"), current())
+    safesave(plotsdir("SumE", "signal_to_background.pdf"), current())
+
+    current()
+end
+

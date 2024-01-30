@@ -3,6 +3,7 @@ authors = ["MPetro"]
 
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
 DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Debugger = "31a5f54b-26ea-5ae9-a837-f05ce5417438"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
