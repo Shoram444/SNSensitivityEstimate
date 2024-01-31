@@ -699,6 +699,61 @@ md"""
 ThalfbbESum = get_tHalf(SNparams, effbb, expBkgESum, 1.8)
 
 
+# ╔═╡ 393c17ab-eb64-4a22-b92b-1b0847a70c1a
+begin 
+	h1Bkg = sum([
+		h1Bi214_foil_bulk,
+		h1Bi214_foil_surface,
+		h1Bi214_PMT_bulk,
+		h1Bi214_wire_bulk,
+		h1Bi214_wire_surface,
+		h1Tl208_foil_bulk,
+		h1Tl208_PMT_bulk,
+		h1Pa234m_foil_bulk,
+		h1K40_foil_bulk,
+		h1K40_PMT_bulk,
+	])
+
+	SensitivityModule.stackedstephist(
+		[h1Xi037_foil_bulk, h1Bkg], 
+		label=["signal" "background"], 
+		xlabel= L"E_{sum} "*"[keV]", 
+		ylabel = "counts [$(step(binedges(h1Xi037_foil_bulk))) "* L"\textrm{keV ^{-1}}]", 
+		title="stacked histogram signal and background",
+		c=[1 3]
+	)
+
+	safesave(plotsdir("SumE","h1_step_bkg_sig.png"), current())
+	current()
+
+	h1BkgROI = restrict(h1Bkg, 800, 1500)
+	h1SigROI = restrict(h1Xi037_foil_bulk, 800, 1500)
+	
+	bkgCtsROI = round(integral( h1BkgROI ), digits = 2)
+	sigEffROI = round(lookup( Xi037_foil_bulk_SumE.efficiency, 800, 1500 )*100, sigdigits=3) 
+	
+	SensitivityModule.stackedhist!([h1SigROI, h1BkgROI], c=[1 3], label= ["sig ∈ (800, 1500)keV" "bkg ∈ (800, 1500)keV"])
+
+	annotate!([
+		(
+			2050, 1.25e4, "signal ε = $sigEffROI%", :left
+		),
+		(
+			2050, 1.15e4, "expected b = $bkgCtsROI", :left
+		),
+	])
+
+	safesave(plotsdir("SumE","h1_step_bkg_sig_ROI.png"), current())
+	current()
+	
+end
+
+# ╔═╡ be2717cc-0a28-4012-86df-f419a46f629b
+
+
+# ╔═╡ 70b727b5-a0f0-4d4b-903a-1d61eb433ee4
+length(midpoints(binedges(h1Xi037_foil_bulk)))
+
 # ╔═╡ Cell order:
 # ╠═af92ba46-999c-11ee-11a4-8554ebc58c0d
 # ╠═fcfd9507-542c-4bab-9b8b-5e8a00b6bb55
@@ -734,3 +789,6 @@ ThalfbbESum = get_tHalf(SNparams, effbb, expBkgESum, 1.8)
 # ╠═df9d6770-a7f0-4e7f-8599-e50703b114c1
 # ╠═da2d004f-8400-4b90-b4d9-181a1fef318a
 # ╠═c5ae4098-ef84-4173-b1d0-d64815e82a0a
+# ╠═393c17ab-eb64-4a22-b92b-1b0847a70c1a
+# ╠═be2717cc-0a28-4012-86df-f419a46f629b
+# ╠═70b727b5-a0f0-4d4b-903a-1d61eb433ee4
