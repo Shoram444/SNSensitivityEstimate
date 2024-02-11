@@ -19,6 +19,9 @@ begin
 	include(scriptsdir("LoadData.jl"))
 end
 
+# ╔═╡ 71739742-f9e8-47c1-8f16-326f73bce8c2
+using ColorSchemes
+
 # ╔═╡ 79a8065f-fc6b-49dd-a3be-b21fb343b6f7
 begin 
 	_palette = ["#00a0f9", "#ba3030", "#22ac74", "#707070", "#9452bd", "#80ff00", "#ffcc00", "#ff00ff", "#00ffff", "#cc9900", "#2a2727"]
@@ -193,27 +196,48 @@ function get_estimated_h1( data, nExp, binning )
 	return h
 end
 
+# ╔═╡ 5efd324d-8fdf-4d17-a09a-cbd4ea277312
+cScheme = ColorSchemes.tab20
+
 # ╔═╡ 55be8367-6822-4ad2-9c6f-cd66327dc1c9
 begin 
 	histosSDBDRC = []
 	labelsSDBDRC = []
+	h1sigSDBDRC = nothing
+	sigLabel = nothing
+	
 	for (r, key) in enumerate(keys(SDBDRCFiles))
 		data = SDBDRCFiles[key].reconstructedEnergy1 .+ SDBDRCFiles[key].reconstructedEnergy2
 		if ( occursin("bb", key))
+			continue
+		end
+		if (occursin("Xi", key))
+			h1sigSDBDRC = get_estimated_h1( data, isotope_SDBDRC_df[r ,2], sumEParams[:binning]  )
+			sigLabel = key
 			continue
 		end
 		hh = get_estimated_h1( data, isotope_SDBDRC_df[r ,2], sumEParams[:binning]  )
 		push!(histosSDBDRC, hh)
 		push!(labelsSDBDRC, key)
 	end
-	
+
+	labelsSDBDRC = vcat(sigLabel, labelsSDBDRC)
 	shTotalSDBDRC = SensitivityModule.stackedhist( 
-		histosSDBDRC, 
+		vcat(h1sigSDBDRC, histosSDBDRC ), 
 		label = reshape(labelsSDBDRC, (1, length(labelsSDBDRC))),
 		xlabel = L"E_{sum}"*" [keV]",
 		ylabel = "estimated counts " *L"[%$(step(sumEParams[:binning])) \textrm{keV^{-1}}]",
-		title = "Stacked Hist \nEstimated counts in $(SNparams["tYear"]) years of measurement \nusing SDBDRC and recommended activities"
+		title = "stacked hist estimated counts \n $(SNparams["tYear"]) yr with recommended activities \nusing SDBDRC cuts",
+		c = [cScheme[i] for i=1:length(vcat(h1sigSDBDRC, histosSDBDRC ))]',
+		yformatter = :scientific,
+		ylims = (0, 2.2e4),
+		legend = :outerright,
+		size = (2200, 1000),
+		thickness_scaling = 1.8
 	)
+	safesave( plotsdir("CompareCuts", "SDBDRCcuts.pdf"), current() )
+	safesave( plotsdir("CompareCuts", "SDBDRCcuts.svg"), current() )
+	current()
 end
 
 
@@ -221,32 +245,56 @@ end
 begin 
 	histosvertex = []
 	labelsvertex = []
+	h1sigvertex = nothing
+	
 	for (r, key) in enumerate(keys(vertexFiles))
 		data = vertexFiles[key].reconstructedEnergy1 .+ vertexFiles[key].reconstructedEnergy2
 		if ( occursin("bb", key))
+			continue
+		end
+		if (occursin("Xi", key))
+			h1sigvertex = get_estimated_h1( data, isotope_vertex_df[r ,2], sumEParams[:binning]  )
 			continue
 		end
 		hh = get_estimated_h1( data, isotope_vertex_df[r ,2], sumEParams[:binning]  )
 		push!(histosvertex, hh)
 		push!(labelsvertex, key)
 	end
-	
+
+	labelsvertex = vcat(sigLabel, labelsvertex)
 	shTotalvertex = SensitivityModule.stackedhist( 
-		histosvertex, 
+		vcat(h1sigvertex, histosvertex), 
 		label = reshape(labelsvertex, (1, length(labelsvertex))),
 		xlabel = L"E_{sum}"*" [keV]",
 		ylabel = "estimated counts " *L"[%$(step(sumEParams[:binning])) \textrm{keV^{-1}}]",
-		title = "Stacked Hist \nEstimated counts in $(SNparams["tYear"]) years of measurement \nusing vertex and recommended activities"
+		title = "stacked hist estimated counts \n $(SNparams["tYear"]) yr with recommended activities \nusing SDBDRC + 100mm vertex cuts",
+		c = [cScheme[i] for i=1:length(labelsvertex)]',
+		yformatter = :scientific,
+		ylims = (0, 2.2e4),
+		legend = :outerright,
+		size = (2200, 1000),
+		thickness_scaling = 1.8
 	)
+
+	safesave( plotsdir("CompareCuts", "vertexcuts.pdf"), current() )
+	safesave( plotsdir("CompareCuts", "vertexcuts.svg"), current() )
+	current()
 end
 
 # ╔═╡ d477a745-e791-4706-971a-19d22958c158
 begin 
 	histosprob = []
 	labelsprob = []
+	h1sigprob = nothing
+
+	
 	for (r, key) in enumerate(keys(probFiles))
 		data = probFiles[key].reconstructedEnergy1 .+ probFiles[key].reconstructedEnergy2
 		if ( occursin("bb", key))
+			continue
+		end
+		if (occursin("Xi", key))
+			h1sigprob = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
 			continue
 		end
 		hh = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
@@ -254,13 +302,26 @@ begin
 		push!(labelsprob, key)
 	end
 	
+	labelsbkg = vcat(sigLabel, labelsprob)
+	
 	shTotalprob = SensitivityModule.stackedhist( 
-		histosprob, 
+		vcat(h1sigprob, histosprob), 
 		label = reshape(labelsprob, (1, length(labelsprob))),
 		xlabel = L"E_{sum}"*" [keV]",
 		ylabel = "estimated counts " *L"[%$(step(sumEParams[:binning])) \textrm{keV^{-1}}]",
-		title = "Stacked Hist \nEstimated counts in $(SNparams["tYear"]) years of measurement \nusing prob and recommended activities"
+		yformatter = :scientific,
+		title = "stacked hist estimated counts \n $(SNparams["tYear"]) yr with recommended activities \nusing SDBDRC + 100mm vertex + probability cuts",
+		c = [cScheme[i] for i=1:length(labelsprob)]',
+		ylims = (0, 2.2e4),
+		# ylims = (0, 1e4),
+		legend = :outerright,
+		size = (2200, 1000),
+		thickness_scaling = 1.8
 	)
+
+	safesave( plotsdir("CompareCuts", "probcuts.pdf"), current() )
+	safesave( plotsdir("CompareCuts", "probcuts.svg"), current() )
+	current()
 end
 
 # ╔═╡ e28ebb26-29b4-45c1-a0db-92d63e01500e
@@ -299,6 +360,68 @@ begin
 end
 
 # ╔═╡ 8adb3f23-19e2-440d-a90d-3ca81a7ea712
+begin 
+	PMT = Hist1D(Float64; bins = sumEParams[:binning])
+	foil_bulk = Hist1D(Float64; bins = sumEParams[:binning])
+	radon = Hist1D(Float64; bins = sumEParams[:binning])
+	labelsPMT = []
+	labelsfoil = []
+	labelsradon = []
+	
+	for (r, key) in enumerate(keys(probFiles))
+		data = probFiles[key].reconstructedEnergy1 .+ probFiles[key].reconstructedEnergy2
+		if ( occursin("bb", key))
+			continue
+		end
+		if ( occursin("Xi", key))
+			continue
+		end
+		if (occursin("PMT", key))
+			hh = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
+			PMT += hh
+			push!(labelsPMT, key)
+			continue
+		end
+		if (occursin("foil_bulk", key))
+			hh = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
+			foil_bulk += hh
+			push!(labelsfoil, key)
+			continue
+		end
+		hh = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
+		radon += hh
+		push!(labelsradon, key)
+	end
+
+	nS =  integral(h1sigprob) |> round 
+	nR =  integral(radon)  |> round
+	nP =  integral(PMT) |> round
+	nF =  integral(foil_bulk) |> round
+	
+	labs = ["signal; $nS" "PMT bkg; $nP" "foil_bulk bkg; $nF" "radon bkg; $nR"]
+
+
+
+	SensitivityModule.stackedhist(
+		vcat(h1sigprob, PMT, foil_bulk, radon),
+		label = labs,
+		legendtitle ="source; entries",
+		legendtitlefontsize = 16,
+		xlabel = L"E_{sum}"*" [keV]",
+		ylabel = "estimated counts " *L"[%$(step(sumEParams[:binning])) \textrm{keV^{-1}}]",
+		yformatter = :scientific,
+		title = "stacked hist estimated counts \n $(SNparams["tYear"]) yr with recommended activities \nusing SDBDRC + 100mm vertex + probability cuts",
+		c = [1, 2, 10, 11]',
+		ylims = (0, 1e4),
+		legend = :outerright,
+		size = (2200, 1000),
+		thickness_scaling = 1.8
+	)
+
+	safesave( plotsdir("CompareCuts", "probcuts_srcs.pdf"), current() )
+	safesave( plotsdir("CompareCuts", "probcuts_srcs.svg"), current() )
+	current()
+end
 
 
 # ╔═╡ Cell order:
@@ -316,6 +439,8 @@ end
 # ╟─4a1b3fdf-1a88-4fc4-b670-e62db0d85573
 # ╠═6fcbfdb0-3496-4edd-a378-cb02828c84d5
 # ╠═078b195e-e83d-4898-a593-bc704fe3bb9b
+# ╠═71739742-f9e8-47c1-8f16-326f73bce8c2
+# ╠═5efd324d-8fdf-4d17-a09a-cbd4ea277312
 # ╠═55be8367-6822-4ad2-9c6f-cd66327dc1c9
 # ╠═467bc8f3-f65d-42c8-9ce2-156adbd8f670
 # ╠═d477a745-e791-4706-971a-19d22958c158
