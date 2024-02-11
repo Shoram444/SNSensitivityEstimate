@@ -31,7 +31,7 @@ function get_isotope_details( activityParams, SNParams, simParams, isotope, dfDa
         SNParams["foilMass"]
     elseif( occursin("surface", string(isotope)))
         SNParams["gasVolume"]
-    elseif( occursin("PMT_bulk", string(isotope)))
+    elseif( occursin("PMT_glass_bulk", string(isotope)))
         SNParams["PMTGlassMass"]
     elseif( occursin("wire_bulk", string(isotope)))
         SNParams["wireBulkMass"]
