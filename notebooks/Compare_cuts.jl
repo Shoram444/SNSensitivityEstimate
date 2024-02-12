@@ -306,12 +306,12 @@ begin
 	
 	shTotalprob = SensitivityModule.stackedhist( 
 		vcat(h1sigprob, histosprob), 
-		label = reshape(labelsprob, (1, length(labelsprob))),
+		label = reshape(labelsbkg, (1, length(labelsbkg))),
 		xlabel = L"E_{sum}"*" [keV]",
 		ylabel = "estimated counts " *L"[%$(step(sumEParams[:binning])) \textrm{keV^{-1}}]",
 		yformatter = :scientific,
 		title = "stacked hist estimated counts \n $(SNparams["tYear"]) yr with recommended activities \nusing SDBDRC + 100mm vertex + probability cuts",
-		c = [cScheme[i] for i=1:length(labelsprob)]',
+		c = [cScheme[i] for i=1:length(labelsbkg)]',
 		ylims = (0, 2.2e4),
 		# ylims = (0, 1e4),
 		legend = :outerright,
@@ -407,6 +407,7 @@ begin
 		label = labs,
 		legendtitle ="source; entries",
 		legendtitlefontsize = 16,
+		legendfontsize = 16,
 		xlabel = L"E_{sum}"*" [keV]",
 		ylabel = "estimated counts " *L"[%$(step(sumEParams[:binning])) \textrm{keV^{-1}}]",
 		yformatter = :scientific,
