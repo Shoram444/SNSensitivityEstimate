@@ -425,6 +425,9 @@ begin
 end
 
 
+# ╔═╡ f80a0885-1ce0-4736-b1ac-e2fd7854a8a5
+savefig
+
 # ╔═╡ Cell order:
 # ╠═60342f92-c102-11ee-04ee-4fe6bdbcb411
 # ╠═a710d50c-7c23-4621-8a25-41ba31896c16
@@ -447,3 +450,4 @@ end
 # ╠═d477a745-e791-4706-971a-19d22958c158
 # ╠═e28ebb26-29b4-45c1-a0db-92d63e01500e
 # ╠═8adb3f23-19e2-440d-a90d-3ca81a7ea712
+# ╠═f80a0885-1ce0-4736-b1ac-e2fd7854a8a5
