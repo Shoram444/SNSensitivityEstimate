@@ -55,45 +55,6 @@ md"""
 # Isotope details using SDBDRC
 """
 
-# ╔═╡ e4ed8dd5-645d-4e39-8efe-a9b9d1f17376
-md"""
-# Isotope details using SDBDRC + vertex
-"""
-
-# ╔═╡ 23213a05-cb68-4f16-be98-510cfede5bcd
-begin
-	isotope_vertex_df = DataFrame()
-	for key in keys(vertexFiles)
-		if ( occursin("bb", key) || occursin("Xi", key))
-			(a, m, t, ε, nExpTot, nTotSim) = get_isotope_details( 
-				SigActivityParams, SNparams, SimulationParams, Symbol(key), vertexFiles[key] 
-			)
-		else
-			(a, m, t, ε, nExpTot, nTotSim) = get_isotope_details( 
-				BkgActivityParams, SNparams, SimulationParams, Symbol(key), vertexFiles[key] 
-			)
-		end
-		push!(isotope_vertex_df, (isotope = key, n_expected = Measurements.value(nExpTot), ε = ε*100, activity = Measurements.value(a), amount = m, n_simulated = nTotSim), promote=:true)
-	end
-
-	push!(
-		isotope_vertex_df, 
-		(
-			isotope = "Total_bkg", 
-			n_expected = sum(isotope_vertex_df[1:end-1,2]), 
-			ε = 0.0, 
-			activity = 0.0, 
-			amount = 0.0, 
-			n_simulated = 0.0
-		), 
-		promote=:true
-	)
-	
-	# isotope_vertex_df
-	
-
-end
-
 # ╔═╡ b0895c4b-bda5-46bd-b3bf-ecfe4b806353
 begin
 	isotope_SDBDRC_df = DataFrame()
@@ -130,10 +91,53 @@ begin
 	["", " ", "[%]", "[Bq/amount]", L"[\textrm{kg or m^3 or l}]", " "]
 	)
 	pretty_table(
-		isotope_vertex_df,
-		header =header,
-		backend = Val(:markdown)
+		isotope_SDBDRC_df,
+		header = header,
+		# backend = Val(:markdown)
 	)
+end
+
+# ╔═╡ e4ed8dd5-645d-4e39-8efe-a9b9d1f17376
+md"""
+# Isotope details using SDBDRC + vertex
+"""
+
+# ╔═╡ 23213a05-cb68-4f16-be98-510cfede5bcd
+begin
+	isotope_vertex_df = DataFrame()
+	for key in keys(vertexFiles)
+		if ( occursin("bb", key) || occursin("Xi", key))
+			(a, m, t, ε, nExpTot, nTotSim) = get_isotope_details( 
+				SigActivityParams, SNparams, SimulationParams, Symbol(key), vertexFiles[key] 
+			)
+		else
+			(a, m, t, ε, nExpTot, nTotSim) = get_isotope_details( 
+				BkgActivityParams, SNparams, SimulationParams, Symbol(key), vertexFiles[key] 
+			)
+		end
+		push!(isotope_vertex_df, (isotope = key, n_expected = Measurements.value(nExpTot), ε = ε*100, activity = Measurements.value(a), amount = m, n_simulated = nTotSim), promote=:true)
+	end
+
+	push!(
+		isotope_vertex_df, 
+		(
+			isotope = "Total_bkg", 
+			n_expected = sum(isotope_vertex_df[1:end-1,2]), 
+			ε = 0.0, 
+			activity = 0.0, 
+			amount = 0.0, 
+			n_simulated = 0.0
+		), 
+		promote=:true
+	)
+	
+	# isotope_vertex_df
+	pretty_table(
+		isotope_vertex_df,
+		header = header,
+		# backend = Val(:markdown)
+	)
+
 end
 
 # ╔═╡ 24266b27-e3c2-4640-9a9e-447045364d81
@@ -172,11 +176,11 @@ begin
 	
 	isotope_prob_df
 
-	# pretty_table(
-	# 	isotope_prob_df,
-	# 	header =header,
-	# 	backend = Val(:markdown)
-	# )
+	pretty_table(
+		isotope_prob_df,
+		header =header,
+		# backend = Val(:markdown)
+	)
 end
 
 # ╔═╡ 4a1b3fdf-1a88-4fc4-b670-e62db0d85573
@@ -199,12 +203,37 @@ end
 # ╔═╡ 5efd324d-8fdf-4d17-a09a-cbd4ea277312
 cScheme = ColorSchemes.tab20
 
+# ╔═╡ 2d30cd03-7fba-4a6a-917e-39785f8b7701
+begin 
+	for (r, key) in enumerate(keys(SDBDRCFiles))
+		data = SDBDRCFiles[key].reconstructedEnergy1 .+ SDBDRCFiles[key].reconstructedEnergy2
+		if (occursin("Xi", key))
+			global h1sigSDBDRC = get_estimated_h1( data, isotope_SDBDRC_df[r ,2], sumEParams[:binning]  )
+			global sigLabel = key
+			continue
+		end
+	end
+	for (r, key) in enumerate(keys(vertexFiles))
+		data = vertexFiles[key].reconstructedEnergy1 .+ vertexFiles[key].reconstructedEnergy2
+		if (occursin("Xi", key))
+			global h1sigvertex = get_estimated_h1( data, isotope_vertex_df[r ,2], sumEParams[:binning]  )
+			continue
+		end
+	end
+	for (r, key) in enumerate(keys(probFiles))
+		data = probFiles[key].reconstructedEnergy1 .+ probFiles[key].reconstructedEnergy2
+		if (occursin("Xi", key))
+			global h1sigprob = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
+			continue
+		end
+	end
+end
+
 # ╔═╡ 55be8367-6822-4ad2-9c6f-cd66327dc1c9
 begin 
 	histosSDBDRC = []
 	labelsSDBDRC = []
-	h1sigSDBDRC = nothing
-	sigLabel = nothing
+
 	
 	for (r, key) in enumerate(keys(SDBDRCFiles))
 		data = SDBDRCFiles[key].reconstructedEnergy1 .+ SDBDRCFiles[key].reconstructedEnergy2
@@ -212,8 +241,6 @@ begin
 			continue
 		end
 		if (occursin("Xi", key))
-			h1sigSDBDRC = get_estimated_h1( data, isotope_SDBDRC_df[r ,2], sumEParams[:binning]  )
-			sigLabel = key
 			continue
 		end
 		hh = get_estimated_h1( data, isotope_SDBDRC_df[r ,2], sumEParams[:binning]  )
@@ -233,9 +260,13 @@ begin
 		ylims = (0, 2.2e4),
 		legend = :outerright,
 		size = (2200, 1000),
-		thickness_scaling = 1.8
+		thickness_scaling = 1.8,
+		legendtitle= "SDBDRC",
+		fmt = :png,
+		linewidth=1
 	)
 	safesave( plotsdir("CompareCuts", "SDBDRCcuts.pdf"), current() )
+	safesave( plotsdir("CompareCuts", "SDBDRCcuts.png"), current() )
 	safesave( plotsdir("CompareCuts", "SDBDRCcuts.svg"), current() )
 	current()
 end
@@ -245,7 +276,6 @@ end
 begin 
 	histosvertex = []
 	labelsvertex = []
-	h1sigvertex = nothing
 	
 	for (r, key) in enumerate(keys(vertexFiles))
 		data = vertexFiles[key].reconstructedEnergy1 .+ vertexFiles[key].reconstructedEnergy2
@@ -253,7 +283,6 @@ begin
 			continue
 		end
 		if (occursin("Xi", key))
-			h1sigvertex = get_estimated_h1( data, isotope_vertex_df[r ,2], sumEParams[:binning]  )
 			continue
 		end
 		hh = get_estimated_h1( data, isotope_vertex_df[r ,2], sumEParams[:binning]  )
@@ -273,10 +302,14 @@ begin
 		ylims = (0, 2.2e4),
 		legend = :outerright,
 		size = (2200, 1000),
-		thickness_scaling = 1.8
+		thickness_scaling = 1.8,
+		legendtitle="SDBDRC + vertex",
+		fmt = :png,
+		linewidth=1
 	)
 
 	safesave( plotsdir("CompareCuts", "vertexcuts.pdf"), current() )
+	safesave( plotsdir("CompareCuts", "vertexcuts.png"), current() )
 	safesave( plotsdir("CompareCuts", "vertexcuts.svg"), current() )
 	current()
 end
@@ -285,7 +318,6 @@ end
 begin 
 	histosprob = []
 	labelsprob = []
-	h1sigprob = nothing
 
 	
 	for (r, key) in enumerate(keys(probFiles))
@@ -294,7 +326,6 @@ begin
 			continue
 		end
 		if (occursin("Xi", key))
-			h1sigprob = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
 			continue
 		end
 		hh = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
@@ -316,11 +347,15 @@ begin
 		# ylims = (0, 1e4),
 		legend = :outerright,
 		size = (2200, 1000),
-		thickness_scaling = 1.8
+		thickness_scaling = 1.8,
+		legendtitle="SDBDRC + vertex + prob",
+		fmt = :png,
+		linewidth=1
 	)
 
 	safesave( plotsdir("CompareCuts", "probcuts.pdf"), current() )
 	safesave( plotsdir("CompareCuts", "probcuts.svg"), current() )
+	safesave( plotsdir("CompareCuts", "probcuts.png"), current() )
 	current()
 end
 
@@ -355,7 +390,8 @@ begin
 		label = ["Xi31" "sum of backgrounds"],
 		xlabel = L"E_{sum}"*" [keV]",
 		ylabel = "estimated counts " *L"[%$(step(sumEParams[:binning])) \textrm{keV^{-1}}]",
-		title = "Stacked Hist \nEstimated counts in $(SNparams["tYear"]) years of measurement \nusing SDBDRC + vertex + prob and \nrecommended activities"
+		title = "Stacked Hist \nEstimated counts in $(SNparams["tYear"]) years of measurement \nusing SDBDRC + vertex + prob and \nrecommended activities",
+		fmt = :png
 	)
 end
 
@@ -378,18 +414,18 @@ begin
 		end
 		if (occursin("PMT", key))
 			hh = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
-			PMT += hh
+			global PMT += hh
 			push!(labelsPMT, key)
 			continue
 		end
 		if (occursin("foil_bulk", key))
 			hh = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
-			foil_bulk += hh
+			global foil_bulk += hh
 			push!(labelsfoil, key)
 			continue
 		end
 		hh = get_estimated_h1( data, isotope_prob_df[r ,2], sumEParams[:binning]  )
-		radon += hh
+		global radon += hh
 		push!(labelsradon, key)
 	end
 
@@ -398,14 +434,13 @@ begin
 	nP =  integral(PMT) |> round
 	nF =  integral(foil_bulk) |> round
 	
-	labs = ["signal; $nS" "PMT bkg; $nP" "foil_bulk bkg; $nF" "radon bkg; $nR"]
-
+	labs = ["signal; $nS" "PMT bkg; $nP" "internal bkg; $nF" "radon bkg; $nR"]
 
 
 	SensitivityModule.stackedhist(
 		vcat(h1sigprob, PMT, foil_bulk, radon),
 		label = labs,
-		legendtitle ="source; entries",
+		legendtitle ="SDBDRC + vertex + prob\nsource; entries",
 		legendtitlefontsize = 16,
 		legendfontsize = 16,
 		xlabel = L"E_{sum}"*" [keV]",
@@ -416,10 +451,13 @@ begin
 		ylims = (0, 1e4),
 		legend = :outerright,
 		size = (2200, 1000),
-		thickness_scaling = 1.8
+		thickness_scaling = 1.8,
+		fmt=:jpg,
+		linewidth=1
 	)
 
 	safesave( plotsdir("CompareCuts", "probcuts_srcs.pdf"), current() )
+	safesave( plotsdir("CompareCuts", "probcuts_srcs.png"), current() )
 	safesave( plotsdir("CompareCuts", "probcuts_srcs.svg"), current() )
 	current()
 end
@@ -445,6 +483,7 @@ savefig
 # ╠═078b195e-e83d-4898-a593-bc704fe3bb9b
 # ╠═71739742-f9e8-47c1-8f16-326f73bce8c2
 # ╠═5efd324d-8fdf-4d17-a09a-cbd4ea277312
+# ╠═2d30cd03-7fba-4a6a-917e-39785f8b7701
 # ╠═55be8367-6822-4ad2-9c6f-cd66327dc1c9
 # ╠═467bc8f3-f65d-42c8-9ce2-156adbd8f670
 # ╠═d477a745-e791-4706-971a-19d22958c158
