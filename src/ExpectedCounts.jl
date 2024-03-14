@@ -14,7 +14,7 @@ function get_tHalf(SNparams, efficiency, bkgCounts, α; approximate=:true)
         b = α√bkgCounts
     end
 
-    tHalf = log(2) * (Nₐ / W) * efficiency * (foilMass * a * tYear / b)
+    tHalf = log(2) * (Nₐ / W) * (foilMass * a * tYear) * efficiency / b
 end
 
 
