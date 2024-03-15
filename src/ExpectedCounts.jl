@@ -8,15 +8,31 @@ end
 """
     get_tHalf(SNparams, efficiency, bkgCounts, α; approximate = :true) -> returns the sensitivity in yr. 
 """
-function get_tHalf(SNparams, efficiency, bkgCounts, α; approximate=:true)
+function get_tHalf(SNparams, efficiency, bkgCounts, α; approximate="formula")
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
-    if approximate
-        b = α√bkgCounts
-    end
+    b = get_FC(bkgCounts, α; approximate=approximate)
 
     tHalf = log(2) * (Nₐ / W) * (foilMass * a * tYear) * efficiency / b
 end
 
+function get_tHalf(W, foilMass, Nₐ, tYear, a , efficiency, bkgCounts, α; approximate="formula")
+    b = get_FC(bkgCounts, α; approximate=approximate)
+    tHalf = log(2) * (Nₐ / W) * (foilMass * a * tYear) * efficiency / b
+end
+
+function get_FC(b, α; approximate="formula")
+    if( approximate == "formula")
+        if (b < 30 && α==1.64)
+            b = 2.44+0.8467*b-0.08849*b^2+0.00625*b^3-0.0002124*b^4+0.000002712*b^5
+        else
+            b = α * sqrt(b)
+        end
+    else
+        b = α * sqrt(b)
+    end
+    return b
+end
+    
 
 """
     get_isotope_details( activityParams, SNParams, simParams, isotope, dfData )

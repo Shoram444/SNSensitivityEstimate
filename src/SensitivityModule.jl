@@ -19,7 +19,8 @@ export
     get_tHalf,
     get_isotope_details,
     print_isotope_details,
-    estimated_counts_hist1D
+    estimated_counts_hist1D,
+    get_FC
 
 include("HistFuncs.jl")
 export 

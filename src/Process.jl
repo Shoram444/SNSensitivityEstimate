@@ -109,7 +109,7 @@ end
 
 """
     Returns the number of expected counts of the given process. 
-    ( n = (ε⋅t⋅m⋅A) ); where α is CL factor
+    ( n = (ε⋅t⋅m⋅A) ); 
 """
 function get_bkg_counts(processes::Process...)
     h2d = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
@@ -125,7 +125,7 @@ function get_bkg_counts(processes::Process...)
             end
         end
     end
-    return sqrt(h2d)
+    return h2d
 end
 
 """
@@ -150,10 +150,10 @@ function get_sig_counts(processes::Process...)
 end
 
 """
-    returns epsilon/(α*sqrt(b)) 
+    returns epsilon/(S(b)) 
 
 """
-function get_epsilon_to_b(α, processes::Process...)
+function get_epsilon_to_b(α, processes::Process...; approximate="formula")
     ε = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
 
     for p in processes # sum efficiencies of the signal processes (does this make sense?)
@@ -163,7 +163,8 @@ function get_epsilon_to_b(α, processes::Process...)
     end
 
     backgroundCounts = get_bkg_counts(processes...)
-    epsToB = ε/(α*sqrt(backgroundCounts))
+    backgroundCounts.hist.weights = get_FC.( backgroundCounts.hist.weights , α; approximate=approximate)
+    epsToB = ε/(backgroundCounts)
 
     replace!(epsToB.hist.weights, NaN => 0.0)
 
@@ -184,7 +185,7 @@ function get_sToBRatio(processes::Process...)
     return StoB
 end
 
-function get_tHalf_map(SNparams, α, processes::Process...; approximate=:true)
+function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula")
     ε = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
 
     for p in processes # sum efficiencies of the signal processes (does this make sense?)
@@ -196,9 +197,11 @@ function get_tHalf_map(SNparams, α, processes::Process...; approximate=:true)
     b = get_bkg_counts(processes...)
 
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
-    constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear ) 
+    constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
+     
+    b.hist.weights = get_FC.(b.hist.weights, α; approximate=approximate)
 
-    tHalf = constantTerm * ε / (α*sqrt(b))
+    tHalf = constantTerm * ε / (b)
     replace!(tHalf.hist.weights, NaN => 0.0)
 
     return tHalf
