@@ -9,15 +9,15 @@ include(scriptsdir("Params.jl"))
 include(scriptsdir("LoadData.jl"))
 
 signalProcessName = "bb0nu_foil_bulk"
-sigProcessESum = get_process(signalProcessName, probProcessesESum)
+sigProcessESum = get_process(signalProcessName, probProcessesESum11)
 
-bb2nuProcess = get_process("Xi037_foil_bulk", probProcessesESum)
+bb2nuProcess = get_process("bb_foil_bulk", probProcessesESum11)
 bb2nuProcess.signal = false
 bkgProcessesESum = [
-    get_process("Tl208_foil_bulk", probProcessesESum),
-    get_process("Bi214_foil_bulk", probProcessesESum),
-    get_process("Bi214_foil_surface", probProcessesESum),
-    get_process("Bi214_wire_surface", probProcessesESum),
+    get_process("Tl208_foil_bulk", probProcessesESum11),
+    get_process("Bi214_foil_bulk", probProcessesESum11),
+    get_process("Bi214_foil_surface", probProcessesESum11),
+    get_process("Bi214_wire_surface", probProcessesESum11),
     bb2nuProcess
 ]
 
@@ -55,8 +55,8 @@ with(
     )
     annotate!([(2000, 700, lbl)])
 
-    safesave(plotsdir("SumE", "T12Map_$(sigProcessESum.isotopeName)_bb=$(bb2nuProcess.isotopeName).png"), current())
-    safesave(plotsdir("SumE", "T12Map_$(sigProcessESum.isotopeName)_bb=$(bb2nuProcess.isotopeName).pdf"), current())
+    safesave(plotsdir("SumE", "T12Map_$(sigProcessESum.isotopeName)_bb=$(bb2nuProcess.isotopeName)_11dE.png"), current())
+    safesave(plotsdir("SumE", "T12Map_$(sigProcessESum.isotopeName)_bb=$(bb2nuProcess.isotopeName)_11dE.pdf"), current())
 
     current()
 end
@@ -75,7 +75,7 @@ get_tHalf1(t, b) = get_tHalf(
     approximate="formula"
 )
 
-
+theme(:dao, legend = :best, widen = :false)
 plot(
     t,
     get_tHalf1.(t, expBkgESum),
@@ -83,6 +83,8 @@ plot(
     ylabel="sensitivity " * L"T_{1/2}^{0\nu}" * "[yr]",
     title="sensitivity to " * L"0\nu\beta\beta" * " as a function of running time",
     label="assuming b = $(round(expBkgESum, sigdigits =4))/2.5yr ",
+    legendtitle = "ΔE = 11% @ 1MeV",
+    legendtitlefontsize = 8
 )
 plot!(
     t,
@@ -93,4 +95,4 @@ plot!(
     label="assuming b = $(round(0.5, sigdigits =4))/2.5yr ",
 )
 hline!([4.6e24], c=:black, label="cupid sensitivity")
-safesave(plotsdir("SumE", "T12Map_$(sigProcessESum.isotopeName)_vs_time.png"), current())
+safesave(plotsdir("SumE", "T12Map_$(sigProcessESum.isotopeName)_vs_time_11dE.png"), current())
