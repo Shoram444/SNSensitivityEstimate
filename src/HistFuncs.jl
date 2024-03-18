@@ -1,4 +1,4 @@
-import Base: *, /
+import Base: *, /, sqrt
 
 function /(x::Real, h::Hist2D)
     mat = zeros(size(bincounts(h)))
@@ -14,19 +14,33 @@ function /(x::Real, h::Hist2D)
     return h
 end
 
-function /(h::Hist2D, x::Real)
-    mat = zeros(size(bincounts(h)))
+/(h::Hist2D, x::Real) = /(x::Real, h::Hist2D)
 
-    for i in eachindex(bincounts(h))
-        mat[i] = bincounts(h)[i] / x
+function /(h1::Hist2D, h2::Hist2D)
+    mat = zeros(size(bincounts(h1)))
+    h1bins = bincounts(h1)
+    h2bins = bincounts(h2)
+
+    for i in eachindex(mat)
+        mat[i] = h1bins[i] / h2bins[i]
     end
-
-    h.hist.weights = mat
-    return h
+    h1.hist.weights = mat
+    return h1
 end
 
 function *(x::Real, h::Hist2D)
     return *(h, x)
+end
+
+function sqrt(h::Hist2D) 
+    mat = zeros(size(bincounts(h)))
+
+    for i in eachindex(bincounts(h))
+        mat[i] = sqrt(bincounts(h)[i]) 
+    end
+
+    h.hist.weights = mat
+    return h
 end
 
 

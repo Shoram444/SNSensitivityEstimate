@@ -61,6 +61,11 @@ function Process(
     return Process(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount, eff)
 end
 
+function get_process(isotopeName, processesVector)
+    idx = findfirst( x -> x.isotopeName == isotopeName , processesVector )
+    return processesVector[idx]
+end
+
 """
     get_efficiency(dataVector::Vector{<:Real}, bins::AbstractRange, nTotalSim::Real)
 
@@ -102,13 +107,16 @@ function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange)
 end
 
 
-
-function get_bkg_rate(processes::Process...)
+"""
+    Returns the number of expected counts of the given process. 
+    ( n = (ε⋅t⋅m⋅A) ); 
+"""
+function get_bkg_counts(processes::Process...)
     h2d = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
 
     for p in processes
         if (p.signal)
-            @warn("get_bkg_rate(): passed isotope $(p.isotopeName) is a signal process!!")
+            @warn("get_bkg_counts(): passed isotope $(p.isotopeName) is a signal process!!")
         else
             if (eltype(p.activity) <: Measurement) # check if measurement with uncertainties
                 h2d += p.efficiency * p.activity.val * p.amount * p.timeMeas
@@ -120,12 +128,16 @@ function get_bkg_rate(processes::Process...)
     return h2d
 end
 
-function get_sig_rate(processes::Process...)
+"""
+    Returns the number of expected counts of the given process. 
+    (n = ε⋅t⋅m⋅A)
+"""
+function get_sig_counts(processes::Process...)
     h2d = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
 
     for p in processes
         if (!p.signal)
-            @warn("get_sig_rate(): passed isotope $(p.isotopeName) is a background process!!")
+            @warn("get_sig_counts(): passed isotope $(p.isotopeName) is a background process!!")
         else
             if (eltype(p.activity) <: Measurement) # check if measurement with uncertainties
                 h2d += p.efficiency * p.activity.val * p.amount * p.timeMeas
@@ -137,10 +149,31 @@ function get_sig_rate(processes::Process...)
     return h2d
 end
 
+"""
+    returns epsilon/(S(b)) 
+
+"""
+function get_epsilon_to_b(α, processes::Process...; approximate="formula")
+    ε = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
+
+    for p in processes # sum efficiencies of the signal processes (does this make sense?)
+        if(p.signal)
+            ε += p.efficiency
+        end
+    end
+
+    backgroundCounts = get_bkg_counts(processes...)
+    backgroundCounts.hist.weights = get_FC.( backgroundCounts.hist.weights , α; approximate=approximate)
+    epsToB = ε/(backgroundCounts)
+
+    replace!(epsToB.hist.weights, NaN => 0.0)
+
+    return epsToB
+end
 
 function get_sToBRatio(processes::Process...)
-    backgroundCounts = get_bkg_rate(processes...)
-    signalCounts = get_sig_rate(processes...)
+    backgroundCounts = get_bkg_counts(processes...)
+    signalCounts = get_sig_counts(processes...)
 
     if size(bincounts(backgroundCounts)) != size(bincounts(signalCounts))
         throw(ArgumentError("Input matrices must have the same dimensions"))
@@ -152,40 +185,55 @@ function get_sToBRatio(processes::Process...)
     return StoB
 end
 
+function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula")
+    ε = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
+
+    for p in processes # sum efficiencies of the signal processes (does this make sense?)
+        if(p.signal)
+            ε += p.efficiency
+        end
+    end
+
+    b = get_bkg_counts(processes...)
+
+    @unpack W, foilMass, Nₐ, tYear, a = SNparams
+    constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
+     
+    b.hist.weights = get_FC.(b.hist.weights, α; approximate=approximate)
+
+    tHalf = constantTerm * ε / (b)
+    replace!(tHalf.hist.weights, NaN => 0.0)
+
+    return tHalf
+end
+
 """
     get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
 ==========
 Outputs the estimated bkg counts for the given ROI. 
 This process is obtained from looking up the `bkg_rate` at `best_ROI` and multiplying by mass and time.  
 """
-function get_estimated_bkg_counts(minBinCenter, maxBinCenter, SNparams, processes::Process...)
-    for p in processes
-        if (p.signal)
-            error("Isotope $(p.isotopeName) is a signal process! Please provide only background processes!")
-        end
-    end
-    h2d = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
-    bkg_cts_mat = zeros(size(bincounts(h2d)))
+function get_bkg_counts_ROI(minBinCenter, maxBinCenter,processes::Process...)
+    b = get_bkg_counts(processes...)
 
-    for p in processes
-        if (p.signal)
-            @warn("get_bkg_rate(): passed isotope $(p.isotopeName) is a signal process!!")
-        else
-            bkg_cts_mat += bincounts(p.efficiency) * p.activity * p.amount * p.timeMeas
-        end
-    end
-
-    return lookup(bkg_cts_mat, minBinCenter, maxBinCenter, processes[1].bins)
+    return lookup(b , minBinCenter, maxBinCenter)
 end
 
-function get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
+function get_bkg_counts_ROI(best_ROI, processes::Process...)
     binStepHalf = step(processes[1].bins) / 2              # get the binning step and divide by half
     minBinCenter = best_ROI[:minBinEdge] + binStepHalf       # get the center of the minimal bin in ROI
     maxBinCenter = best_ROI[:maxBinEdge] - binStepHalf       # get the center of the maximal bin in ROI
 
-    return get_estimated_bkg_counts(minBinCenter, maxBinCenter, SNparams, processes...)
+    return get_bkg_counts_ROI(minBinCenter, maxBinCenter, processes...)
 end
 
+function FHist.lookup(process::Process, best_ROI::Dict) 
+    binStepHalf = step(process.bins) / 2              # get the binning step and divide by half
+    minBinCenter = best_ROI[:minBinEdge] + binStepHalf       # get the center of the minimal bin in ROI
+    maxBinCenter = best_ROI[:maxBinEdge] - binStepHalf       # get the center of the maximal bin in ROI
+    
+    return lookup(process.efficiency, minBinCenter, maxBinCenter)
+end
 
 FHist.lookup(process::Process, x::Real, y::Real) = lookup(process.efficiency, x, y)
 DrWatson.default_allowed(::Process) = (Real, String, Bool, AbstractRange)
