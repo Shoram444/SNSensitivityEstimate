@@ -1,6 +1,6 @@
 # SNSensitivityEstimate
 
-All **performed and completed tasks** are summarized in the [Wiki page](https://github.com/Shoram444/SNSensitivityEstimate/wiki).
+All **performed and completed tasks** are summarized in the [TO DO](https://github.com/Shoram444/SNSensitivityEstimate/issues/14).
 
 This code repository represents a small project within the SuperNEMO experiment. The goal is calcualtion of sensitivity estimates for various modes of $2\nu\beta\beta$ decay. 
 

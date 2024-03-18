@@ -7,15 +7,23 @@ include("Misc.jl")
 export 
     generate_raw_plots,
     fill_from_root_file,
-    get_max_bin,
-    halfLife_to_activity,
-    get_tHalf,
-    annotatewithbox!,
     get_2D_vertex_separation,
     get_1D_vertex_separation,
     add_vertex_2D_separation_column!,
     add_vertex_dy_separation_column!,
     add_vertex_dz_separation_column!
+
+include("ExpectedCounts.jl")
+export 
+    halfLife_to_activity,
+    get_tHalf,
+    get_isotope_details,
+    print_isotope_details,
+    estimated_counts_hist1D
+
+include("HistFuncs.jl")
+export 
+    get_max_bin
 
 include("Process.jl")
 export 

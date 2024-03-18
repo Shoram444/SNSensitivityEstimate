@@ -1,5 +1,3 @@
-import Base: *, /
-
 function generate_raw_plots(inDf::DataFrame, isotope; kwargs...)
     phi, e1, e2 = inDf[!, :phi], inDf[!, :reconstructedEnergy1], inDf[!, :reconstructedEnergy2]
 
@@ -23,10 +21,10 @@ function generate_raw_plots(inDf::DataFrame, isotope; kwargs...)
     hPhi = stephist(
         phi;
         nbins=0:5:180,
-        xlabel="escape angle "*L"[\degree]",
+        xlabel="escape angle " * L"[\degree]",
         ylabel="counts/" * L"5\degree",
-        title= "angular distribution of $isotope",
-        label = "",
+        title="angular distribution of $isotope",
+        label="",
         plot_args,
         kwargs...
     )
@@ -36,29 +34,29 @@ function generate_raw_plots(inDf::DataFrame, isotope; kwargs...)
         nbins=0:100:3500,
         xlabel="single-electron energy [keV]",
         ylabel="counts/" * "100 keV",
-        title= "single electron energy distribution of $isotope",
-        label = "energy 1",
+        title="single electron energy distribution of $isotope",
+        label="energy 1",
         plot_args,
-        )
+    )
 
     stephist!(
         e2;
         nbins=0:100:3500,
-        label = "energy 2",
+        label="energy 2",
         plot_args,
     )
 
     stephist!(
-        vcat(e1,e2);
+        vcat(e1, e2);
         nbins=0:100:3500,
-        label = "both electrons",
+        label="both electrons",
         plot_args,
     )
-    
-    safesave(plotsdir( "Raw", "Angular", "$(isotope)_raw_angdist.png"), hPhi )
-    safesave(plotsdir("Raw", "Single","$(isotope)_raw_enedist.png"), hEne)
 
-    plot(hPhi, hEne, size = (1800, 600))
+    safesave(plotsdir("Raw", "Angular", "$(isotope)_raw_angdist.png"), hPhi)
+    safesave(plotsdir("Raw", "Single", "$(isotope)_raw_enedist.png"), hEne)
+
+    plot(hPhi, hEne, size=(1800, 600))
 
 end
 
@@ -71,85 +69,21 @@ function fill_from_root_file(inFile::ROOTFile, treeName::String, fieldNames)
     return df
 end
 
-FHist.binedges(h::Histogram) = h.edges[1]
 
-
-"""
-    get_max_bin(h2d::Hist2D)
-
-Returns a Dict with the following keys:
-    + :minBinEdge => minBinCenterEdge - binStepHalf ->  defines the lower edge of ROI
-    + :maxBinEdge => maxBinCenterEdge + binStepHalf ->  defines the upper edge of ROI
-    + :maxBinCount => maxBinCount ->  provides the maximum bin counts of the 2D histogram
-"""
-function get_max_bin(h2d::Hist2D)
-    (step(binedges(h2d)[1]) != step(binedges(h2d)[1])) && error("bins must be the same!")
-    binStepHalf = step(binedges(h2d)[1])/2
-    BinID = argmax(bincounts(h2d))
-    minBinEdge, maxBinEdge = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
-    maxBinCount = lookup(h2d, minBinEdge, maxBinEdge)
-
-    return Dict(
-        :minBinEdge => minBinEdge - binStepHalf,
-        :maxBinEdge => maxBinEdge + binStepHalf,
-        :maxBinCount => maxBinCount
-    )
+function get_2D_vertex_separation(y1, z1, y2, z2)
+    return sqrt((y1 - y2)^2 + (z1 - z2)^2)
 end
 
-
-"""
-    halfLife_to_activity( NA::Real, W::Real, Thalf::Real ) -> returns activity in [Bq/kg]
-"""
-function halfLife_to_activity( NA::Real, W::Real, Thalf::Real )
-    return (log(2) * NA) / (W * Thalf) 
-end
-
-"""
-    get_tHalf(SNparams, efficiency, bkgCounts, α; approximate = :true) -> returns the sensitivity in yr. 
-"""
-function get_tHalf(SNparams, efficiency, bkgCounts, α; approximate = :true)
-    @unpack W, foilMass, Nₐ, tYear, a = SNparams
-    if approximate
-        b = α√bkgCounts
-    end
-
-    tHalf = log(2) * (Nₐ / W) * efficiency * (foilMass*a*tYear / b)
-end
-
-"""
-    Annotations with box: courtesy of https://discourse.julialang.org/t/how-to-change-annotate-background-color/40606.
-"""
-function annotatewithbox!(
-    fig::Plots.Plot,
-    text::Plots.PlotText,
-    x::Real, y::Real, Δx::Real, Δy::Real = Δx;
-    kwargs...)
-
-    box = Plots.Shape(:rect)
-
-    Plots.scale!(box, Δx, Δy)
-    Plots.translate!(box, x, y)
-
-    Plots.plot!(fig, box, c = :white, linestroke = :black, label = false; kwargs...)
-    Plots.annotate!(fig, x, y, text)
-
-    fig
-end
-
-function get_2D_vertex_separation( y1, z1, y2, z2 )
-    return sqrt( (y1 - y2)^2 + (z1 - z2)^2)
-end
-
-function get_1D_vertex_separation( x1, x2 )
-    return abs( x1 - x2 )
+function get_1D_vertex_separation(x1, x2)
+    return abs(x1 - x2)
 end
 
 function add_vertex_2D_separation_column!(df)
     @rtransform! df :d = get_2D_vertex_separation(
-    :y1Escaped, 
-    :z1Escaped, 
-    :y2Escaped, 
-    :z2Escaped 
+        :y1Escaped,
+        :z1Escaped,
+        :y2Escaped,
+        :z2Escaped
     )
 end
 
@@ -167,32 +101,3 @@ function add_vertex_dz_separation_column!(df)
     )
 end
 
-function /(x::Real, h::Hist2D)
-    mat = zeros(size(bincounts(h)))
-
-    for i in eachindex(bincounts(h))
-        if(bincounts(h)[i] == 0)
-            continue
-        else
-            mat[i] = x/bincounts(h)[i]
-        end
-    end
-    h.hist.weights = mat
-    return h
-end
-
-function /(h::Hist2D, x::Real)
-    mat = zeros(size(bincounts(h)))
-
-    for i in eachindex(bincounts(h))
-        mat[i] = bincounts(h)[i]/x
-    end
-    
-    h.hist.weights = mat
-    return h
-end
-
-
-function *(x::Real, h::Hist2D)
-    return *(h, x)
-end

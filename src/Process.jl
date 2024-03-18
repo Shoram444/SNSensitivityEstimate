@@ -39,23 +39,23 @@ The following fields are defined:
     + efficiency::Hist2D - the 2D histogram with efficiencies per bin 
 """
 function Process(
-    dataVector::Vector{<:Real}, 
-    isotopeName::String, 
-    signal::Bool, 
-    activity::Real, 
-    timeMeas::Real, 
-    nTotalSim::Real, 
+    dataVector::Vector{<:Real},
+    isotopeName::String,
+    signal::Bool,
+    activity::Real,
+    timeMeas::Real,
+    nTotalSim::Real,
     bins::AbstractRange,
     amount::Real
-) 
+)
     eff = get_efficiency(dataVector, bins, nTotalSim)
     return Process(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount, eff)
 end
 
 function Process(
-    dataVector::Vector{<:Real}, 
+    dataVector::Vector{<:Real},
     processDict::Dict
-) 
+)
     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
     eff = get_efficiency(dataVector, bins, nTotalSim)
     return Process(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount, eff)
@@ -102,7 +102,6 @@ function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange)
 end
 
 
-FHist.lookup(process::Process, x::Real, y::Real) = lookup(process.efficiency, x, y)
 
 function get_bkg_rate(processes::Process...)
     h2d = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
@@ -111,7 +110,7 @@ function get_bkg_rate(processes::Process...)
         if (p.signal)
             @warn("get_bkg_rate(): passed isotope $(p.isotopeName) is a signal process!!")
         else
-            if( eltype(p.activity) <: Measurement ) # check if measurement with uncertainties
+            if (eltype(p.activity) <: Measurement) # check if measurement with uncertainties
                 h2d += p.efficiency * p.activity.val * p.amount * p.timeMeas
             else
                 h2d += p.efficiency * p.activity * p.amount * p.timeMeas
@@ -128,7 +127,7 @@ function get_sig_rate(processes::Process...)
         if (!p.signal)
             @warn("get_sig_rate(): passed isotope $(p.isotopeName) is a background process!!")
         else
-            if( eltype(p.activity) <: Measurement ) # check if measurement with uncertainties
+            if (eltype(p.activity) <: Measurement) # check if measurement with uncertainties
                 h2d += p.efficiency * p.activity.val * p.amount * p.timeMeas
             else
                 h2d += p.efficiency * p.activity * p.amount * p.timeMeas
@@ -161,12 +160,12 @@ This process is obtained from looking up the `bkg_rate` at `best_ROI` and multip
 """
 function get_estimated_bkg_counts(minBinCenter, maxBinCenter, SNparams, processes::Process...)
     for p in processes
-        if(p.signal)
+        if (p.signal)
             error("Isotope $(p.isotopeName) is a signal process! Please provide only background processes!")
         end
     end
     h2d = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
-    bkg_cts_mat = zeros(size(bincounts(h2d)))   
+    bkg_cts_mat = zeros(size(bincounts(h2d)))
 
     for p in processes
         if (p.signal)
@@ -180,7 +179,7 @@ function get_estimated_bkg_counts(minBinCenter, maxBinCenter, SNparams, processe
 end
 
 function get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
-    binStepHalf = step( processes[1].bins ) / 2              # get the binning step and divide by half
+    binStepHalf = step(processes[1].bins) / 2              # get the binning step and divide by half
     minBinCenter = best_ROI[:minBinEdge] + binStepHalf       # get the center of the minimal bin in ROI
     maxBinCenter = best_ROI[:maxBinEdge] - binStepHalf       # get the center of the maximal bin in ROI
 
@@ -188,17 +187,9 @@ function get_estimated_bkg_counts(best_ROI, SNparams, processes::Process...)
 end
 
 
+FHist.lookup(process::Process, x::Real, y::Real) = lookup(process.efficiency, x, y)
 DrWatson.default_allowed(::Process) = (Real, String, Bool, AbstractRange)
 DrWatson.allaccess(::Process) = (:isotopeName, :signal, :bins, :activity, :nTotalSim, :amount)
 
-function FHist.lookup(weights::Matrix, x::Real, y::Real, binning)
-    h2d = Hist2D(Float64, bins=(binning, binning))
-    h2d.hist.weights = [bc.val for bc in weights]
 
-    rx, ry = binedges(h2d)
-    !(first(rx) <= x <= last(rx)) && return missing
-    !(first(ry) <= y <= last(ry)) && return missing
-
-    return weights[FHist._edge_binindex(rx, x), FHist._edge_binindex(ry, y)]
-end
 
