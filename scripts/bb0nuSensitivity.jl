@@ -18,7 +18,7 @@ bkgProcessesESum = [
     get_process("Bi214_foil_bulk", probProcessesESum11),
     get_process("Bi214_foil_surface", probProcessesESum11),
     get_process("Bi214_wire_surface", probProcessesESum11),
-    bb2nuProcess
+    bb2nuProcess,
 ]
 
 α = 1.64
@@ -75,7 +75,6 @@ get_tHalf1(t, b) = get_tHalf(
     approximate="formula"
 )
 
-theme(:dao, legend = :best, widen = :false)
 plot(
     t,
     get_tHalf1.(t, expBkgESum),
@@ -84,7 +83,7 @@ plot(
     title="sensitivity to " * L"0\nu\beta\beta" * " as a function of running time",
     label="assuming b = $(round(expBkgESum, sigdigits =4))/2.5yr ",
     legendtitle = "ΔE = 11% @ 1MeV",
-    legendtitlefontsize = 8
+    legendtitlefontsize = 12
 )
 plot!(
     t,
@@ -96,3 +95,68 @@ plot!(
 )
 hline!([4.6e24], c=:black, label="cupid sensitivity")
 safesave(plotsdir("SumE", "T12Map_$(sigProcessESum.isotopeName)_vs_time_11dE.png"), current())
+
+
+plot(
+    t,
+    get_tHalf1.(t, 1.5),
+    xlabel="running time [yr]",
+    ylabel="sensitivity " * L"T_{1/2}^{0\nu}" * "[yr]",
+    title="sensitivity to " * L"0\nu\beta\beta" * " as a function of running time",
+    label="b = 1.5 / 2.5yr ",
+    legendtitle = "ΔE = 11% @ 1MeV",
+    legendtitlefontsize = 12,
+    # fill = get_tHalf1.(t, 0.5),
+    # fa = 0.4,
+    # fillstyle= :x
+)
+plot!(
+    t,
+    get_tHalf1.(t, 0.5),
+    label="b = 0.5 / 2.5yr ",
+    c= 2,
+)
+plot!(
+    t,
+    get_tHalf1.(t, 0.5),
+    label="b ∈ (0.5, 1.5) / 2.5yr ",
+    c= :black,
+    fill = get_tHalf1.(t, 1.5),
+    fa = 0.4,
+    fillstyle= :x,
+    lw = 0
+)
+hline!([4.6e24], c=:black, label="cupid sensitivity")
+savefig(plotsdir("SumE","T12_band.png"))
+
+
+hhs = get_bkg_counts_1D.(bkgProcessesESum)
+sig1d = get_bkg_counts_1D(sigProcessESum)
+
+gr()
+SensitivityModule.stackedhist(
+    hhs, 
+    yscale =:log10, 
+    ylims = (1e-1, 1e4), 
+    label = reshape([p.isotopeName for p in bkgProcessesESum], 1, length(hhs)),
+    legend = :best,
+    xlabel = "sum energy [keV]",
+    ylabel = "estimated counts " * L"[keV^{-1}]",
+    title = "estimated sum spectrum",
+    xlims = (0, 3500),.
+    c= [2 3 4 5 1],
+)
+savefig(plotsdir("SumE", "estimated1D_nu0_spectrum.png"))
+
+
+estimated_counts_hist1D(probFiles11["Bi214_foil_bulk"], 
+                        BkgActivityParams[:Bi214_foil_bulk], 
+                        SNparams["foilMass"], 
+                        SNparams["t"], 
+                        0:150:3500, 
+                        SimulationParams[:Bi214_foil_bulk]) |> integral
+
+
+for p in probProcessesESum
+    @show print_isotope_details(p)
+end

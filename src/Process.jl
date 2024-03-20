@@ -130,6 +130,34 @@ end
 
 """
     Returns the number of expected counts of the given process. 
+    ( n = (ε⋅t⋅m⋅A) ); 
+"""
+function get_bkg_counts_1D(processes::Process...)
+    h1d = Hist1D(Float64; bins=(processes[1].bins))
+
+    for p in processes
+        if (p.signal)
+            @warn("get_bkg_counts(): passed isotope $(p.isotopeName) is a signal process!!")
+        else
+            h1d += get_bkg_counts_1D(p)
+        end
+    end
+    return h1d
+end
+
+function get_bkg_counts_1D(process::Process)
+    fh1 = Hist1D(Float64; bins=process.bins) 
+    push!.(fh1, process.dataVector )
+
+    totalEff = length(process.dataVector) / process.nTotalSim
+    fh1 = normalize(fh1, width = false) 
+    fh1 *= totalEff * process.amount * process.timeMeas * Measurements.value(process.activity)
+    
+    return fh1
+end
+
+"""
+    Returns the number of expected counts of the given process. 
     (n = ε⋅t⋅m⋅A)
 """
 function get_sig_counts(processes::Process...)
@@ -205,6 +233,64 @@ function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula
     replace!(tHalf.hist.weights, NaN => 0.0)
 
     return tHalf
+end
+
+function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula")
+    ε = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
+
+    for p in processes # sum efficiencies of the signal processes (does this make sense?)
+        if(p.signal)
+            ε += p.efficiency
+        end
+    end
+
+    b = get_bkg_counts(processes...)
+
+    @unpack W, foilMass, Nₐ, tYear, a = SNparams
+    constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
+     
+    b.hist.weights = get_FC.(b.hist.weights, α; approximate=approximate)
+
+    tHalf = constantTerm * ε / (b)
+    replace!(tHalf.hist.weights, NaN => 0.0)
+
+    return tHalf
+end
+
+"""
+    get_isotope_details( process::Process )
+
+    returns a tuple of isotope details: (a, m, t, ε, nExpTot, nTotSim)
+
+    Useful for printing and estimating expected counts.
+"""
+function get_isotope_details( process::Process )
+    a = process.activity
+    m = process.amount
+    t = process.timeMeas
+    nTotSim = process.nTotalSim
+    ε = length(process.dataVector) / nTotSim
+
+    nExpTot = a*m*t*ε
+
+    return a, m, t, ε, nExpTot, nTotSim 
+end
+
+"""
+    print_isotope_details( processes::Process... )
+
+    returns a string with basic isotope details.
+"""
+function print_isotope_details( process::Process )
+    (a, m, t, ε, nExpTot, nTotSim) = get_isotope_details(process) 
+
+    a = round(a, sigdigits=3)
+    ε = round(ε*100, sigdigits=3)
+    m = round(m, sigdigits=3)
+    nExpTot = round(nExpTot, sigdigits=3)
+    isotope = process.isotopeName
+    
+    "|$isotope | $nExpTot | $ε | $a | $m |"
 end
 
 """

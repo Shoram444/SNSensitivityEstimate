@@ -37,8 +37,11 @@ export
     get_sToBRatio,              # sig / bkg
     get_epsilon_to_b,           # epsilon / bkg
     get_tHalf_map,              # returns the Hist2D object with T1/2 per ROI
-    get_bkg_counts_ROI          # obtain the estimated bkg numbers in given ROI (scaled to mass and Tmeas)
-
+    get_bkg_counts_ROI,          # obtain the estimated bkg numbers in given ROI (scaled to mass and Tmeas)
+    get_bkg_counts_1D,             # returns Hist1D of expected backgrounds
+    get_isotope_details,
+    print_isotope_details
+    
 include("PlotsRecipes.jl")
 
 include("Makie_themes.jl")

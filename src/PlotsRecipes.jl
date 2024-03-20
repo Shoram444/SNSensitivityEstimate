@@ -7,8 +7,8 @@ Plots.@recipe function f(h::StackedHist)
     
     x = midpoints(FHist.binedges(histos[1])) 
 
-    y = zeros(length(x), length(histos))    
-    fr = zeros(length(x), length(histos))   
+    y = zeros(length(x), length(histos))
+    fr = zeros(length(x), length(histos))
 
     for i in 1:length(histos)
         y[:, i] = i == 1 ? bincounts(histos[i]) : y[:, i-1] .+ bincounts(histos[i])

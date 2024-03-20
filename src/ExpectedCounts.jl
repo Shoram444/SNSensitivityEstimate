@@ -90,7 +90,7 @@ function estimated_counts_hist1D(dataDf, activity, amount, time, binning, nTotal
             binning
         )
     
-    h1d = normalize(h1d; width =:true) # normalize to area of 1
+    h1d = normalize(h1d; width =:false) # normalize to area of 1
     
     if(typeof(activity)<:Measurement) # just a precaution, sometime I use activities with uncertainty
         activity = activity.val
