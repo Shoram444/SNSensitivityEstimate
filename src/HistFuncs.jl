@@ -10,11 +10,23 @@ function /(x::Real, h::Hist2D)
             mat[i] = x / bincounts(h)[i]
         end
     end
-    h.hist.weights = mat
+    h.bincoutns .= mat
     return h
 end
 
-/(h::Hist2D, x::Real) = /(x::Real, h::Hist2D)
+function /(h::Hist2D, x::Real) 
+    mat = zeros(size(bincounts(h)))
+
+    for i in eachindex(bincounts(h))
+        if (bincounts(h)[i] == 0)
+            continue
+        else
+            mat[i] =  bincounts(h)[i] / x
+        end
+    end
+    h.bincoutns .= mat
+    return h
+end
 
 function /(h1::Hist2D, h2::Hist2D)
     mat = zeros(size(bincounts(h1)))
@@ -24,7 +36,7 @@ function /(h1::Hist2D, h2::Hist2D)
     for i in eachindex(mat)
         mat[i] = h1bins[i] / h2bins[i]
     end
-    h1.hist.weights = mat
+    h1.bincounts .= mat
     return h1
 end
 
@@ -39,7 +51,7 @@ function sqrt(h::Hist2D)
         mat[i] = sqrt(bincounts(h)[i]) 
     end
 
-    h.hist.weights = mat
+    h.bincounts .= mat
     return h
 end
 
@@ -53,11 +65,11 @@ Returns a Dict with the following keys:
     + :maxBinCount => maxBinCount ->  provides the maximum bin counts of the 2D histogram
 """
 function get_max_bin(h2d::Hist2D)
-    (step(binedges(h2d)[1]) != step(binedges(h2d)[1])) && error("bins must be the same!")
-    binStepHalf = step(binedges(h2d)[1]) / 2
-    BinID = argmax(bincounts(h2d))
-    minBinEdge, maxBinEdge = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
-    maxBinCount = lookup(h2d, minBinEdge, maxBinEdge)
+    (step(binedges(h2d)[1].uniform_edges) != step(binedges(h2d)[1].uniform_edges)) && error("bins must be the same!")
+    @show binStepHalf = step(binedges(h2d)[1].uniform_edges) / 2
+    @show BinID = argmax(bincounts(h2d))
+    @show minBinEdge, maxBinEdge = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
+    @show maxBinCount = lookup(h2d, minBinEdge, maxBinEdge)
 
     return Dict(
         :minBinEdge => minBinEdge - binStepHalf,

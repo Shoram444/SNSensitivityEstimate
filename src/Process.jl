@@ -89,8 +89,8 @@ function get_nPassed(process::Process, bins::AbstractRange)
 end
 
 function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange)
-    h1d = Hist1D(dataVector, bins)
-    h2d = Hist2D(Float64, bins=(bins, bins))#prepare empty 2d Histogram
+    h1d = Hist1D(dataVector; binedges=bins)
+    h2d = Hist2D(; counttype=Float64, binedges=(bins, bins))#prepare empty 2d Histogram
 
     binCenters = collect(bincenters(h1d))
     binStep = step(bins)
@@ -112,7 +112,7 @@ end
     ( n = (ε⋅t⋅m⋅A) ); 
 """
 function get_bkg_counts(processes::Process...)
-    h2d = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
+    h2d = Hist2D(; binedges=(processes[1].bins, processes[1].bins))
 
     for p in processes
         if (p.signal)
@@ -133,7 +133,7 @@ end
     ( n = (ε⋅t⋅m⋅A) ); 
 """
 function get_bkg_counts_1D(processes::Process...)
-    h1d = Hist1D(Float64; bins=(processes[1].bins))
+    h1d = Hist1D(; binedges=(processes[1].bins))
 
     for p in processes
         if (p.signal)
@@ -146,7 +146,7 @@ function get_bkg_counts_1D(processes::Process...)
 end
 
 function get_bkg_counts_1D(process::Process)
-    fh1 = Hist1D(Float64; bins=process.bins) 
+    fh1 = Hist1D(; binedges=process.bins) 
     push!.(fh1, process.dataVector )
 
     totalEff = length(process.dataVector) / process.nTotalSim
@@ -161,7 +161,7 @@ end
     (n = ε⋅t⋅m⋅A)
 """
 function get_sig_counts(processes::Process...)
-    h2d = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
+    h2d = Hist2D(; binedges=(processes[1].bins, processes[1].bins))
 
     for p in processes
         if (!p.signal)
@@ -182,7 +182,7 @@ end
 
 """
 function get_epsilon_to_b(α, processes::Process...; approximate="formula")
-    ε = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
+    ε = Hist2D(; binedges=(processes[1].bins, processes[1].bins))
 
     for p in processes # sum efficiencies of the signal processes (does this make sense?)
         if(p.signal)
@@ -191,10 +191,10 @@ function get_epsilon_to_b(α, processes::Process...; approximate="formula")
     end
 
     backgroundCounts = get_bkg_counts(processes...)
-    backgroundCounts.hist.weights = get_FC.( backgroundCounts.hist.weights , α; approximate=approximate)
+    backgroundCounts.bincounts .= get_FC.( backgroundCounts.bincounts , α; approximate=approximate)
     epsToB = ε/(backgroundCounts)
 
-    replace!(epsToB.hist.weights, NaN => 0.0)
+    replace!(epsToB.bincounts, NaN => 0.0)
 
     return epsToB
 end
@@ -208,13 +208,13 @@ function get_sToBRatio(processes::Process...)
     end
 
     StoB = signalCounts / backgroundCounts
-    replace!(StoB.hist.weights, NaN => 0.0)
+    replace!(StoB.bincounts, NaN => 0.0)
 
     return StoB
 end
 
 function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula")
-    ε = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
+    ε = Hist2D(; binedges=(processes[1].bins, processes[1].bins))
 
     for p in processes # sum efficiencies of the signal processes (does this make sense?)
         if(p.signal)
@@ -227,16 +227,16 @@ function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
      
-    b.hist.weights = get_FC.(b.hist.weights, α; approximate=approximate)
+    b.bincounts .= get_FC.(b.bincounts, α; approximate=approximate)
 
     tHalf = constantTerm * ε / (b)
-    replace!(tHalf.hist.weights, NaN => 0.0)
+    replace!(tHalf.bincounts, NaN => 0.0)
 
     return tHalf
 end
 
 function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula")
-    ε = Hist2D(Float64, bins=(processes[1].bins, processes[1].bins))
+    ε = Hist2D(; binedges=(processes[1].bins, processes[1].bins))
 
     for p in processes # sum efficiencies of the signal processes (does this make sense?)
         if(p.signal)
@@ -249,10 +249,10 @@ function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
      
-    b.hist.weights = get_FC.(b.hist.weights, α; approximate=approximate)
+    b.bincounts .= get_FC.(b.bincounts, α; approximate=approximate)
 
     tHalf = constantTerm * ε / (b)
-    replace!(tHalf.hist.weights, NaN => 0.0)
+    replace!(tHalf.bincounts, NaN => 0.0)
 
     return tHalf
 end
