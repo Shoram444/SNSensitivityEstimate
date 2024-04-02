@@ -9,15 +9,15 @@ include(scriptsdir("Params.jl"))
 include(scriptsdir("LoadData.jl"))
 
 signalProcessName = "bb0nu_foil_bulk"
-sigProcessESum = get_process(signalProcessName, probProcessesESum11)
+sigProcessESum = get_process(signalProcessName, probProcessesESum)
 
-bb2nuProcess = get_process("bb_foil_bulk", probProcessesESum11)
+bb2nuProcess = get_process("bb_foil_bulk", probProcessesESum)
 bb2nuProcess.signal = false
 bkgProcessesESum = [
-    get_process("Tl208_foil_bulk", probProcessesESum11),
-    get_process("Bi214_foil_bulk", probProcessesESum11),
-    get_process("Bi214_foil_surface", probProcessesESum11),
-    get_process("Bi214_wire_surface", probProcessesESum11),
+    get_process("Tl208_foil_bulk", probProcessesESum),
+    get_process("Bi214_foil_bulk", probProcessesESum),
+    get_process("Bi214_foil_surface", probProcessesESum),
+    get_process("Bi214_wire_surface", probProcessesESum),
     bb2nuProcess,
 ]
 
