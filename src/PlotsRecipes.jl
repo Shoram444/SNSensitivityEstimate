@@ -26,7 +26,7 @@ Plots.@recipe function f(h::StackedHist)
     end
 
     linewidth --> 0.0
-    bar_width --> step(binedges(histos[1]))
+    bar_width --> step(binedges(histos[1]).uniform_edges)
     fillrange  := fr
     seriestype := :bar
 

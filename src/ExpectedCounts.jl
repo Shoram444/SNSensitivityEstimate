@@ -86,8 +86,8 @@ function estimated_counts_hist1D(dataDf, activity, amount, time, binning, nTotal
     totEff = nrow(dataDf) / nTotalSim
     h1d = 
         Hist1D(
-            dataDf.reconstructedEnergy1 .+ dataDf.reconstructedEnergy2 ,
-            binning
+            dataDf.reconstructedEnergy1 .+ dataDf.reconstructedEnergy2;
+            binedges = binning
         )
     
     h1d = normalize(h1d; width =:false) # normalize to area of 1
@@ -96,7 +96,7 @@ function estimated_counts_hist1D(dataDf, activity, amount, time, binning, nTotal
         activity = activity.val
     end
     
-    h1d.hist.weights = h1d.hist.weights .*(
+    h1d.bincounts .= h1d.bincounts .*(
         activity * time * amount * totEff    
     ) # multiply each bin by activity * time * amount * totalEfficiency
 
