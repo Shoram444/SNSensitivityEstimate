@@ -193,11 +193,11 @@ plot(T12_uniform)
     data .~ Exponential(lambda)
 end
 
-m = exp_only(data .- 2.6)
+m = exp_only(data )
 ch = sample(m, NUTS(), MCMCThreads(),10_000, 1)
 
 
 l = mean(ch[:,1,:])
-h1 = fit(Histogram, data .-2.6, 2.6-2.6:0.1:3.5-2.6)
+h1 = fit(Histogram, data , minE:deltaE:maxE)
 plot(normalize(h1, mode=:pdf), label="data")
 plot!(twinx(), xlims=(0,0.8),x-> pdf(Exponential(l), x), lw = 4, ls = :dash, c = 2, label = "fit", legend= :best)
