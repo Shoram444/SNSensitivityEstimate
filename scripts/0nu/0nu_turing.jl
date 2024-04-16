@@ -18,7 +18,7 @@ function generate_data(expected_bkg_cts_per_ROI)
         bin_min = row.bins[1]
         bins_step = row.bins[2] - row.bins[1]
         num_events_in_bin = rand(Poisson(row.bExp)) # number of events in bin Poisson distributed
-        @show e = [ bin_min + bins_step* rand() for _ in 1:num_events_in_bin ]
+        e = [ bin_min + bins_step* rand() for _ in 1:num_events_in_bin ]
         append!(events, e) # each event in bin is generated uniformally through bin width
     end
     float.(events)
@@ -28,7 +28,7 @@ end
 #####              MODEL DEFINITIONS            #######
 #######################################################
 @model function full_model_exponential(data; Q=Q, sigma=sigmaTrue, )
-    lambda ~ Uniform(10^-10, 100.0)
+    lambda ~ Uniform(10^-2, 10.)
     mu ~ Normal(Q, sigma)
     sigma1 ~ truncated(Normal(sigmaTrue, 0.01), 0, Inf)
     # Prior distributions for the proportions
@@ -113,14 +113,14 @@ end
 #######################################################
 # Generate some sample data
 # signal
-Q = 2.99
+Q = 2.99 - 2.6
 sigmaTrue = 0.060
-minE = 2.600
-maxE = 3.200
+minE = 2.600 - 2.6
+maxE = 3.200 - 2.6
 deltaE = 0.100
 expected_bkg_cts_per_ROI = DataFrame( 
     bins = [ (e1, e1+deltaE) for e1 in minE:deltaE:maxE-deltaE ],
-    bExp = [  4.22099, 0.999972, 0.529423, 0.382328, 0.276759, 0.237596  ] 
+    bExp = [  4.22099, 0.999972, 0.529423, 0.382328, 0.276759, 0.237596  ]
 )
 
 data = generate_data(expected_bkg_cts_per_ROI)
@@ -132,7 +132,7 @@ plot(normalize(h, mode = :pdf), label = "pseudo-data", legend =:best)
 #####              SAMPLING AND ANALYSIS SIMPLE #######
 #######################################################
 model = full_model_uniform(data)
-chains = sample(model, NUTS(1000, 0.65), MCMCThreads(), 10_000, 4)
+chains = sample(model, NUTS(1000, 0.65), MCMCThreads(), 10_000, 4, )
 
 mu = mean(chains[:,1,:])
 sigma = mean(chains[:,2,:])
@@ -145,10 +145,10 @@ nBkg_90q = quantile(chains[:, 4, 1], 0.9)
 plot(chains, thickness_scaling = 1)
 
 plot( normalize(h, mode=:pdf) )
-plot!( range( 2.6, 3.2, 100 ), x->fit_function_uniform(mu, sigma, nSig, nBkg, x  ) )
+plot!( range( minE,maxE, 100 ), x->fit_function_uniform(mu, sigma, nSig, nBkg, x  ) )
 
 
-model = full_model_exponential(data)
+model = full_model_exponential(data )
 chains = sample(model, NUTS(1000, 0.65), MCMCThreads(), 10_000, 4)
 
 lambda = mean(chains[:,1,:])
@@ -163,7 +163,7 @@ nBkg_90q = quantile(chains[:, 5, 1], 0.9)
 plot(chains, thickness_scaling = 1)
 
 plot( normalize(h, mode=:pdf) )
-plot!( range( 2.6, 3.2, 100 ), x->fit_function_exponential(mu, sigma, lambda,nSig, nBkg, x  ) )
+plot!( range( minE, maxE, 100 ), x->fit_function_exponential(mu, sigma, lambda,nSig, nBkg, x  ) )
 
 #######################################################
 #####              SAMPLING AND ANALYSIS MULTIPLE    ##
@@ -185,3 +185,19 @@ for i=1:10
 end
 mean(T12_uniform)
 plot(T12_uniform)
+
+
+@model function exp_only(data)
+    lambda ~ Uniform(1e-4, 1e4)
+
+    data .~ Exponential(lambda)
+end
+
+m = exp_only(data .- 2.6)
+ch = sample(m, NUTS(), MCMCThreads(),10_000, 1)
+
+
+l = mean(ch[:,1,:])
+h1 = fit(Histogram, data .-2.6, 2.6-2.6:0.1:3.5-2.6)
+plot(normalize(h1, mode=:pdf), label="data")
+plot!(twinx(), xlims=(0,0.8),x-> pdf(Exponential(l), x), lw = 4, ls = :dash, c = 2, label = "fit", legend= :best)
