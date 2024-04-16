@@ -1,37 +1,66 @@
+using DrWatson
+@quickactivate 
+
 using BAT, Distributions, StatsPlots, DataFrames, StatsBase, LinearAlgebra
-using DensityInterface, IntervalSets
+using DensityInterface, IntervalSets, BinnedModels
 
-bkgCounts_true = 20
-sigCounts_true = 0
-nTot = bkgCounts_true + sigCounts_true
-Q = 2990
-sigmaTrue = 130
-minE = 2600
-maxE = 3200
-deltaE = 100
-
-data = vcat(
-    rand(Uniform(minE, maxE), bkgCounts_true),
-    rand(Normal(Q, sigmaTrue), sigCounts_true)
+Q = 2.99
+sigmaTrue = 0.060
+minE = 2.700
+maxE = 3.500
+deltaE = 0.100
+expected_bkg_cts_per_ROI = DataFrame( 
+    bins = [ (e1, e1+deltaE) for e1 in minE:deltaE:maxE-deltaE ],
+    bExp = [  0.999972, 0.529423, 0.382328, 0.276759, 0.237596, 0.207903, 0.172914, 0.125756  ]
 )
 
+data = let b=expected_bkg_cts_per_ROI
+    events = []
+    for row in eachrow(b)
+        bin_min = row.bins[1]
+        bins_step = row.bins[2] - row.bins[1]
+        num_events_in_bin = rand(Poisson(row.bExp)) # number of events in bin Poisson distributed
+        @show e = [ bin_min + bins_step* rand() for _ in 1:num_events_in_bin ]
+        append!(events, e) # each event in bin is generated uniformally through bin width
+    end
+    events
+end
 
-function likelihood_a(p, x; minE=minE, maxE=maxE, Q=Q)
-    (p.muB * pdf(Uniform(minE, maxE), x)  +
-     p.muS * pdf(Normal(Q, p.sigma),  x)) *
-    inv( p.muB + p.muS ) 
+data = float.(data)
+h = fit(Histogram, data, minE:deltaE:maxE)
+plot(h)
+
+# function likelihood_a(p::NamedTuple{(:muB, :muS, :sigma)}, x::Real; minE=minE, maxE=maxE, Q=Q)
+#     (p.muB * pdf(Uniform(minE, maxE), x)  +
+#      p.muS * pdf(Normal(Q, p.sigma),  x)) *
+#     inv( p.muB + p.muS ) 
+# end
+
+
+function likelihood_a(muB::Real, muS::Real, sigma::Real, lambda::Real, x::Real; minE=minE, maxE=maxE, Q=Q)
+    (muB * pdf(Exponential(lambda), x)  +
+     muS * pdf(Normal(Q, sigma),  x)) *
+    inv( muB + muS ) 
+end
+
+function likelihood_a(p::NamedTuple{(:muB, :muS, :sigma, :lambda)}, x::Real; minE=minE, maxE=maxE, Q=Q)
+    likelihood_a(p.muB, p.muS, p.sigma, p.lambda, x; minE=minE, maxE=maxE, Q=Q)
 end
 
 function likelihood_b(p, n)
     pdf(Poisson(p.muB + p.muS), n)
 end
 
+function fit_function(p, x; minE=minE, maxE=maxE, Q=Q, deltaE=deltaE)
+    deltaE*(p.muB * pdf( Exponential(p.lambda), x ) + p.muS * pdf( Normal(Q, p.sigma), x) )
+end
+
 """
     Stupid integration for getting upper limit - requires monotonely decreasing samples in vector form!
 """
 function get_interval_upper(data, CL; nbins=100)
-    h = fit(Histogram, data, nbins)
-    cs = cumsum(h.weights)
+    h = fit(Histogram, data; nbins = nbins)
+    cs = cumsum(h.weights) ./ sum(h.weights)
 
     uppID = findfirst(x -> x >= CL, cs)
     midpoints(h.edges[1])[Int(uppID)]
@@ -41,11 +70,9 @@ end
 ##############################################################
 ####                RAW PLOTS + TRUTH                     ####
 ##############################################################
-h = fit(Histogram, data, minE:deltaE:maxE)
-plot(normalize(h, mode=:density), ylabel="normalized rate", xlabel="E [keV]", label="fake data")
+plot(h, ylabel="counts", xlabel="E [MeV]", label="fake data", legend =:best)
+plot(normalize(h, mode=:pdf), ylabel="normalized rate", xlabel="E [MeV]", label="fake data", legend =:best)
 
-tru_params = (muB=bkgCounts_true, sigma=sigmaTrue, muS=sigCounts_true)
-plot!(x -> likelihood_a(tru_params, x) * nTot , label="true likelihood (0 signal)")
 
 
 ##############################################################
@@ -85,8 +112,9 @@ end
 
 function DensityInterface.logdensityof(likelihood::UnbinnedModel, p)
     n = length(likelihood.data)
+    muS, muB, sigma, lambda = p
 
-    ll_a = sum(log.(likelihood_a(p, likelihood.data)))
+    ll_a = sum(log.(likelihood_a.(muS, muB, sigma, lambda, likelihood.data)))
     ll_b = log(likelihood_b(p, n))
     ll_a + ll_b
 end
@@ -95,11 +123,28 @@ end
 ##############################################################
 ####              PRIORS                                  ####
 ##############################################################
-prior = distprod(
-    muB=Uniform(0.1,45),
-    muS=Uniform(1e-10, 10),
-    sigma=130 # watch out sigma cannot be 0! Then Normal(Q, 0) = Inf
+priorBkg = distprod(
+    muB=Uniform(1e-5, 1e3),
+    muS=0.0,
+    sigma=sigmaTrue, # watch out sigma cannot be 0! Then Normal(Q, 0) = Inf
+    lambda = Uniform(1e-5,1e2 )
 )
+
+prior = distprod(
+    muB=Uniform(1e-5, 1e3), #Uniform(1e-5, 45),
+    muS=Uniform(1e-5, 100), #Uniform(1e-5, 15),
+    sigma=sigmaTrue, # watch out sigma cannot be 0! Then Normal(Q, 0) = Inf
+    lambda = Uniform(1e-5,1e2 )
+)
+
+##############################################################
+####              POSTERIOR  BINNED BKG ONLY              ####
+##############################################################
+binned_posterior_Bkg = PosteriorMeasure(binned_model, priorBkg)
+binned_samples_Bkg = bat_sample(binned_posterior_Bkg, MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^5, nchains=4)).result
+
+mode(binned_samples_Bkg)
+plot(binned_samples_Bkg)
 
 ##############################################################
 ####              POSTERIOR  BINNED                       ####
@@ -110,6 +155,47 @@ binned_samples = bat_sample(binned_posterior, MCMCSampling(mcalg=MetropolisHasti
 mode(binned_samples)
 plot(binned_samples)
 
+binned_unshaped_samples, f_flatten = bat_transform(Vector, binned_samples)
+muSsBinned = [m[2] for m in binned_unshaped_samples.v]
+
+
+exp_mu_signal_90 = get_interval_upper(muSsBinned, 0.9)
+Na = 6.02214e23
+m = 6.067
+t = 2.88
+W = 0.08192
+eff= 0.1737
+Thalf = log(2) * (Na * m * t * 0.15 / W) / exp_mu_signal_90
+
+binned_params=mode(binned_samples)
+
+plot(binned_samples, size = (2000, 1600), thickness_scaling=1.6)
+safesave(plotsdir("Bayessian0nu", "binned_samples_BAT.png" ), current())
+safesave(plotsdir("Bayessian0nu", "binned_samples_BAT.pdf" ), current())
+
+let f= fit_function
+    plot(h, bins=(minE:deltaE:maxE),legend= :best, label= "data", widen =:false, xlims =(minE, maxE))
+    plot!(
+        range(minE, maxE, length=500), 
+        f, 
+        binned_samples, 
+        xlabel = "Energy [keV]", 
+        ylabel = "Background distribution", 
+        title= "binned_fit: Exponential + Normal likelihood ",
+        colors = [2,3,4], 
+        fa = 0.6, 
+        interval_labels = ["1σ", "2σ", "3σ"],
+        size = (1200, 800),
+        thickness_scaling= 1.6,
+        legend=:best,
+        dpi = 200
+    )
+    safesave(plotsdir("Bayessian0nu", "binned_fit.png" ), current())
+    safesave(plotsdir("Bayessian0nu", "binned_fit.pdf" ), current())
+    current()
+end
+
+plot(  )
 ##############################################################
 ####              POSTERIOR  UNBINNED                     ####
 ##############################################################
@@ -117,59 +203,47 @@ unbinned_posterior = PosteriorMeasure(UnbinnedModel(data), prior)
 unbinned_samples = bat_sample(unbinned_posterior, MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^5, nchains=4)).result
 
 mode(unbinned_samples)
-plot(unbinned_samples)
+plot(unbinned_samples, size = (2000, 1600), thickness_scaling=1.6)
+safesave(plotsdir("Bayessian0nu", "unbinned_samples.png" ), current())
+safesave(plotsdir("Bayessian0nu", "unbinned_samples.pdf" ), current())
+
+unbinned_unshaped_samples, f_flatten = bat_transform(Vector, unbinned_samples)
+muSsUnbinned = [m[2] for m in unbinned_unshaped_samples.v]
 
 
-binned_unshaped_samples, f_flatten = bat_transform(Vector, binned_samples)
-muSs = [m[2] for m in binned_unshaped_samples.v]
-
-exp_mu_signal_90 = 
+exp_mu_signal_90 = get_interval_upper(muSsUnbinned, 0.9)
 Na = 6.02214e23
 m = 6.067
-t = 2.5
+t = 2.88
 W = 0.08192
+eff= 0.1737
+Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
 
-Thalf = log(2) * (Na * m * t * 0.15 / W) / exp_mu_signal_90
+unbinned_params=mode(unbinned_samples)
 
-
-
-
-
-posterior_struct = PosteriorMeasure(SignalBkgLikelihood(data), prior)
-
-samples_struct = bat_sample(posterior_struct, MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^5, nchains=4))
-
-res = samples.result
-
-plot(res)
-
-
-function credibility_interval(v::Vector{Float64}, alpha::Float64)
-    # Sort the vector
-    sorted_v = sort(v)
-    
-    # Compute the cumulative sum
-    cumulative_sum = cumsum(sorted_v)
-    
-    # Find the index range for the desired credibility level
-    index_range = searchsortedfirst(cumulative_sum, alpha)
-    
-    # Compute the interval based on the index range
-    credibility_interval = sorted_v[1:index_range]
-    
-    return credibility_interval
+let f= fit_function(p, x) = likelihood_a(p,x)
+    plot(normalize(h, mode =:pdf), legend= :best, label= "data", widen =:false, xlims =(minE, maxE))
+    plot!(
+        range(minE, maxE, length=500), 
+        f, 
+        unbinned_samples, 
+        xlabel = "Energy [keV]", 
+        ylabel = "Background distribution", 
+        title= "unbinned_fit: Exponential + Normal likelihood ",
+        colors = [2,3,4], 
+        fa = 0.6, 
+        interval_labels = ["1σ", "2σ", "3σ"],
+        size = (1200, 800),
+        thickness_scaling= 1.6,
+        legend=:best,
+        dpi = 200
+    )
+    safesave(plotsdir("Bayessian0nu", "unbinned_fit.png" ), current())
+    safesave(plotsdir("Bayessian0nu", "unbinned_fit.pdf" ), current())
+    current()
 end
 
-credibility_interval(muSs, 0.9)
+ll = inv(mode(unbinned_samples).lambda)
+plot!( 2.5:0.1:3.5, x-> ll*exp(-ll*x) )
 
-d = muSs[1:100]
-sorted_mu = sort(d)
-cs_mu = cumsum(sorted_mu) / sum(sorted_mu)
-
-low = 0.0
-up_idx = findfirst(x -> x >= 0.9, cs_mu)
-up = sorted_mu[up_idx]
-
-sum( sorted_mu[1:up_idx] ) / sum(sorted_mu)
-
-for ilow = 1:length(sorted_mu), iup = 
+normalize(h, mode=:pdf) 

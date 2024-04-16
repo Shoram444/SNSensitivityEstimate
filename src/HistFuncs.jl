@@ -28,17 +28,18 @@ function /(h::Hist2D, x::Real)
     return h
 end
 
-function /(h1::Hist2D, h2::Hist2D)
-    mat = zeros(size(bincounts(h1)))
-    h1bins = bincounts(h1)
-    h2bins = bincounts(h2)
+# Added in FHist update
+# function /(h1::Hist2D, h2::Hist2D)
+#     mat = zeros(size(bincounts(h1)))
+#     h1bins = bincounts(h1)
+#     h2bins = bincounts(h2)
 
-    for i in eachindex(mat)
-        mat[i] = h1bins[i] / h2bins[i]
-    end
-    h1.bincounts .= mat
-    return h1
-end
+#     for i in eachindex(mat)
+#         mat[i] = h1bins[i] / h2bins[i]
+#     end
+#     h1.bincounts .= mat
+#     return h1
+# end
 
 function *(x::Real, h::Hist2D)
     return *(h, x)
@@ -65,17 +66,39 @@ Returns a Dict with the following keys:
     + :maxBinCount => maxBinCount ->  provides the maximum bin counts of the 2D histogram
 """
 function get_max_bin(h2d::Hist2D)
-    (step(binedges(h2d)[1].uniform_edges) != step(binedges(h2d)[1].uniform_edges)) && error("bins must be the same!")
-    @show binStepHalf = step(binedges(h2d)[1].uniform_edges) / 2
-    @show BinID = argmax(bincounts(h2d))
-    @show minBinEdge, maxBinEdge = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
-    @show maxBinCount = lookup(h2d, minBinEdge, maxBinEdge)
+    # check whether the histogram is square (both axes must have same binning)
+    if( binedges(h2d)[1].isuniform || binedges(h2d)[1].isuniform  )
+        (step(binedges(h2d)[1].uniform_edges) != step(binedges(h2d)[1].uniform_edges)) && error("bins must be the same!")
+        
+        # if uniform edges = bin_width is same for all bins
+        @show halfBinWidth = step(binedges(h2d)[1].uniform_edges) / 2.
+    elseif( !binedges(h2d)[1].isuniform || !binedges(h2d)[1].isuniform )
+        ((binedges(h2d)[1].nonuniform_edges) != (binedges(h2d)[1].nonuniform_edges)) && error("bins must be the same!")
+    
+        diffs = diff(binedges(h2d)[1].nonuniform_edges)
+        @show halfBinWidths = diffs ./ 2.
+    end
 
-    return Dict(
-        :minBinEdge => minBinEdge - binStepHalf,
-        :maxBinEdge => maxBinEdge + binStepHalf,
-        :maxBinCount => maxBinCount
-    )
+    if( binedges(h2d)[1].isuniform )
+        @show BinID = argmax(bincounts(h2d))
+        @show minBinCenter, maxBinCenter = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
+        @show maxBinCount = lookup(h2d, minBinCenter, maxBinCenter)
+
+        return Dict(
+            :minBinEdge => minBinCenter - halfBinWidth,
+            :maxBinEdge => maxBinCenter + halfBinWidth,
+            :maxBinCount => maxBinCount
+        )
+    else
+        @show BinID = argmax(bincounts(h2d))
+        @show minBinCenter, maxBinCenter = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
+        @show maxBinCount = lookup(h2d, minBinCenter, maxBinCenter)
+        return Dict(
+            :minBinEdge => minBinCenter - halfBinWidths[BinID[1]],
+            :maxBinEdge => maxBinCenter + halfBinWidths[BinID[2]],
+            :maxBinCount => maxBinCount
+        )
+    end
 end
 
 function FHist.lookup(weights::Matrix, x::Real, y::Real, binning)

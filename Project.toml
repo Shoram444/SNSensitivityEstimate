@@ -3,6 +3,7 @@ authors = ["MPetro"]
 
 [deps]
 BAT = "c0cd4b16-88b7-57fa-983b-ab80aecada7e"
+BinnedModels = "fa1fc709-16e9-4084-816c-4cfb0f07afb9"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Debugger = "31a5f54b-26ea-5ae9-a837-f05ce5417438"

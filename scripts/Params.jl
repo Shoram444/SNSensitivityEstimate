@@ -5,15 +5,15 @@ using Measurements
 SNparams = Dict(
     "Nₐ" => 6.02214e23,                         # Avogadro's number in [1/mol]
     "W" => 0.08192,                             # Se82 molar mass in [kg/mol]
-    "a" => 0.98,                                # abundance/foil enrichment; check number
+    "a" => 0.972,                               # abundance/foil enrichment; check number
     "foilMass" => 6.25,                         # foil mass in [kg]
     "gasVolume" => 15,                          # tracker volume in [m3]
     "PMTGlassMass" => 286,                      # PMT glass mass in [kg]
     "wireBulkMass" => 20,                       # DUMMY VALUE!! mass of the tracker wires in [kg]
-    "t" => 2.5 * 365 * 24 * 3600,               # measurement time in [s]
+    "t" => 2.88 * 365 * 24 * 3600,              # measurement time in [s]
     "tYear" => 2.5,                             # measurement time in [y]
     "SeThalf2nu" => (9.39 ± 0.17)*1e19 * 365 * 24 * 3600,    # 2nu Se82 half life in [s], results from NEMO-3
-    "SeThalf0nu" => 1e26 * 365 * 24 * 3600,    # 0nu Se82 half life in [s], results from NEMO-3
+    "SeThalf0nu" => 1e26 * 365 * 24 * 3600,     # 0nu Se82 half life in [s], results from NEMO-3
 ) 
 
 BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-6295-x and docDB 4505

@@ -1,66 +1,171 @@
-using Turing, StatsPlots, StatsBase, LinearAlgebra
+using Turing, StatsPlots, StatsBase, LinearAlgebra, DataFrames
 
-# Generate some sample data
-# signal
-mu1_true = 5
-sigma1_true = 0.5
-n1_true = 0
+#######################################################
+#####               FUNCTIONS                   #######
+#######################################################
 
-# background
-lambda_true = 5
-n2_true = 25
+function get_smallest_interval( v::Vector{Float64}, α ; step = 0.1)
+    intervals = []
+    smallest_interval = (0., maximum(v))
+    best_width = abs(smallest_interval[2]-smallest_interval[1])
+    for qMin = 0.:step:0.1
+        qMax = qMin + α
 
+        qs = quantile(v, [qMin, qMax])
+        width = abs(qs[2] - qs[1])
 
-data = vcat(rand(Normal(mu1_true, sigma1_true), n1_true),
-             rand(Exponential(lambda_true), n2_true))
+        if( width <= best_width )
+            smallest_interval = Tuple(qs)
+        end
+        push!(intervals, qs)
+    end
 
-h = fit(Histogram, data, nbins = 10)
-plot(normalize(h, mode = :density), label = "data")
+    return smallest_interval, intervals
+end
 
-# Run the sampler
-@model function full_model(data)
-    mu1 ~ truncated(Normal(5, 0.5), 1e-6, 20)
-    sigma1 ~ truncated(Normal(0.5, 0.1), 0.1, 2.0)
-    lambda ~ truncated(Normal(5, 2), 1.0, 100.0)
+function fit_function_exponential( Q, sigma, lambda, n1, n2, x )
+    (n1 * pdf( Normal(Q, sigma), x ) + n2 * pdf( Exponential(lambda), x ))
+end
 
+function fit_function_uniform( Q, sigma, lambda, n1, n2, x; minE=minE, maxE=maxE )
+    (n1 * pdf( Normal(Q, sigma), x ) + n2 * inv(maxE-minE))/(n1+n2)
+end
+
+function generate_data(expected_bkg_cts_per_ROI)
+    events = []
+    for row in eachrow(expected_bkg_cts_per_ROI)
+        bin_min = row.bins[1]
+        bins_step = row.bins[2] - row.bins[1]
+        num_events_in_bin = rand(Poisson(row.bExp)) # number of events in bin Poisson distributed
+        @show e = [ bin_min + bins_step* rand() for _ in 1:num_events_in_bin ]
+        append!(events, e) # each event in bin is generated uniformally through bin width
+    end
+    float.(events)
+end
+
+#######################################################
+#####              MODEL DEFINITIONS            #######
+#######################################################
+@model function full_model_exponential(data; Q=Q, sigma=sigmaTrue, )
+    lambda ~ Uniform(0, 1e2)
+    mu ~ Normal(Q, sigma)
+    sigma1 ~ truncated(Normal(sigmaTrue, 0.01), 0, Inf)
     # Prior distributions for the proportions
-    p_normal ~ Uniform(0, length(data))  # Prior for proportion of Normal data
-    p_exponential ~ Uniform(0, length(data))  # Prior for proportion of Normal data
-    # p_exponential = 1 - p_normal  # Calculate proportion of Exponential data
+    nSignal ~ Uniform(1e-10, 15)  # Prior for proportion of Normal data
+    nBkg ~ Uniform(1e-10, 45)  # Prior for proportion of Normal data
     
     # Likelihood of data
     for x in data
-        likelihood_normal = pdf(Normal(mu1, sigma1), x)
+        likelihood_normal = pdf(Normal(mu, sigma1), x)
         likelihood_exponential = pdf(Exponential(lambda), x)
-        likelihood_mixture = (p_normal * likelihood_normal + p_exponential * likelihood_exponential) / (p_normal + p_exponential)
-        likelihood_extended = pdf(Poisson(p_normal + p_exponential), length(data))
+        likelihood_mixture = (nSignal * likelihood_normal + nBkg * likelihood_exponential) 
+        likelihood_extended = pdf(Poisson(nSignal + nBkg), length(data))
         Turing.@addlogprob! (log(likelihood_extended) + log(likelihood_mixture))
     end
 end
 
-model = full_model(data)
-chains3 = sample(model, NUTS(), MCMCThreads(), 10_000, 4)
-
-function fit_function( mu1, sigma1, lambda, n1, n2, x )
-    n1 * pdf( Normal(mu1, sigma1), x ) + n2 * pdf( Exponential(lambda), x )
+@model function full_model_uniform(data; Q=Q, sigma=sigmaTrue, minE=minE, maxE=maxE)
+    mu ~ Normal(Q, sigma)
+    sigma1 ~ truncated(Normal(sigmaTrue, 0.01), 0, Inf)
+    # Prior distributions for the proportions
+    nSignal ~ Uniform(1e-10, 15)  # Prior for proportion of Normal data
+    nBkg ~ Uniform(1e-10, 45)  # Prior for proportion of Normal data
+    
+    # Likelihood of data
+    for x in data
+        likelihood_normal = pdf(Normal(mu, sigma1), x)
+        likelihood_uniform = inv(maxE-minE) # expectation value of uniform
+        likelihood_mixture = (nSignal * likelihood_normal + nBkg * likelihood_uniform) 
+        likelihood_extended = pdf(Poisson(nSignal + nBkg), length(data))
+        Turing.@addlogprob! (log(likelihood_extended) + log(likelihood_mixture))
+    end
 end
 
-mu1 = mean(chains3[:,1, :])
-sigma1 = mean(chains3[:,2, :])
-lambda = mean(chains3[:,3, :])
-n1 = mean(chains3[:,4, :]) 
-n1_90quantile = quantile(chains3[:, 4, :], [0., 0.9])
+function generate_sample_output_uniform(expected_bkg_cts_per_ROI; α=0.9)
+    data = generate_data(expected_bkg_cts_per_ROI)
+    model = full_model_uniform(data)
+    chains = sample(model, NUTS(1000, 0.65), MCMCThreads(), 10_000, 1)
 
-n2 = mean(chains3[:,5, :]) 
-n2_90quantile = quantile(chains3[:, 5, :], [0., 0.9])
+    lambda = mean(chains[:,1, :])
+    mu = mean(chains[:,2, :])
+    sigma = mean(chains[:,3, :])
+    nSig = mean(chains[:,4, :]) 
+    nSig_90q = quantile(chains[:, 4, 1].data, 0.9)
+
+    nBkg = mean(chains[:,5, :]) 
+    nBkg_90q = quantile(chains[:, 5, 1].data, 0.9)
+
+    ( lambda=lambda, mu=mu,sigma=sigma, nSig=nSig, 
+      nSig_90q=nSig_90q, nBkg=nBkg, nBkg_90q=nBkg_90q, data=data )
+end
+
+function generate_sample_output_exponential(expected_bkg_cts_per_ROI; α=0.9)
+    data = generate_data(expected_bkg_cts_per_ROI)
+    model = full_model_exponential(data)
+    chains = sample(model, NUTS(1000, 0.65), MCMCThreads(), 10_000, 1)
+
+    lambda = mean(chains[:,1, :])
+    mu = mean(chains[:,2, :])
+    sigma = mean(chains[:,3, :])
+    nSig = mean(chains[:,4, :]) 
+    nSig_90q = quantile(chains[:, 4, 1], 0.9)
+
+    nBkg = mean(chains[:,5, :]) 
+    nBkg_90q = quantile(chains[:, 5, 1], 0.9)
+
+    ( lambda=lambda, mu=mu,sigma=sigma, nSig=nSig, 
+      nSig_90q=nSig_90q, nBkg=nBkg, nBkg_90q=nBkg_90q, data=data )
+end
+
+function get_tHalf(nSig_90q)
+    Na = 6.02214e23
+    m = 6.067
+    t = 2.88
+    W = 0.08192
+    eff= 0.1737
+    Thalf = log(2) * (Na * m * t * eff / W) / nSig_90q
+end
 
 
-h = fit(Histogram, data, nbins = 10)
+#######################################################
+#####               DATA                        #######
+#######################################################
+# Generate some sample data
+# signal
+Q = 2.99
+sigmaTrue = 0.060
+minE = 2.600
+maxE = 3.200
+deltaE = 0.100
+expected_bkg_cts_per_ROI = DataFrame( 
+    bins = [ (e1, e1+deltaE) for e1 in minE:deltaE:maxE-deltaE ],
+    bExp = [  4.22099, 0.999972, 0.529423, 0.382328, 0.276759, 0.237596  ]
+)
 
-plot( h , label ="data" , legend= :best)
-plot!( x -> fit_function( mu1, sigma1, lambda, n1, n2, x ), label ="fit" )
+data = generate_data(expected_bkg_cts_per_ROI)
 
+h = fit(Histogram, data, minE:deltaE:maxE)
+plot(normalize(h, mode = :density), label = "pseudo-data", legend =:best)
 
-current()
+#######################################################
+#####              SAMPLING AND ANALYSIS        #######
+#######################################################
+lambda, mu,sigma, nSig, nSig_90q, nBkg, nBkg_90q, data1 = generate_sample_output_exponential(expected_bkg_cts_per_ROI)
 
-plot(chains3, thickness_scaling = 0.8)
+get_tHalf(lambda, mu,sigma, nSig_90q, nBkg_90q)
+
+T12_exponential = Float64[]
+for i=1:10
+    lambda, mu,sigma, nSig, nSig_90q, nBkg, nBkg_90q, data = generate_sample_output_exponential(expected_bkg_cts_per_ROI)
+    push!(T12_exponential, get_tHalf(nSig_90q) )
+end
+mean(T12_exponential)
+plot(T12_exponential)
+
+T12_uniform = Float64[]
+for i=1:10
+    lambda, mu,sigma, nSig, nSig_90q, nBkg, nBkg_90q, data = generate_sample_output_uniform(expected_bkg_cts_per_ROI)
+    push!(T12_uniform, get_tHalf(nSig_90q) )
+end
+mean(T12_uniform)
+plot(T12_uniform)

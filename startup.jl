@@ -19,7 +19,7 @@ printstyled("using Revise \nusing AbbreviatedStackTraces"; color=:light_blue)
 const PLOTS_DEFAULTS = Dict(
 	:theme => :dao,
 	:size  => (1200, 800),
-    	:legend => :topleft,
+	:legend => :topleft,
 	:guidefontsize  => 16,
 	:tickfontsize   => 12,
 	:titlefontsize  => 16,
@@ -32,4 +32,5 @@ const PLOTS_DEFAULTS = Dict(
 	:markerstrokecolor => :black,
 	:palette => ["#00a0f9", "#ba3030", "#22ac74", "#707070", "#9452bd", "#80ff00", "#ffcc00", "#ff00ff", "#00ffff", "#cc9900"],
 	:linewidth => 3,
+	:fontfamily => "Serif"
 )
