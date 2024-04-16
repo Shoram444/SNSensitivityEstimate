@@ -11,7 +11,7 @@ maxE = 3.500
 deltaE = 0.100
 expected_bkg_cts_per_ROI = DataFrame( 
     bins = [ (e1, e1+deltaE) for e1 in minE:deltaE:maxE-deltaE ],
-    bExp = [  0.999972, 0.529423, 0.382328, 0.276759, 0.237596, 0.207903, 0.172914, 0.125756  ]
+    bExp = [  0.999972, 0.529423, 0.382328, 0.276759, 0.237596, 0.207903, 0.172914, 0.125756  ] 
 )
 
 data = let b=expected_bkg_cts_per_ROI
@@ -131,10 +131,10 @@ priorBkg = distprod(
 )
 
 prior = distprod(
-    muB=Uniform(1e-5, 1e3), #Uniform(1e-5, 45),
-    muS=Uniform(1e-5, 100), #Uniform(1e-5, 15),
+    muB=Uniform(1e-5, 1e4), #Uniform(1e-5, 45),
+    muS=Uniform(1e-5, 1e4), #Uniform(1e-5, 15),
     sigma=sigmaTrue, # watch out sigma cannot be 0! Then Normal(Q, 0) = Inf
-    lambda = Uniform(1e-5,1e2 )
+    lambda = Uniform(1e-5,1e5 )
 )
 
 ##############################################################
@@ -150,7 +150,7 @@ plot(binned_samples_Bkg)
 ####              POSTERIOR  BINNED                       ####
 ##############################################################
 binned_posterior = PosteriorMeasure(binned_model, prior)
-binned_samples = bat_sample(binned_posterior, MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^5, nchains=4)).result
+binned_samples = bat_sample(binned_posterior, MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^5, nchains=6)).result
 
 mode(binned_samples)
 plot(binned_samples)
@@ -180,7 +180,8 @@ let f= fit_function
         f, 
         binned_samples, 
         xlabel = "Energy [keV]", 
-        ylabel = "Background distribution", 
+        ylabel = "Background distribution", safesave(plotsdir("Bayessian0nu", "binned_fit.png" ), current())
+        # sa
         title= "binned_fit: Exponential + Normal likelihood ",
         colors = [2,3,4], 
         fa = 0.6, 
@@ -190,12 +191,11 @@ let f= fit_function
         legend=:best,
         dpi = 200
     )
-    safesave(plotsdir("Bayessian0nu", "binned_fit.png" ), current())
-    safesave(plotsdir("Bayessian0nu", "binned_fit.pdf" ), current())
+    # safesave(plotsdir("Bayessian0nu", "binned_fit.png" ), current())
+    # safesave(plotsdir("Bayessian0nu", "binned_fit.pdf" ), current())
     current()
 end
 
-plot(  )
 ##############################################################
 ####              POSTERIOR  UNBINNED                     ####
 ##############################################################
