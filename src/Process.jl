@@ -73,9 +73,9 @@ end
 
 """
 function get_efficiency(dataVector::Vector{<:Real}, bins::AbstractRange, nTotalSim::Real)
-    n = nTotalSim
-
-    h2d = get_nPassed(dataVector, bins) * (1 / n) # Matrix - scalar multiplication
+    h2d=get_nPassed(dataVector, bins, wgt=inv(nTotalSim)) # nPassed scaled by total simulated events
+    h2d.sumw2 .= sqrt.(h2d.sumw2) # weights scaled 
+    return h2d
 end
 
 """
@@ -84,39 +84,24 @@ end
     returns a 2D histgoram of type Hist2D with passed events per bin.
 
 """
-function get_nPassed(process::Process, bins::AbstractRange)
-    return get_nPassed(process.dataVector, bins)
+function get_nPassed(process::Process, bins::AbstractRange; wgt=1)
+    return get_nPassed(process.dataVector, bins, wgt=wgt)
 end
 
-function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange)
+function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange; wgt=1)
     h1d = Hist1D(dataVector; binedges=bins)
     h2d = Hist2D(; counttype=Float64, binedges=(bins, bins))#prepare empty 2d Histogram
 
+    bc=bincenters(h1d)
     for (i,b) in enumerate(bc)
-        cs=cumsum(bincounts(h1d)[i:end])
+        cs=cumsum(bincounts(h1d)[i:end]) * wgt
         push!.(h2d, b, bc[i:end], cs)
         # bincounts(h2d)[i, i:end]=cumsum(bincounts(h1d)[i:end])
     end
 
     h2d
 end
-function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange)
-    h1d = Hist1D(dataVector; binedges=bins)
-    h2d = Hist2D(; counttype=Float64, binedges=(bins, bins))#prepare empty 2d Histogram
 
-    binCenters = collect(bincenters(h1d))
-    binStep = step(bins)
-    for (i, xVal) in enumerate(binCenters)
-        # for (j, yVal) in enumerate(binCenters[i+1:end])
-        for (j, yVal) in enumerate(binCenters[i:end])
-            # j += i
-            integral = sum(lookup.(h1d, xVal:binStep:yVal))
-            push!(h2d, xVal, yVal, integral)
-        end
-    end
-
-    h2d
-end
 
 """
     Returns the number of expected counts of the given process. 
