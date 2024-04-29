@@ -92,6 +92,18 @@ function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange)
     h1d = Hist1D(dataVector; binedges=bins)
     h2d = Hist2D(; counttype=Float64, binedges=(bins, bins))#prepare empty 2d Histogram
 
+    for (i,b) in enumerate(bc)
+        cs=cumsum(bincounts(h1d)[i:end])
+        push!.(h2d, b, bc[i:end], cs)
+        # bincounts(h2d)[i, i:end]=cumsum(bincounts(h1d)[i:end])
+    end
+
+    h2d
+end
+function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange)
+    h1d = Hist1D(dataVector; binedges=bins)
+    h2d = Hist2D(; counttype=Float64, binedges=(bins, bins))#prepare empty 2d Histogram
+
     binCenters = collect(bincenters(h1d))
     binStep = step(bins)
     for (i, xVal) in enumerate(binCenters)
@@ -105,7 +117,6 @@ function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange)
 
     h2d
 end
-
 
 """
     Returns the number of expected counts of the given process. 
