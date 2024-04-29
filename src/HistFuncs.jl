@@ -28,18 +28,6 @@ function /(h::Hist2D, x::Real)
     return h
 end
 
-# Added in FHist update
-# function /(h1::Hist2D, h2::Hist2D)
-#     mat = zeros(size(bincounts(h1)))
-#     h1bins = bincounts(h1)
-#     h2bins = bincounts(h2)
-
-#     for i in eachindex(mat)
-#         mat[i] = h1bins[i] / h2bins[i]
-#     end
-#     h1.bincounts .= mat
-#     return h1
-# end
 
 function *(x::Real, h::Hist2D)
     return *(h, x)
@@ -71,18 +59,18 @@ function get_max_bin(h2d::Hist2D)
         (step(binedges(h2d)[1].uniform_edges) != step(binedges(h2d)[1].uniform_edges)) && error("bins must be the same!")
         
         # if uniform edges = bin_width is same for all bins
-        @show halfBinWidth = step(binedges(h2d)[1].uniform_edges) / 2.
+        halfBinWidth = step(binedges(h2d)[1].uniform_edges) / 2.
     elseif( !binedges(h2d)[1].isuniform || !binedges(h2d)[1].isuniform )
         ((binedges(h2d)[1].nonuniform_edges) != (binedges(h2d)[1].nonuniform_edges)) && error("bins must be the same!")
     
         diffs = diff(binedges(h2d)[1].nonuniform_edges)
-        @show halfBinWidths = diffs ./ 2.
+        halfBinWidths = diffs ./ 2.
     end
 
     if( binedges(h2d)[1].isuniform )
-        @show BinID = argmax(bincounts(h2d))
-        @show minBinCenter, maxBinCenter = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
-        @show maxBinCount = lookup(h2d, minBinCenter, maxBinCenter)
+        BinID = argmax(bincounts(h2d))
+        minBinCenter, maxBinCenter = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
+        maxBinCount = lookup(h2d, minBinCenter, maxBinCenter)
 
         return Dict(
             :minBinEdge => minBinCenter - halfBinWidth,
@@ -90,9 +78,9 @@ function get_max_bin(h2d::Hist2D)
             :maxBinCount => maxBinCount
         )
     else
-        @show BinID = argmax(bincounts(h2d))
-        @show minBinCenter, maxBinCenter = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
-        @show maxBinCount = lookup(h2d, minBinCenter, maxBinCenter)
+        BinID = argmax(bincounts(h2d))
+        minBinCenter, maxBinCenter = bincenters(h2d)[1][BinID[1]], bincenters(h2d)[1][BinID[2]]
+        maxBinCount = lookup(h2d, minBinCenter, maxBinCenter)
         return Dict(
             :minBinEdge => minBinCenter - halfBinWidths[BinID[1]],
             :maxBinEdge => maxBinCenter + halfBinWidths[BinID[2]],

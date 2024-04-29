@@ -115,9 +115,9 @@ function get_bkg_counts(processes::Process...)
             @warn("get_bkg_counts(): passed isotope $(p.isotopeName) is a signal process!!")
         else
             if (eltype(p.activity) <: Measurement) # check if measurement with uncertainties
-                h2d += p.efficiency * p.activity.val * p.amount * p.timeMeas
+                merge!(h2d, p.efficiency * p.activity.val * p.amount * p.timeMeas)
             else
-                h2d += p.efficiency * p.activity * p.amount * p.timeMeas
+                merge!(h2d, p.efficiency * p.activity * p.amount * p.timeMeas)
             end
         end
     end
@@ -135,7 +135,7 @@ function get_bkg_counts_1D(processes::Process...)
         if (p.signal)
             @warn("get_bkg_counts(): passed isotope $(p.isotopeName) is a signal process!!")
         else
-            h1d += get_bkg_counts_1D(p)
+            merge!(h1d, get_bkg_counts_1D(p))
         end
     end
     return h1d
@@ -214,11 +214,12 @@ function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula
 
     for p in processes # sum efficiencies of the signal processes (does this make sense?)
         if(p.signal)
-            ε += p.efficiency
+            merge!(ε, p.efficiency)
         end
     end
-
+    @show "aa"
     b = get_bkg_counts(processes...)
+    @show typeof(b)
 
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
@@ -231,27 +232,27 @@ function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula
     return tHalf
 end
 
-function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula")
-    ε = Hist2D(; binedges=(processes[1].bins, processes[1].bins))
+# function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula")
+#     ε = Hist2D(; binedges=(processes[1].bins, processes[1].bins))
 
-    for p in processes # sum efficiencies of the signal processes (does this make sense?)
-        if(p.signal)
-            ε += p.efficiency
-        end
-    end
+#     for p in processes # sum efficiencies of the signal processes (does this make sense?)
+#         if(p.signal)
+#             ε += p.efficiency
+#         end
+#     end
 
-    b = get_bkg_counts(processes...)
+#     b = get_bkg_counts(processes...)
 
-    @unpack W, foilMass, Nₐ, tYear, a = SNparams
-    constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
+#     @unpack W, foilMass, Nₐ, tYear, a = SNparams
+#     constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
      
-    b.bincounts .= get_FC.(b.bincounts, α; approximate=approximate)
+#     b.bincounts .= get_FC.(b.bincounts, α; approximate=approximate)
 
-    tHalf = constantTerm * ε / (b)
-    replace!(tHalf.bincounts, NaN => 0.0)
+#     tHalf = constantTerm * ε / (b)
+#     replace!(tHalf.bincounts, NaN => 0.0)
 
-    return tHalf
-end
+#     return tHalf
+# end
 
 """
     get_isotope_details( process::Process )
