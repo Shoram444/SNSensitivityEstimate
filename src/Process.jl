@@ -217,42 +217,18 @@ function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula
             merge!(ε, p.efficiency)
         end
     end
-    @show "aa"
     b = get_bkg_counts(processes...)
-    @show typeof(b)
 
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
      
     b.bincounts .= get_FC.(b.bincounts, α; approximate=approximate)
 
-    tHalf = constantTerm * ε / (b)
+    tHalf = constantTerm * ε / b
     replace!(tHalf.bincounts, NaN => 0.0)
 
     return tHalf
 end
-
-# function get_tHalf_map(SNparams, α, processes::Process...; approximate="formula")
-#     ε = Hist2D(; binedges=(processes[1].bins, processes[1].bins))
-
-#     for p in processes # sum efficiencies of the signal processes (does this make sense?)
-#         if(p.signal)
-#             ε += p.efficiency
-#         end
-#     end
-
-#     b = get_bkg_counts(processes...)
-
-#     @unpack W, foilMass, Nₐ, tYear, a = SNparams
-#     constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
-     
-#     b.bincounts .= get_FC.(b.bincounts, α; approximate=approximate)
-
-#     tHalf = constantTerm * ε / (b)
-#     replace!(tHalf.bincounts, NaN => 0.0)
-
-#     return tHalf
-# end
 
 """
     get_isotope_details( process::Process )

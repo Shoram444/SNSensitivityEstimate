@@ -24,11 +24,11 @@ bkgProcessesESum = [
 α = 1.64
 
 
-t12MapESum      = get_tHalf_map(SNparams, α, sigProcessESum, bkgProcessesESum...)
-best_t12ESum    = get_max_bin(t12MapESum)
-expBkgESum      = get_bkg_counts_ROI(best_t12ESum, bkgProcessesESum...)
-effbb           = lookup(sigProcessESum, best_t12ESum)
-ThalfbbESum     = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
+t12MapESum = get_tHalf_map(SNparams, α, sigProcessESum, bkgProcessesESum...)
+best_t12ESum = get_max_bin(t12MapESum)
+expBkgESum = get_bkg_counts_ROI(best_t12ESum, bkgProcessesESum...)
+effbb = lookup(sigProcessESum, best_t12ESum)
+ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
 
 lbl = "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV 
       b  = $(round(expBkgESum, sigdigits = 3)) 
@@ -71,7 +71,7 @@ get_tHalf1(t, b) = get_tHalf(
     t,
     SNparams["a"],
     effbb,
-    b / SNparams["tYear"] * t ,
+    b / SNparams["tYear"] * t,
     α;
     approximate="formula"
 )
@@ -83,23 +83,23 @@ plot(
     ylabel="sensitivity " * L"T_{1/2}^{0\nu}" * "[yr]",
     title="sensitivity to " * L"0\nu\beta\beta" * " as a function of running time",
     label="Frequentist; b = $(round(expBkgESum, sigdigits =4))/2.5yr ",
-    legendtitle = "ΔE = 11% @ 1MeV",
-    legendtitlefontsize = 12,
-    fontfamily = "serif",
-    thickness_scaling = 1.6,
-    legend = :bottomright,
-    c = 1
+    legendtitle="ΔE = 11% @ 1MeV",
+    legendtitlefontsize=12,
+    fontfamily="serif",
+    thickness_scaling=1.6,
+    legend=:bottomright,
+    c=1
 )
 
-get_tHalf_Bayess(t, muS = 2.35) = log(2) * (effbb * SNparams["foilMass"] * SNparams["a"] * SNparams["Nₐ"] *t) / (muS*SNparams["W"])
-   
+get_tHalf_Bayess(t, muS=2.35) = log(2) * (effbb * SNparams["foilMass"] * SNparams["a"] * SNparams["Nₐ"] * t) / (muS * SNparams["W"])
+
 hline!(
     [get_tHalf_Bayess(2.5, 2.35)],
     xlabel="running time [yr]",
     ylabel="sensitivity " * L"T_{1/2}^{0\nu}" * "[yr]",
     title="sensitivity to " * L"0\nu\beta\beta" * " as a function of running time",
     label="Bayess SN muS = 2.35 ",
-    ls = :dash
+    ls=:dash
 )
 hline!([4.6e24], c=:black, label="cupid sensitivity")
 safesave(plotsdir("SumE", "sensitivity_vs_time_7dE_Bayess.png"), current())
@@ -111,38 +111,38 @@ sig1d = get_bkg_counts_1D(sigProcessESum)
 
 pythonplot()
 SensitivityModule.stackedhist(
-    hhs, 
-    yscale =:log10,
-    ylims = (1e-4, 1e4),
-    label = reshape([p.isotopeName for p in bkgProcessesESum], 1, length(hhs)),
-    legend = :best,
-    xlabel = "sum energy [keV]",
-    ylabel = "estimated counts " * L"[keV^{-1}]",
-    title = "estimated sum spectrum",
-    xlims = (0, 3500),
-    c= [2 3 4 5 1],
-    lw = 0,
+    hhs,
+    yscale=:log10,
+    ylims=(1e-4, 1e4),
+    label=reshape([p.isotopeName for p in bkgProcessesESum], 1, length(hhs)),
+    legend=:best,
+    xlabel="sum energy [keV]",
+    ylabel="estimated counts " * L"[keV^{-1}]",
+    title="estimated sum spectrum",
+    xlims=(0, 3500),
+    c=[2 3 4 5 1],
+    lw=0,
     bar_width=150,
-    fontfamily = "serif"
+    fontfamily="serif"
 )
 savefig(plotsdir("SumE", "estimated1D_nu0_spectrum.png"))
 
 
 estimated_counts_hist1D(
-    probFiles["Bi214_foil_bulk"], 
-    BkgActivityParams[:Bi214_foil_bulk], 
-    SNparams["foilMass"], 
-    SNparams["t"], 
-    0:150:3500, 
+    probFiles["Bi214_foil_bulk"],
+    BkgActivityParams[:Bi214_foil_bulk],
+    SNparams["foilMass"],
+    SNparams["t"],
+    0:150:3500,
     SimulationParams[:Bi214_foil_bulk]
 ) |> integral
 
 bkgNames = ["bb_foil_bulk", "Tl208_foil_surface", "Bi214_foil_bulk", "Bi214_wire_surface", "Bi214_foil_surface"]
-bkgFiles = Dict( k => probFiles[k] for k in bkgNames if haskey(probFiles, k) )
+bkgFiles = Dict(k => probFiles[k] for k in bkgNames if haskey(probFiles, k))
 
 h = Hist1D(; counttype=Float64, binedges=binningDict[:SumE])
 for k in keys(bkgFiles)
-    if ( k == "bb_foil_bulk")
+    if (k == "bb_foil_bulk")
         a = SigActivityParams[Symbol(k)]
     else
         a = BkgActivityParams[Symbol(k)]
@@ -156,13 +156,13 @@ minROI, nBins, bStep = 2500, 9, 100
 bins = []
 bExp = []
 for (i, ROI) in enumerate(minROI:bStep:minROI+(bStep*nBins))
-    binning=ROI:bStep:ROI+bStep
+    binning = ROI:bStep:ROI+bStep
     push!(bins, binning)
 
     b = restrict(h, first(binning), last(binning)) |> integral
     push!(bExp, b)
 end
-expected_bkg_cts_per_ROI = DataFrame(bins = bins, bExp = bExp)
+expected_bkg_cts_per_ROI = DataFrame(bins=bins, bExp=bExp)
 
 DataFrames.pretty_table(expected_bkg_cts_per_ROI, backend=Val(:markdown))
 
@@ -171,8 +171,8 @@ expected_bkg_cts_per_ROI.b_n1 .= b_n1
 
 expected_bkg_cts_per_ROI
 
-with(gr) do 
-   bar(2500:100:3500, expected_bkg_cts_per_ROI.b_n1) 
+with(gr) do
+    bar(2500:100:3500, expected_bkg_cts_per_ROI.b_n1)
 end
 
 using PrettyTables
