@@ -1,4 +1,8 @@
-using Turing, Distributions, StatsPlots, ReverseDiff
+using DrWatson
+@quickactivate "SNSensitivityEstimate"
+
+push!(LOAD_PATH, srcdir())
+using Turing, Distributions, StatsPlots, ReverseDiff, SensitivityModule
 
 mu, s, n = 5, 1, 1000
 
@@ -17,25 +21,19 @@ ch = sample(normal_fit(d), NUTS(1000, 0.65), MCMCSerial(), 1000, 1)
 plot(ch)
 histogram(d)
 
-preds = predict(normal_fit(similar(d, Missing)), ch)
-preds = dropdims(preds.value, dims=3)';
 
-preds_mean = vec(mean(preds, dims=2));
-preds_90 = mapslices(x -> quantile(x, [0.05, 0.95]), preds, dims=2);
-
-fit_f(x,qs, bw,n) = bw*n*pdf(Normal(qs[1], qs[2]),x)
-ff(x, mu, sig, bw, n) = bw*n*pdf(Normal(mu, sig),x)
+fit_f(x, params, bw,n) = bw*n*pdf(Normal(params[1], params[2]),x)
 
 bw=0.1
 bins = 0:bw:10
 
-mean_mu, mean_sigma = mean(ch[:mu]), mean(ch[:sigma])
-m = ff.(collect(bins), mean_mu, mean_sigma, 0.1, n)
+fit_f1(x, params) = fit_f(x, params, bw,n)
+means, lowers, uppers = get_mean_conf(bins, ch, fit_f1, 0.1)
 
 histogram(d, bins=bins, label="data")
-plot!(collect(bins),m, label = "mean")
-plot!(collect(bins),m, ribbon=abs.(preds_mean .- preds_90), label = "90% credible interval", lw =0, fa = 0.7)
-ylims!(0, 50)
+plot!(bins, means, label = "mean", lw =1, ls=:dash, c=5)
+plot!(bins, means, ribbon=(lowers,uppers),c=5, label = "90% credible interval", lw =0, fa = 0.7)
+ylims!(0, 60)
 savefig("plots/test_turing_CI.png")
 
 ############################################
@@ -66,3 +64,4 @@ fit_f(p::@NamedTuple{mu::Float64, sigma::Float64}, x; bw=bw, n=n) = bw*n*pdf(Nor
 histogram(d, bins=bins, label="data")
 plot!(bins, fit_f, samples, thickness_scaling =1, intervals=[0.9],lw=1, mean=false, size=(800,600))
 savefig("plots/test_BAT_CI.png")
+

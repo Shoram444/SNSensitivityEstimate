@@ -1,4 +1,8 @@
-using Turing, Distributions, StatsPlots, ReverseDiff
+using DrWatson
+@quickactivate
+
+push!(LOAD_PATH, srcdir())
+using SensitivityModule,Turing, Distributions, StatsPlots, ReverseDiff
 
 mu, s, l, n1, n2 = 5, 1, 0.5, 3, 100
 
@@ -25,31 +29,23 @@ d= vcat(sig, bkg);
         Turing.@addlogprob! (log(likelihood_extended) + log(likelihood_mixture))
     end
 end
-ch = sample(bkg_sig(d), NUTS(0.65; adtype=AutoReverseDiff()), MCMCSerial(), 1_000, 1)
+ch = sample(bkg_sig(d), NUTS(0.65), MCMCSerial(), 1_000, 1)
 
 plot(ch)
 histogram(d)
 
 
 # quantiles?
-samples = Array(ch[:,:,1])
-
-
-lower_qs = mapslices(x -> quantile(x, 0.025), samples; dims=1)
-upper_qs = mapslices(x -> quantile(x, 0.975), samples; dims=1)
-mid_qs = mapslices(x -> quantile(x, 0.5), samples; dims=1)
-
-fit_f(x,qs, bw) = bw*(qs[4]*pdf(Normal(qs[2], qs[3]),x) + qs[5]*pdf(Exponential(qs[1]),x))
+fit_f(x,params, bw) = bw*(params[4]*pdf(Normal(params[2], params[3]),x) + params[5]*pdf(Exponential(params[1]),x))
 
 bw=0.1
 bins = 0:bw:10
 
-mids = [fit_f(x,mid_qs, bw) for x in collect(bins)];
-lows = [fit_f(x,lower_qs, bw) for x in collect(bins)];
-ups = [fit_f(x,upper_qs, bw) for x in collect(bins)];
+ff(x,params) = fit_f(x,params, bw)
+
+m, l, u = get_mean_conf(bins, ch, ff, 0.1)
 
 histogram(d, bins=bins, label="data")
-plot!(bins, mids, label="mid", lw=1, ls = :dash)
-plot!(bins, lows, fill = ups, label ="95% credible interval", fa = 0.7, lw=0)
-
+plot!(bins, m, label="mean fit", lw=3, c=5, ls = :dash)
+plot!(bins, u+m, fill=m-l, label ="90% credible interval", fa = 0.7, lw=1, c=5)
 

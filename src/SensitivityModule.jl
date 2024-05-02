@@ -1,6 +1,16 @@
 module SensitivityModule
 
-using StatsPlots, DataFramesMeta, LaTeXStrings, FHist, StatsBase, UnROOT, DrWatson, MakieCore, Measurements
+using 
+    StatsPlots, 
+    DataFramesMeta, 
+    LaTeXStrings, 
+    FHist, 
+    StatsBase, 
+    UnROOT, 
+    DrWatson, 
+    MakieCore, 
+    Measurements,
+    Turing
 
 
 include("Misc.jl")
@@ -48,6 +58,9 @@ include("Makie_themes.jl")
 export 
     dao 
 
+include("BayessUtils.jl")
+export 
+    get_mean_conf   
 
 
 end # module

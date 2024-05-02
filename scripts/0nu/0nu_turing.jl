@@ -1,3 +1,8 @@
+using DrWatson
+@quickactivate "SNSensitivityEstimate"
+
+push!(LOAD_PATH, srcdir())
+
 using Turing, StatsPlots, StatsBase, LinearAlgebra, DataFrames
 
 #######################################################
