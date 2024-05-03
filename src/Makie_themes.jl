@@ -21,7 +21,7 @@ function dao(basewidth = 2, spinewidth = basewidth * 0.75)
 			yautolimitmargin = (0.0f0, 0.05f0),
         ),
         Legend = MakieCore.Attributes(
-            bgcolor = :transparent,
+            backgroundcolor = :transparent,
             framevisible = true,
         ),
         Scatter = MakieCore.Attributes(
@@ -30,9 +30,10 @@ function dao(basewidth = 2, spinewidth = basewidth * 0.75)
             strokewidth = 0,
         ),
 		Heatmap = MakieCore.Attributes(
-			colormap = :coolwarm,
+			colormap = :viridis,
 		),
 		
 		)
-    return MakieCore.merge(MakieCore.theme_latexfonts(),dao_attr)
+    # return MakieCore.merge(MakieCore.theme_latexfonts(),dao_attr)
+    return dao_attr
 end

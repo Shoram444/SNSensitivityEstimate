@@ -11,7 +11,7 @@ SNparams = Dict(
     "PMTGlassMass" => 286,                      # PMT glass mass in [kg]
     "wireBulkMass" => 20,                       # DUMMY VALUE!! mass of the tracker wires in [kg]
     "t" => 2.88 * 365 * 24 * 3600,              # measurement time in [s]
-    "tYear" => 2.5,                             # measurement time in [y]
+    "tYear" => 2.88,                             # measurement time in [y]
     "SeThalf2nu" => (9.39 ± 0.17)*1e19 * 365 * 24 * 3600,    # 2nu Se82 half life in [s], results from NEMO-3
     "SeThalf0nu" => 1e26 * 365 * 24 * 3600,     # 0nu Se82 half life in [s], results from NEMO-3
 ) 

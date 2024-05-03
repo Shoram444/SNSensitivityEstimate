@@ -914,7 +914,7 @@ version = "3.3.10+0"
 
 [[deps.FHist]]
 deps = ["BayesHistogram", "LinearAlgebra", "MakieCore", "Measurements", "RecipesBase", "Requires", "Statistics", "StatsBase"]
-git-tree-sha1 = "591cfa60ed9899839a312327cfe893c852b473c2"
+path = "/home/shoram/.julia/dev/FHist"
 uuid = "68837c9b-b678-4cd5-9925-8a54edc8f695"
 version = "0.11.1"
 
