@@ -62,5 +62,9 @@ include("BayessUtils.jl")
 export 
     get_mean_conf   
 
-
+include("LoadData.jl")
+export 
+    load_files,
+    load_processes
+    
 end # module
