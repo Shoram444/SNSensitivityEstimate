@@ -112,9 +112,9 @@ end
 
 function DensityInterface.logdensityof(likelihood::UnbinnedModel, p)
     n = length(likelihood.data)
-    muS, muB, sigma, lambda = p
+    muB, muS, sigma, lambda = p
 
-    ll_a = sum(log.(likelihood_a.(muS, muB, sigma, lambda, likelihood.data)))
+    ll_a = sum(log.(likelihood_a.(muB, muS, sigma, lambda, likelihood.data)))
     ll_b = log(likelihood_b(p, n))
     ll_a + ll_b
 end
