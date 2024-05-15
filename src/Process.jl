@@ -66,6 +66,44 @@ function get_process(isotopeName, processesVector)
     return processesVector[idx]
 end
 
+############################################################
+########### setters!
+############################################################
+
+function set_signal!(process, signal)
+    process.signal = signal
+    return process
+end
+
+function set_activity!(process, activity)
+    process.activity = activity
+    return process
+end
+
+function set_timeMeas!(process, timeMeas)
+    process.timeMeas = timeMeas
+    return process
+end
+
+function set_nTotalSim!(process, nTotalSim)
+    process.nTotalSim = nTotalSim
+    process.efficiency = get_efficiency(process.dataVector, process.bins, nTotalSim)
+    return process
+end
+
+function set_bins!(process, bins)
+    process.bins = bins
+    process.efficiency = get_efficiency(process.dataVector, bins, process.nTotalSim)
+    return process
+end
+
+
+function set_amount!(process, amount)
+    process.amount = amount
+    return process
+end
+
+
 """
     get_efficiency(dataVector::Vector{<:Real}, bins::AbstractRange, nTotalSim::Real)
 

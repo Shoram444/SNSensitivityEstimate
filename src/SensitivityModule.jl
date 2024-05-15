@@ -41,6 +41,12 @@ export
     Process,
     get_process,                # returns the Process by isotopeName from vector of processes
     get_efficiency,
+    set_signal!,                # experimental feature!
+    set_activity!,
+    set_timeMeas!,
+    set_nTotalSim!,
+    set_bins!,
+    set_amount!,
     get_nPassed,
     get_bkg_counts,               # obtain the expected number of bkg processes per ROI: b_rate = α * sqrt( sum_i A_i * eff_i * t * amount) (where i is the individual bkg process)
     get_sig_counts,               # obtain the rate of sig processes per ROI: s_rate = sum_i A_i * eff_i  (where i is the individual sig process)
