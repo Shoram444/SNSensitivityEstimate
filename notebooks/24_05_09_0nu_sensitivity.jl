@@ -20,6 +20,9 @@ macro bind(def, element)
     end
 end
 
+# ╔═╡ 4dc436b8-1bc4-49d4-83c7-10aa7b1ce5a8
+import Pkg; Pkg.add("ColorSchemes")
+
 # ╔═╡ e0d5731a-086d-11ef-0315-5705b559453d
 using DrWatson
 
@@ -39,6 +42,9 @@ end
 
 # ╔═╡ d33cdccb-3c3e-4394-b16b-6a0bd56b5a3f
 using BAT, DensityInterface, IntervalSets, BinnedModels
+
+# ╔═╡ d48022a9-4b4e-40b8-919f-de812f02d34c
+using ColorSchemes
 
 # ╔═╡ a5b84247-8464-4a80-af07-5309d7bcaef9
 using PlutoUI
@@ -812,6 +818,7 @@ pretty_isotopoes
 	In comparison to the "standard" ``\bar{b}`` = 0.5 cts and the one I calculated earlier this year ``\bar{b} \approx 1.0`` cts, the new value ``\bar{b} = 2.55`` cts is **way too big**. Two things have changes that may be the culprit:
 	1. I used `SimRC` conditions (with realistic **flat** foil though!).
 	2. I generated a **lot more events** which decreased relative error in high energy regions.
+	3. Why is the signal efficiency so much lower? (11% here compared to 13-15% before...SimRC?)
 
 """
 
@@ -989,7 +996,7 @@ data = let
 	clicked1
 	clicked2
 	generate_sample_data(h1d_full_bkg)
-end
+end;
 
 # ╔═╡ 23f06d08-e9ad-4de0-a152-fc5d47d6d103
 h1d_sample = let 
@@ -1205,12 +1212,12 @@ md"""
 """
 
 # ╔═╡ e2161672-3e61-4163-a7b6-5cf0a075462c
-allProcesses_12 = load_processes("fal5_12pers")
+allProcesses_12 = load_processes("fal5_12perc", "sumE")
 
 # ╔═╡ 6c93c4a9-8c02-4de2-adf1-02d2c642c8bb
 begin
 	sig12_process = deepcopy(get_process("bb0nu_foil_bulk", allProcesses_12))
-	set_nTotalSim!(sig12_process, 1e8)
+	set_nTotalSim!(sig12_process, 98e7)
 	nothing
 end
 
@@ -1368,6 +1375,18 @@ function chi_square(bincounts, f, xs; nparams= 1)
 	return χ², ndf
 end;
 
+# ╔═╡ 79b85562-16a8-423d-ac7d-16d9ab89c61b
+function exp_integral(lambda, N, a, b)
+	first = -inv(lambda)*N*exp(-a*lambda)
+	second = -inv(lambda)*N*exp(-b*lambda)
+	
+	return second - first
+end;
+
+# ╔═╡ 890ef7fc-2649-442e-beaf-8f9db8c69220
+# data needs to be shifted to start from 0 for a binned fit (we do this by subtracting a from edges)
+b_exp_sample = exp_integral(lambda, N, best_t12ESum[:minBinEdge] - a  , best_t12ESum[:maxBinEdge] - a) / bw ;
+
 # ╔═╡ 8f81bf60-cb6a-4d24-a793-18cb621c1afb
 let l = lambda, N = N, h = h1d_sample_ROI, fit_f(d) = f_exp(d, fit_params)
 	
@@ -1385,24 +1404,13 @@ let l = lambda, N = N, h = h1d_sample_ROI, fit_f(d) = f_exp(d, fit_params)
 
 	p = plot!(ax, h, label = "data", xlabel ="energy", ylabel="normalized counts", )
 	vspan!(ax, best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge], color = (:orange, 0.3), label ="ROI" )
-	lines!(ax, xs , ys, color = :red, linewidth=3, linestyle=:solid, label ="fit: \nλ = $(round(l, sigdigits=3)) \nχ² / ndf = $(round(chisq, sigdigits= 4)) / $(ndf)")
+	lines!(ax, xs , ys, color = :red, linewidth=3, linestyle=:solid, 
+		label ="fit: \nλ = $(round(l, sigdigits=3)) \nχ² / ndf = $(round(chisq, sigdigits= 4)) / $(ndf) \nexp_b = $(round(b_exp_sample, sigdigits=3))")
 	errorbars!(ax, h, label="data", whiskerwidth = 6, color=:black, )
 	ylims!(ax, 1e-1, 1e4)
 	f[1,2] = Legend(f, ax, merge = true )
 	f
 end
-
-# ╔═╡ 79b85562-16a8-423d-ac7d-16d9ab89c61b
-function exp_integral(lambda, N, a, b)
-	first = -inv(lambda)*N*exp(-a*lambda)
-	second = -inv(lambda)*N*exp(-b*lambda)
-	
-	return second - first
-end;
-
-# ╔═╡ 890ef7fc-2649-442e-beaf-8f9db8c69220
-# data needs to be shifted to start from 0 for a binned fit (we do this by subtracting a from edges)
-b_exp_sample = exp_integral(lambda, N, best_t12ESum[:minBinEdge] - a  , best_t12ESum[:maxBinEdge] - a) / bw ;
 
 # ╔═╡ df989bf7-ee2c-4912-bee8-42afeeca70e1
 T12_sample_freq = round(get_tHalf(SNparams, effbb, b_exp_sample, α), sigdigits = 4);
@@ -1512,18 +1520,18 @@ let l = λ, nS = n_Sig, nB = n_Bkg, h = h1d_sample_ROI, ch = chains
 	f = Figure(size = (900, 700), fontsize= 22, fonts = (; regular = "TeX"))
 	ax = Axis(f[1,1], xlabel ="energy [keV]", ylabel="counts / 100keV", title= "Bayessian fit \nlog-scale",  xticks= range(a, b, 5), yscale = log10)
 	ax2 = Axis(f[2,1], xlabel ="energy [keV]", ylabel="counts / 100keV", title= "Bayessian fit \nlinear-scale",  xticks= range(a, b, 5), )
-	p = plot!(ax, h, label = "data")
-	p = plot!(ax2, h, label = "data")
+	p = plot!(ax, h, label = "data", color= (Makie.wong_colors()[1], 0.7), strokewidth =1, strokecolor=:black)
+	p = plot!(ax2, h, label = "data", color= (Makie.wong_colors()[1], 0.7), strokewidth =1, strokecolor=:black)
 
 	bin_edges = binedges(h)
 	min_bin, max_bin = extrema(bin_edges) # used for scaling on the x-axis
 	
 	xs = range(min_bin, max_bin, length=1000) 
-	colors = [:red, :green, :yellow]
+	colors = ColorSchemes.RdYlGn_3.colors
 	alphas=[0.01, 0.10, 1-0.68]
-	m, l, u = get_mean_conf(xs .- min_bin, ch, fit_function, alphas[1])	
+	m, l, u = get_median_conf(xs .- min_bin, ch, fit_function, alphas[1])	
 	for i=1:3
-		m, l, u = get_mean_conf(xs .- min_bin, ch, fit_function, alphas[i])	
+		m, l, u = get_median_conf(xs .- min_bin, ch, fit_function, alphas[i])	
 		band!(ax, xs, m .-l, u .+m ; color = (colors[i], 1), label="$(1-alphas[i])% CI")
 		band!(ax2, xs, m .-l, u .+m ; color = (colors[i], 1), label="$(1-alphas[i])% CI")
 	end
@@ -1608,7 +1616,7 @@ let
 	hlines!(ax1, 4.6e24, color = :black, label = L"\textrm{Cupid: 4.6\times10^{24}y}", linestyle =:dash, linewidth=4)
 	lines!(ax1, t, get_tHalf1.(t, expBkgESum), label =L"\textrm{freq: 8% simulation; } \bar{b} = %$(round(expBkgESum, sigdigits=3))", linewidth=4)
 	lines!(ax1, t, get_tHalf1.(t, b_exp_sample), label =L"\textrm{freq: 8% sample set; } \bar{b} = %$(round(b_exp_sample, sigdigits=3))", linewidth=4)
-	#lines!(ax1, t, get_tHalf2.(t, expBkgESum_12, effbb_12), label =L"\textrm{freq: 12% baseline}", linewidth=4, linestyle =:dot)
+	lines!(ax1, t, get_tHalf2.(t, expBkgESum_12, effbb_12), label =L"\textrm{freq: 12% simulation}  \bar{b} = %$(round(expBkgESum_12, sigdigits=3))", linewidth=4, linestyle =:dot)
 	scatter!(ax1, [2.88], [t12_bayess], color = :red,label = L"\textrm{Bayess: 8% sample set; } \mu_U = %$(round(n_Sig_90q, sigdigits=3))", marker= :star5, markersize = 25)
 	ylims!(ax1, 0, 6e24)
 	fig[1,2] = Legend(fig, ax1, merge = true, tellwidth = false,patchsize = (40, 30))
@@ -1797,9 +1805,11 @@ end
 # ╠═3483d64d-0e77-44d1-8819-e508daf5ae78
 # ╠═44912c3b-7bf9-4245-9f8e-32725dec45a5
 # ╠═348c76b8-6207-415d-97e5-69004a34da2f
-# ╠═ba3142e4-f68e-48a1-9dfd-2fa4695a1488
-# ╠═3dc657f6-692b-47ed-8c4c-2d3eec90d95e
+# ╟─ba3142e4-f68e-48a1-9dfd-2fa4695a1488
+# ╟─3dc657f6-692b-47ed-8c4c-2d3eec90d95e
 # ╟─78d57fb7-f166-420b-af5d-7f982252a0b4
+# ╠═4dc436b8-1bc4-49d4-83c7-10aa7b1ce5a8
+# ╠═d48022a9-4b4e-40b8-919f-de812f02d34c
 # ╠═e881e2dc-a9ac-4ea2-ab29-9da4d4cc8b2f
 # ╠═a5b84247-8464-4a80-af07-5309d7bcaef9
 # ╠═5d6fb41a-8146-4423-94b2-dc2e78495a25
