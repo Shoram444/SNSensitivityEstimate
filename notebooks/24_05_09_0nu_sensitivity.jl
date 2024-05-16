@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.41
+# v0.19.40
 
 #> [frontmatter]
 #> title = "Sensitivity to 0nubb in SuperNEMO: two ways! Frequentist vs Bayessian approach."
@@ -844,7 +844,7 @@ md"""
 
 # ╔═╡ 796d7a86-dae3-4e0c-9dc7-157d245425e9
 md"""
-a = $(@bind a PlutoUI.Slider(1600:100:2700, default=2300; show_value=true)) keV
+a = $(@bind a PlutoUI.Slider(1600:100:2700, default=2400; show_value=true)) keV
 
 b = $(@bind b PlutoUI.Slider(3100:100:3500, default=3400; show_value=:true)) keV
 """
@@ -1616,7 +1616,7 @@ let
 	hlines!(ax1, 4.6e24, color = :black, label = L"\textrm{Cupid: 4.6\times10^{24}y}", linestyle =:dash, linewidth=4)
 	lines!(ax1, t, get_tHalf1.(t, expBkgESum), label =L"\textrm{freq: 8% simulation; } \bar{b} = %$(round(expBkgESum, sigdigits=3))", linewidth=4)
 	lines!(ax1, t, get_tHalf1.(t, b_exp_sample), label =L"\textrm{freq: 8% sample set; } \bar{b} = %$(round(b_exp_sample, sigdigits=3))", linewidth=4)
-	lines!(ax1, t, get_tHalf2.(t, expBkgESum_12, effbb_12), label =L"\textrm{freq: 12% simulation}  \bar{b} = %$(round(expBkgESum_12, sigdigits=3))", linewidth=4, linestyle =:dot)
+	lines!(ax1, t, get_tHalf2.(t, expBkgESum_12, effbb_12), label =L"\textrm{freq: 12% simulation; }  \bar{b} = %$(round(expBkgESum_12, sigdigits=3))", linewidth=4, linestyle =:dot)
 	scatter!(ax1, [2.88], [t12_bayess], color = :red,label = L"\textrm{Bayess: 8% sample set; } \mu_U = %$(round(n_Sig_90q, sigdigits=3))", marker= :star5, markersize = 25)
 	ylims!(ax1, 0, 6e24)
 	fig[1,2] = Legend(fig, ax1, merge = true, tellwidth = false,patchsize = (40, 30))
