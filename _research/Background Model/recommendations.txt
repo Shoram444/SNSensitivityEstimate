@@ -1,0 +1,57 @@
+Literature recommendation for:
+	Bayessian analysis 
+
+
+### Books to read: 
+- Statistical Rethinking by Richard McElreath
+	- A great book on comprehensive Bayessian analysis
+	- https://xcelab.net/rm/ (Good resource website with code suggestions)
+	- https://www.youtube.com/@rmcelreath/playlists (Youtube playlists of the lectures by author)
+
+- Statistical Data Analysis by Glen Cowan 
+	- Good general statistics for particle physics (not so much Bayessian, but a nice intro to Bayess Theorem)
+	- https://www.sherrytowers.com/cowan_statistical_data_analysis.pdf  
+
+
+### Papers:
+- *NATURE* Background-free search for neutrinoless double-β decay of 76Ge with GERDA 
+	- Methodology describes the choice of model and procedure of calculating sensitivty (I tried to follow this one as much as made sense)
+	- https://www.nature.com/articles/nature21717
+
+- A Bayesian Approach to Neutrinoless Double Beta Decay Analysis in KamLAND-Zen
+	- https://www.researchgate.net/publication/351500787_A_Bayesian_Approach_to_Neutrinoless_Double_Beta_Decay_Analysis_in_KamLAND-Zen
+
+
+- CUORE sensitivity to 0nubb decay
+	- https://link.springer.com/article/10.1140/epjc/s10052-017-5098-9
+
+- Asymptotic formulae for likelihood-based tests of new physics
+	- paper on methods for sensitivty calculations (*a difficult read*)
+	- https://link.springer.com/article/10.1140/epjc/s10052-011-1554-0
+
+
+### Tools:
+- BAT (Bayessian Analysis Toolkit)
+	- Developed by members of LEGEND, used extensively in other double beta experiments
+	- written in Julia (a rewrite of an *old* software written in C++, I don't know it it still works..)
+	- some tutorials: https://github.com/bat/bat-julia-tutorial
+	- freely available at https://github.com/bat/BAT.jl (example in documentation)
+	- https://link.springer.com/article/10.1007/s42979-021-00626-4 (**with GERDA-like example**)
+
+- Turing.jl
+	- A general bayessian inference software
+	- relatively easy learning curve (in comparison to BAT I would say)
+	- Documentation with a bunch of examples: https://turinglang.org/dev/ 
+
+### Youtube:
+- Probabilistic programming for beginners
+	- A very nice intro to Bayessian statistics and how Turing is used 
+	- https://www.youtube.com/playlist?list=PLhQ2JMBcfAsgU7kZ-Ee_SDrjhJIehICmR
+	- Guy also has other julia tutorials (worth checking out if interested)
+
+- Probabilistic modelling with Turing.jl
+	- A bit more comprehensive guide
+	- https://www.youtube.com/watch?v=pcj56T1BoSw
+
+
+By Maros Petro
