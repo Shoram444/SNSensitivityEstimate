@@ -101,3 +101,22 @@ function add_vertex_dz_separation_column!(df)
     )
 end
 
+
+function generate_pseudo_data(h1d::Hist1D)
+	n_i = map(x->rand(Poisson(x)), bincounts(h1d))
+	b_i = collect(binedges(h1d))
+	bin_widths = diff(b_i) # vector of bin widths (in case of non-uniform binning)
+	
+	data = Vector{Float64}(undef, sum(n_i))
+	idx_slice = 1
+	for (ni, bi, bw_i) in zip(n_i, b_i, bin_widths)
+		if(ni != 0)
+			data[idx_slice:idx_slice+ni-1] = rand(Uniform(bi, bi + bw_i ), ni)
+			idx_slice+=ni
+		end
+	end
+	return data 
+end
+
+get_sigma_MeV(E_MeV, FWHM) = 1/(2*sqrt(2*log(2)))*FWHM*sqrt(1/E_MeV)*E_MeV
+get_sigma_keV(E_keV, FWHM) = get_sigma_MeV(E_keV/1000.0, FWHM) * 1000.0

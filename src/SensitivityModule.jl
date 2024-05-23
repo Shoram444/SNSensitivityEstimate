@@ -10,7 +10,10 @@ using
     DrWatson, 
     MakieCore, 
     Measurements,
-    Turing
+    Turing,
+    CairoMakie,
+    BAT,
+    DensityInterface
 
 
 include("Misc.jl")
@@ -21,7 +24,10 @@ export
     get_1D_vertex_separation,
     add_vertex_2D_separation_column!,
     add_vertex_dy_separation_column!,
-    add_vertex_dz_separation_column!
+    add_vertex_dz_separation_column!,
+    generate_pseudo_data,
+    get_sigma_keV,
+    get_sigma_MeV
 
 include("ExpectedCounts.jl")
 export 
@@ -60,7 +66,7 @@ export
     
 include("PlotsRecipes.jl")
 
-include("Makie_themes.jl")
+include("Makie.jl")
 export 
     dao 
 
@@ -73,5 +79,13 @@ include("LoadData.jl")
 export 
     load_files,
     load_processes
+
+include("Models.jl")
+export 
+    exponential_normal_model,           
+    exponential_uniform_normal_model,
+    mixture_model,
+    exponential_normal_mixture,
+    BAT_normal_exponential_model 
     
 end # module

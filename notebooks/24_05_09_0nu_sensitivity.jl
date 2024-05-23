@@ -752,11 +752,11 @@ md"""
 """
 
 # ╔═╡ bb31751d-eaa8-4b7e-aad0-cf894a6ee7f7
-α=1.64;
+α=1.64485362695147;
 
 # ╔═╡ 7e9ac44f-b1af-477b-a9ab-762e12a9d294
 # ╠═╡ show_logs = false
-t12MapESum = get_tHalf_map(SNparams, α, sigProcessESum, bkgProcessesESum...);
+t12MapESum = get_tHalf_map(SNparams, α, sigProcessESum, bkgProcessesESum...; approximate="formula");
 
 # ╔═╡ e5cba772-d3a1-4b5b-9897-164183366e04
 let
@@ -1683,9 +1683,9 @@ end
 # ╟─a65e5feb-fe4a-41a0-9cc9-530c0c90a317
 # ╟─21b41886-2a18-40d2-b57c-62862b30b8fe
 # ╟─cede3473-fae8-4998-ba6e-01f9d05ad54c
-# ╟─6821c511-ef71-401e-9f36-1719886e7b54
-# ╟─52165d49-4a46-41d5-9803-20047b1ce12e
-# ╟─3cbcfaf5-b367-40e2-9093-d10f852d403a
+# ╠═6821c511-ef71-401e-9f36-1719886e7b54
+# ╠═52165d49-4a46-41d5-9803-20047b1ce12e
+# ╠═3cbcfaf5-b367-40e2-9093-d10f852d403a
 # ╟─f57a6ed8-2332-4ab1-abef-27c44881c7af
 # ╟─84c47066-c7b7-4653-8e7a-9d24305fe091
 # ╟─ec440471-bd5a-44ca-bd8c-7be723c07179
@@ -1705,9 +1705,9 @@ end
 # ╟─91546e37-2d22-4616-9d19-a4d973e80e54
 # ╟─d5b67056-4212-40b6-b25c-007cacd0509a
 # ╟─26f30acb-b8ab-4619-bdb2-b49107c0a317
-# ╟─06e1024a-5afb-4cd8-a75e-4bcfb4a5ab8f
-# ╟─1554ee0b-4a9c-49e4-badc-b000c767ed2d
-# ╟─23f06d08-e9ad-4de0-a152-fc5d47d6d103
+# ╠═06e1024a-5afb-4cd8-a75e-4bcfb4a5ab8f
+# ╠═1554ee0b-4a9c-49e4-badc-b000c767ed2d
+# ╠═23f06d08-e9ad-4de0-a152-fc5d47d6d103
 # ╟─a47c9336-33de-4c89-bc64-3e1e12036243
 # ╟─873c693a-23a9-4ec2-ac3a-04cd9c9ac40b
 # ╟─52e4668e-9804-492a-9deb-830f8cdedfcf
@@ -1720,8 +1720,8 @@ end
 # ╟─883a548d-54ec-4242-9e65-38118045a517
 # ╟─9be29518-9b98-4f6d-a504-40a27ada1107
 # ╟─e5cba772-d3a1-4b5b-9897-164183366e04
-# ╟─7e9ac44f-b1af-477b-a9ab-762e12a9d294
-# ╟─bb31751d-eaa8-4b7e-aad0-cf894a6ee7f7
+# ╠═7e9ac44f-b1af-477b-a9ab-762e12a9d294
+# ╠═bb31751d-eaa8-4b7e-aad0-cf894a6ee7f7
 # ╟─14d69080-2f1b-48a6-8c05-d58b5b4d3992
 # ╟─196c8517-cb7a-4286-b630-98488d8bbe18
 # ╟─abc26356-b76e-4bc0-a1fd-c9aed18c0841
@@ -1746,7 +1746,7 @@ end
 # ╟─4cd71a16-3bb8-4d81-b1f7-f67eb6cad196
 # ╟─14ef85c1-4be6-45c3-b2f8-cae5d5a21aa7
 # ╟─2c04e398-8c31-4f9b-a00a-528c9bf60358
-# ╟─8ba6e3d9-3529-4c8d-bc5c-98a91743f29a
+# ╠═8ba6e3d9-3529-4c8d-bc5c-98a91743f29a
 # ╟─c145389c-b760-42d2-afe2-18ea3d31b49f
 # ╟─6376b61a-f6a2-4dbd-9ba1-b2bcd96f5d9d
 # ╟─2134a77e-34bb-4b7f-a268-23fd1e6d52a1

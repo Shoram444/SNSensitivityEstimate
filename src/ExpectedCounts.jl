@@ -22,7 +22,7 @@ end
 
 function get_FC(b, α; approximate="formula")
     if( approximate == "formula")
-        if (b < 30 && α==1.64)
+        if (b < 30 && isapprox(1.64, α, atol=0.1))
             b = 2.44+0.8467*b-0.08849*b^2+0.00625*b^3-0.0002124*b^4+0.000002712*b^5
         else
             b = α * sqrt(b)

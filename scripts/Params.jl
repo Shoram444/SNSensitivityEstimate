@@ -14,21 +14,22 @@ SNparams = Dict(
     "tYear" => 2.88,                             # measurement time in [y]
     "SeThalf2nu" => (9.39 ± 0.17)*1e19 * 365 * 24 * 3600,    # 2nu Se82 half life in [s], results from NEMO-3
     "SeThalf0nu" => 1e26 * 365 * 24 * 3600,     # 0nu Se82 half life in [s], results from NEMO-3
+    "Q" => 2997.9                               # [keV]
 ) 
 
 BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-6295-x and docDB 4505
     :Pa234m_foil_bulk => (17.3 ± 0.1) / 1000 ,          # [mBq/kg] converted to [Bq/kg] from NEMO-3
     :Bi214_foil_bulk => 10 / 1_000_000 ,               # [μBq/kg] converted to [Bq/kg] from SN measurements
-    :Bi214_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; upper limit 48m3 (4x6x2m3) 
-    :Bi214_wire_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; upper limit 48m3 (4x6x2m3) 
+    :Bi214_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
+    :Bi214_wire_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi214_wire_bulk => 0.00001 ,                       # MOCK VALUE
     :Bi214_PMT_glass_bulk => 140 / 286,                 # [Bq/kg] originally the value is given as 417Bq, I just divide by PMT weight here
     :Tl208_foil_bulk => 2 / 1_000_000 ,                # [μBq/kg] converted to [Bq/kg] from SN measurements
-    :Tl208_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; upper limit 48m3 (4x6x2m3)
+    :Tl208_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3
     :Tl208_PMT_glass_bulk => 41.4 / 286 ,               # [Bq/kg] originally the value is given as 41.4Bq, I just divide by PMT weight here
     :Bi210_foil_bulk => 10 / 1_000_000 ,                # MOCK VALUE
-    :Bi210_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; upper limit 48m3 (4x6x2m3) 
-    :Bi210_wire_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; upper limit 48m3 (4x6x2m3) 
+    :Bi210_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
+    :Bi210_wire_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi210_wire_bulk => 0.00001 ,                       # MOCK VALUE
     :K40_foil_bulk => (58.7 ± 0.1) / 1000 ,             # [mBq/kg] converted to [Bq/kg] from NEMO-3
     :K40_PMT_glass_bulk => 417 / 286 ,                  # [Bq/kg] originally the value is given as 417Bq, I just divide by PMT weight here
@@ -65,7 +66,7 @@ SimulationParams = Dict(
 
 binningDict = Dict(
     :SumE => 0:100:3500,
-    :SingleE => 0:100:3500,
+    :SingleE => 0:50:3500,
     :Phi => 0:5:180,
 )
 

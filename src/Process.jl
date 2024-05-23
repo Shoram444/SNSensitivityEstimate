@@ -63,6 +63,9 @@ end
 
 function get_process(isotopeName, processesVector)
     idx = findfirst( x -> x.isotopeName == isotopeName , processesVector )
+    if( idx == nothing )
+        @error "process $isotopeName not found!"
+    end
     return processesVector[idx]
 end
 
