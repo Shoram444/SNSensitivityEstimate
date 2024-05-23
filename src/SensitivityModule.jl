@@ -82,10 +82,7 @@ export
 
 include("Models.jl")
 export 
-    exponential_normal_model,           
-    exponential_uniform_normal_model,
-    mixture_model,
-    exponential_normal_mixture,
+    turing_normal_exponential_model,
     BAT_normal_exponential_model 
     
 end # module

@@ -67,7 +67,7 @@ let
     f
 end
 
-a = 2500.0
+a = 2600.0
 b = 3500.0
 
 ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge] 
@@ -80,7 +80,7 @@ pseudo_data = generate_pseudo_data(h1d_background)
 
 ### Fitting
 using Optim, Turing, MCMCChains
-model1 = exponential_normal_mixture(pseudo_data .- a, a, b)
+model1 = turing_normal_exponential_model(pseudo_data .- a, a, b)
 
 mle_fit = optimize(model1, MLE(), NelderMead()).values
 chains = Turing.sample(model1, NUTS(), 10_000)
@@ -92,14 +92,10 @@ end
 xs = range(a,b,100)
 sigma_at_Q = get_sigma_keV(Q_keV, 0.08)
 # mle fit params
-mu_mle, sigma_mle, l_mle, ns_mle, nb_mle = mle_fit
-ns_mle = ns_mle * length(pseudo_data)
-nb_mle = nb_mle * length(pseudo_data)
+l_mle, ns_mle, nb_mle = mle_fit
 # Bayess fit params
 summary_chains = summarize(chains) |> DataFrame
-mu_bayes, sigma_bayes,l_bayes, ns_bayes, nb_bayes = summary_chains[:, 2]
-ns_bayes = ns_bayes * length(pseudo_data)
-nb_bayes = nb_bayes * length(pseudo_data)
+l_bayes, ns_bayes, nb_bayes = summary_chains[:, 2]
 
 
 ys_bayess = fit_function_exponential_normal_model.(l_bayes, sigma_at_Q, ns_bayes, nb_bayes, xs, Q_keV, a,b) .* step(binningDict[:SumE]) 
@@ -111,12 +107,14 @@ let
     p = plot!(a, h1d_background, label ="pseudo-data")
     lines!(a, xs, ys_mle, label = "fit_mle", color=Makie.wong_colors()[2], linewidth=2, linestyle=:dash)
     lines!(a, xs, ys_bayess, label = "fit_bayes", color=Makie.wong_colors()[3], linewidth=2, linestyle=:dot)
+    ylims!(0,10)
+    xlims!(ROI_a, ROI_b)
     axislegend(a, position = :rt)
     f
 end
 
 credible_interval_90 = hpd(chains; alpha=0.1) |> DataFrame
-mu_U = credible_interval_90[4,3] * length(pseudo_data)
+mu_U = credible_interval_90[2,3]
 
 using QuadGK
 f(x) = fit_function_exponential_normal_model(l_mle, sigma_at_Q, 0, nb_mle, x, Q_keV, a, b) 
