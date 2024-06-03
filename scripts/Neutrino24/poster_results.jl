@@ -93,7 +93,7 @@ let
 	ax = Axis(f[1:2,1], xlabel = "electron sum energy [keV]", ylabel = "counts / $bw keV" , title = "simulated SuperNEMO background", yscale =log10, xticklabelrotation=45)
 	ax2 = Axis(f[2,2], xlabel = "energy [keV]", title = L"\textrm{0\nu\beta\beta ROI}", yscale =log10, limits=(2700,3000, nothing,nothing), yaxisposition = :right, xticklabelrotation=45)
 	
-	labels= [L"0\nu\beta\beta", "internal", "radon", "external"]
+	labels= [L"2\nu\beta\beta", "internal", "radon", "external"]
 	st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
 	for i=2:length(bkg_hists)
 		hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
