@@ -104,6 +104,7 @@ let
 		hist!(ax2, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
 	end
 	
+    text!(ax, 2000, 1.5e1, text= "Preliminary", fontsize = 40, rotation = pi/6, align = (:center, :baseline), color = (:red, 0.6))
 	ylims!(ax, min_cts, 1e6)
 	xlims!(ax, 200, 3200)
 	ylims!(ax2, min_cts, 1e1)
