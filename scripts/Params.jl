@@ -10,6 +10,7 @@ SNparams = Dict(
     "gasVolume" => 15,                          # tracker volume in [m3]
     "PMTGlassMass" => 286,                      # PMT glass mass in [kg]
     "wireBulkMass" => 20,                       # DUMMY VALUE!! mass of the tracker wires in [kg]
+    "hall_surface" => 1,                       # External gamma activity is given in [Bq] so no need to scale by amount
     "t" => 2.88 * 365 * 24 * 3600,              # measurement time in [s]
     "tYear" => 2.88,                             # measurement time in [y]
     "SeThalf2nu" => (9.39 ± 0.17)*1e19 * 365 * 24 * 3600,    # 2nu Se82 half life in [s], results from NEMO-3
@@ -33,7 +34,10 @@ BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-
     :Bi210_wire_bulk => 0.00001 ,                       # MOCK VALUE
     :K40_foil_bulk => (58.7 ± 0.1) / 1000 ,             # [mBq/kg] converted to [Bq/kg] from NEMO-3
     :K40_PMT_glass_bulk => 417 / 286 ,                  # [Bq/kg] originally the value is given as 417Bq, I just divide by PMT weight here
-)
+    :Bi214_hall_surface => 0.5 / 500 / 500 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
+    :Tl208_hall_surface => 2.4 / 500 /500 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
+    :K40_hall_surface => 1.2 / 500 / 500 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
+    )
 
 SigActivityParams = Dict( 
     :bb_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # activity calculated from 2nubb Half-life in [Bq/kg]
@@ -58,7 +62,7 @@ SimulationParams = Dict(
     :Pa234m_foil_bulk => 1e8,
     :K40_foil_bulk => 1e8,
     :K40_PMT_glass_bulk => 1e8,
-    :bb_foil_bulk => 5e8, # 5e8 for 8% fal5, 1e8 for 8% fa4, 1e7 for 11%
+    :bb_foil_bulk => 5e8, # 1e8 for 12% fal5, 5e8 for 8% fal5, 1e8 for 8% fal4, 1e7 for 11%
     :Xi037_foil_bulk => 1e8 ,
     :RH037_foil_bulk => 1e7 ,
     :bb0nu_foil_bulk => 1e8, # 1e8 for fal5 8%, 1e7 for fal4 8%
