@@ -105,8 +105,8 @@ let
 		hist!(ax2, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
 	end
 	
-    # arrows!(ax, [SNparams["Q"]+200], [0.1], [-200 ;10], [-(0.1-min_cts*1.2) ; 10], color=(:red, 0.9), arrowsize=6, linewidth=4)
-    text!(ax, SNparams["Q"]+200, 0.2, text= L"\mathbf{\textrm{Q_{\beta\beta}}}", fontsize = 26, align = (:center, :baseline), color = (:red, 1))
+    arrows!(ax, [SNparams["Q"]+200], [0.1], [-200 ;10], [-(0.1-min_cts*1.2) ; 10], color=(:red, 0.9), arrowsize=0, linewidth=3)
+    text!(ax, SNparams["Q"]+200, 0.13, text= L"\mathbf{\textrm{Q_{\beta\beta}}}", fontsize = 26, align = (:center, :baseline), color = (:red, 1))
     lines!(ax, [2700, 2730], [min_cts, 0.6e1], color=(:black), linewidth=2)
     lines!(ax, [3200, 3750], [min_cts, 0.6e1], color=(:black), linewidth=2)
     text!(ax, 2900, 5e4, text=L"\textrm{0\nu\beta\beta ROI}", fontsize=32)
