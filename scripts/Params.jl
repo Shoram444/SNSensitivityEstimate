@@ -19,7 +19,7 @@ SNparams = Dict(
 ) 
 
 BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-6295-x and docDB 4505
-    :Pa234m_foil_bulk => (17.3 ± 0.1) / 1000 ,          # [mBq/kg] converted to [Bq/kg] from NEMO-3
+    :Pa234m_foil_bulk => 8.19 / 1000 / 10,          # [mBq/kg] from Steven's thesis, better case (table7.4)
     :Bi214_foil_bulk => 10 / 1_000_000 ,               # [μBq/kg] converted to [Bq/kg] from SN measurements
     :Bi214_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi214_wire_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
@@ -32,7 +32,7 @@ BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-
     :Bi210_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi210_wire_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi210_wire_bulk => 0.00001 ,                       # MOCK VALUE
-    :K40_foil_bulk => (58.7 ± 0.1) / 1000 ,             # [mBq/kg] converted to [Bq/kg] from NEMO-3
+    :K40_foil_bulk => 53.59 / 1000 / 10,             # [mBq/kg] from Steven's thesis, better case (table7.4)
     :K40_PMT_glass_bulk => 417 / 286 ,                  # [Bq/kg] originally the value is given as 417Bq, I just divide by PMT weight here
     :Bi214_hall_surface => 0.5 / 500 / 500 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
     :Tl208_hall_surface => 2.4 / 500 /500 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
@@ -52,6 +52,7 @@ SimulationParams = Dict(
     :Bi214_PMT_glass_bulk => 1e7,
     :Bi214_wire_bulk => 1e7,
     :Bi214_wire_surface => 5e8, # 5e8 for 8% fal5, 1e7 for 8%, 1e8 for 11%
+    :Bi214_hall_surface => 1e9, # 
     :Bi210_foil_bulk => 1e6 ,       
     :Bi210_foil_surface => 1e6 ,    
     :Bi210_wire_surface => 1e6 ,    
@@ -59,9 +60,11 @@ SimulationParams = Dict(
     :Tl208_foil_bulk => 5e8, # 5e8 for 8% fal5, 1e8 for fal4 8%
     :Tl208_foil_surface => 117e6,
     :Tl208_PMT_glass_bulk => 1e8,
+    :Tl208_hall_surface => 1e9,
     :Pa234m_foil_bulk => 1e8,
     :K40_foil_bulk => 1e8,
     :K40_PMT_glass_bulk => 1e8,
+    :K40_hall_surface => 1e9,
     :bb_foil_bulk => 5e8, # 1e8 for 12% fal5, 5e8 for 8% fal5, 1e8 for 8% fal4, 1e7 for 11%
     :Xi037_foil_bulk => 1e8 ,
     :RH037_foil_bulk => 1e7 ,
@@ -131,6 +134,17 @@ sumEBi214_wire_surface_Params = Dict(
     :bins => binningDict[:SumE],
     :vertexPosition => "radon",
     :amount => SNparams["gasVolume"]
+)
+
+sumEBi214_hall_surface_Params = Dict(
+    :isotopeName => "Bi214_hall_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:Bi214_hall_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:Bi214_hall_surface],
+    :bins => binningDict[:SumE],
+    :vertexPosition => "hall_surface",
+    :amount => SNparams["hall_surface"]
 )
 
 ### Bi210
@@ -203,6 +217,17 @@ sumETl208_foil_surface_Params = Dict(
     :amount => SNparams["gasVolume"]
 )
 
+sumETl208_hall_surface_Params = Dict(
+    :isotopeName => "Tl208_hall_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:Tl208_hall_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:Tl208_hall_surface],
+    :bins => binningDict[:SumE],
+    :vertexPosition => "hall_surface",
+    :amount => SNparams["hall_surface"]
+)
+
 sumETl208_PMT_glass_bulk_Params = Dict(
     :isotopeName => "Tl208_PMT_glass_bulk", 
     :signal => :false, 
@@ -238,6 +263,17 @@ sumEK40_foil_bulk_Params = Dict(
     :bins => binningDict[:SumE],
     :vertexPosition => "foil_bulk",
     :amount => SNparams["foilMass"]
+)
+
+sumEK40_hall_surface_Params = Dict(
+    :isotopeName => "K40_hall_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:K40_hall_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:K40_hall_surface],
+    :bins => binningDict[:SumE],
+    :vertexPosition => "hall_surface",
+    :amount => SNparams["hall_surface"]
 )
 
 sumEK40_PMT_glass_bulk_Params = Dict(
@@ -303,6 +339,7 @@ sumEbb0nuParams = Dict(
 sumEParams = Dict(
     :Bi214_foil_bulk => sumEBi214_foil_bulk_Params,
     :Bi214_foil_surface => sumEBi214_foil_surface_Params,
+    :Bi214_hall_surface => sumEBi214_hall_surface_Params,
     :Bi214_PMT_glass_bulk => sumEBi214_PMT_glass_bulk_Params,
     :Bi214_wire_bulk => sumEBi214_wire_bulk_Params,
     :Bi214_wire_surface => sumEBi214_wire_surface_Params,
@@ -312,9 +349,11 @@ sumEParams = Dict(
     :Bi210_wire_surface => sumEBi210_wire_surface_Params,
     :Tl208_foil_bulk => sumETl208_foil_bulk_Params,
     :Tl208_foil_surface => sumETl208_foil_surface_Params,
+    :Tl208_hall_surface => sumETl208_hall_surface_Params,
     :Tl208_PMT_glass_bulk => sumETl208_PMT_glass_bulk_Params,
     :Pa234m_foil_bulk => sumEPa234m_foil_bulk_Params,
     :K40_foil_bulk => sumEK40_foil_bulk_Params,
+    :K40_hall_surface => sumEK40_hall_surface_Params,
     :K40_PMT_glass_bulk => sumEK40_PMT_glass_bulk_Params,
     :bb_foil_bulk => sumEbbParams,
     :Xi037_foil_bulk => sumEXiParams,
@@ -344,13 +383,14 @@ singleEBi214_foil_bulk_Params = Dict(
 singleEBi214_foil_surface_Params = Dict(
     :isotopeName => "Bi214_foil_surface", 
     :signal => :false, 
-    :activity => BkgActivityParams[:Bi214_wire_surface], 
+    :activity => BkgActivityParams[:Bi214_foil_surface], 
     :timeMeas => SNparams["t"], 
     :nTotalSim => SimulationParams[:Bi214_foil_surface], 
     :bins => binningDict[:SingleE],
     :vertexPosition => "radon",
     :amount => SNparams["gasVolume"]
 )
+
 
 singleEBi214_PMT_glass_bulk_Params = Dict(
     :isotopeName => "Bi214_PMT_glass_bulk", 
@@ -383,6 +423,17 @@ singleEBi214_wire_surface_Params = Dict(
     :bins => binningDict[:SingleE],
     :vertexPosition => "radon",
     :amount => SNparams["gasVolume"]
+)
+
+singleEBi214_hall_surface_Params = Dict(
+    :isotopeName => "Bi214_hall_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:Bi214_hall_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:Bi214_hall_surface],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "hall_surface",
+    :amount => SNparams["hall_surface"]
 )
 
 ### Bi210
@@ -454,6 +505,17 @@ singleETl208_foil_surface_Params = Dict(
     :amount => SNparams["gasVolume"]
 )
 
+singleETl208_hall_surface_Params = Dict(
+    :isotopeName => "Tl208_hall_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:Tl208_hall_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:Tl208_hall_surface],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "hall_surface",
+    :amount => SNparams["hall_surface"]
+)
+
 
 singleETl208_PMT_glass_bulk_Params = Dict(
     :isotopeName => "Tl208_PMT_glass_bulk", 
@@ -490,6 +552,17 @@ singleEK40_foil_bulk_Params = Dict(
     :bins => binningDict[:SingleE],
     :vertexPosition => "foil_bulk",
     :amount => SNparams["foilMass"]
+)
+
+singleEK40_hall_surface_Params = Dict(
+    :isotopeName => "K40_hall_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:K40_hall_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:K40_hall_surface],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "hall_surface",
+    :amount => SNparams["hall_surface"]
 )
 
 singleEK40_PMT_glass_bulk_Params = Dict(
@@ -559,16 +632,19 @@ singleEParams = Dict(
     :Bi214_PMT_glass_bulk => singleEBi214_PMT_glass_bulk_Params,
     :Bi214_wire_bulk => singleEBi214_wire_bulk_Params,
     :Bi214_wire_surface => singleEBi214_wire_surface_Params,
+    :Bi214_hall_surface => singleEBi214_hall_surface_Params,
     :Bi210_foil_bulk => singleEBi210_foil_bulk_Params,
     :Bi210_foil_surface => singleEBi210_foil_surface_Params,
     :Bi210_wire_bulk => singleEBi210_wire_bulk_Params,
     :Bi210_wire_surface => singleEBi210_wire_surface_Params,
     :Tl208_foil_bulk => singleETl208_foil_bulk_Params,
     :Tl208_foil_surface => singleETl208_foil_surface_Params,
+    :Tl208_hall_surface => singleETl208_hall_surface_Params,
     :Tl208_PMT_glass_bulk => singleETl208_PMT_glass_bulk_Params,
     :Pa234m_foil_bulk => singleEPa234m_foil_bulk_Params,
     :K40_foil_bulk => singleEK40_foil_bulk_Params,
     :K40_PMT_glass_bulk => singleEK40_PMT_glass_bulk_Params,
+    :K40_hall_surface => singleEK40_hall_surface_Params,
     :bb_foil_bulk => singleEbbParams,
     :Xi037_foil_bulk => singleEXiParams,
     :RH037_foil_bulk => singleERH037Params,
@@ -632,6 +708,17 @@ phiBi214_wire_surface_Params = Dict(
     :bins => binningDict[:Phi],
     :vertexPosition => "radon",
     :amount => SNparams["gasVolume"]
+)
+
+phiBi214_hall_surface_Params = Dict(
+    :isotopeName => "Bi214_hall_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:Bi214_hall_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:Bi214_hall_surface],
+    :bins => binningDict[:Phi],
+    :vertexPosition => "hall_surface",
+    :amount => SNparams["hall_surface"]
 )
 
 ### Bi210
@@ -703,6 +790,17 @@ phiTl208_foil_surface_Params = Dict(
     :amount => SNparams["gasVolume"]
 )
 
+phiTl208_hall_surface_Params = Dict(
+    :isotopeName => "Tl208_hall_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:Tl208_hall_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:Tl208_hall_surface],
+    :bins => binningDict[:Phi],
+    :vertexPosition => "hall_surface",
+    :amount => SNparams["hall_surface"]
+)
+
 phiTl208_PMT_glass_bulk_Params = Dict(
     :isotopeName => "Tl208_PMT_glass_bulk", 
     :signal => :false, 
@@ -738,6 +836,17 @@ phiK40_foil_bulk_Params = Dict(
     :bins => binningDict[:Phi],
     :vertexPosition => "foil_bulk",
     :amount => SNparams["foilMass"]
+)
+
+phiK40_hall_surface_Params = Dict(
+    :isotopeName => "K40_hall_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:K40_hall_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:K40_hall_surface],
+    :bins => binningDict[:Phi],
+    :vertexPosition => "hall_surface",
+    :amount => SNparams["hall_surface"]
 )
 
 phiK40_PMT_glass_bulk_Params = Dict(
@@ -804,6 +913,7 @@ phibb0nuParams = Dict(
 phiParams = Dict(
     :Bi214_foil_bulk => phiBi214_foil_bulk_Params,
     :Bi214_foil_surface => phiBi214_foil_surface_Params,
+    :Bi214_hall_surface => phiBi214_hall_surface_Params,
     :Bi214_PMT_glass_bulk => phiBi214_PMT_glass_bulk_Params,
     :Bi214_wire_bulk => phiBi214_wire_bulk_Params,
     :Bi214_wire_surface => phiBi214_wire_surface_Params,
@@ -813,9 +923,11 @@ phiParams = Dict(
     :Bi210_wire_surface => phiBi210_wire_surface_Params,
     :Tl208_foil_bulk => phiTl208_foil_bulk_Params,
     :Tl208_foil_surface => phiTl208_foil_surface_Params,
+    :Tl208_hall_surface => phiTl208_hall_surface_Params,
     :Tl208_PMT_glass_bulk => phiTl208_PMT_glass_bulk_Params,
     :Pa234m_foil_bulk => phiPa234m_foil_bulk_Params,
     :K40_foil_bulk => phiK40_foil_bulk_Params,
+    :K40_hall_surface => phiK40_hall_surface_Params,
     :K40_PMT_glass_bulk => phiK40_PMT_glass_bulk_Params,
     :bb_foil_bulk => phibbParams,
     :Xi037_foil_bulk => phiXiParams,

@@ -32,6 +32,10 @@ function load_processes(dir::String, mode::String)
     nFiles = 0
     for file in readdir(full_dir)
         nFiles += 1
+        if( split(file, ".")[end] != "root" )
+            continue
+        end
+        
         df = ROOTFile(joinpath(full_dir, file)) |> ffrf
         fileName = split(file, ".")[1]  |> split |> first 
         
