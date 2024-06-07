@@ -3,7 +3,7 @@ using DrWatson
 @quickactivate "SNSensitivityEstimate"
 
 push!(LOAD_PATH, srcdir())
-using SensitivityModule, CairoMakie, UnROOT, DataFramesMeta, LaTeXStrings, Revise, StatsBase, FHist, Distributions
+using SensitivityModule, CairoMakie, UnROOT, ColorSchemes,DataFramesMeta, LaTeXStrings, Revise, StatsBase, FHist, Distributions
 Revise.track(SensitivityModule)
 
 include(scriptsdir("Params.jl"))
@@ -86,13 +86,13 @@ bkg_hists = [
 ]
 
 min_cts = minimum(@. minimum( filter(x-> x>0, bincounts(bkg_hists)) ) ) *10
+# colors = colorschemes[:julialegacy] #["#003865", "#FFB948", "#52473B", "#9A3A06", ]
 colors = ["#003865", "#FFB948", "#52473B", "#9A3A06", ]
 
-let
-	f = Figure(size = (800, 600), fontsize = 26, fonts = (; regular = "TeX"))
-	ax = Axis(f[1:2,1], xlabel = "Summed 2-electron energy [keV]", ylabel = "Counts per $bw keV" , title = "Simulated SuperNEMO background", yscale =log10, xticklabelrotation=45)
-	# ax2 = Axis(f[2,2], xlabel = "energy [keV]", title = L"\textrm{0\nu\beta\beta ROI}", yscale =log10, limits=(2700,3000, nothing,nothing), yaxisposition = :right, xticklabelrotation=45)
-	ax2 = Axis(f, bbox=BBox(580,760,426,540), yscale =log10,yaxisposition = :left,xticklabelrotation=45) #, title = L"\textrm{0\nu\beta\beta ROI}"
+with_theme(theme_latexfonts()) do 
+	f = Figure(size = (800, 600), fontsize = 24, fonts = (; regular = "TeX"))
+	ax = Axis(f[1:2,1], xlabel = "Summed 2-electron energy [keV]", ylabel = "Counts per $bw keV" , title = "Simulated SuperNEMO background; 17.5 kg.yr", yscale =log10, xticklabelrotation=45)
+	ax2 = Axis(f, bbox=BBox(590,753,426,540), yscale =log10,yaxisposition = :left,xticklabelrotation=0, xticklabelsize = 20, backgroundcolor=(:blue, 0.1)) #, title = L"\textrm{0\nu\beta\beta ROI}"
 	
     labels= [L"2\nu\beta\beta", "internal", "radon", "external"]
 	st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
@@ -105,25 +105,25 @@ let
 		hist!(ax2, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
 	end
 	
-    arrows!(ax, [SNparams["Q"]+200], [0.1], [-200 ;10], [-(0.1-min_cts*1.2) ; 10], color=(:red, 0.9), arrowsize=0, linewidth=3)
-    text!(ax, SNparams["Q"]+200, 0.13, text= L"\mathbf{\textrm{Q_{\beta\beta}}}", fontsize = 26, align = (:center, :baseline), color = (:red, 1))
-    lines!(ax, [2700, 2730], [min_cts, 0.6e1], color=(:black), linewidth=2)
-    lines!(ax, [3200, 3750], [min_cts, 0.6e1], color=(:black), linewidth=2)
-    text!(ax, 2900, 5e4, text=L"\textrm{0\nu\beta\beta ROI}", fontsize=32)
+    arrows!(ax, [SNparams["Q"]], [0.1], [0 ;10], [-(0.1-min_cts*1.2) ; 10], color=(:red, 0.9), arrowsize=0, linewidth=3.5)
+    text!(ax, SNparams["Q"], 0.13, text= L"\mathbf{\textrm{Q_{\beta\beta}}}", fontsize = 26, align = (:center, :baseline), color = (:red, 1))
+    lines!(ax, [2700, 2700, 2555], [min_cts, 1e1, 1e2], color=(:black), linewidth=3.5)
+    lines!(ax, [3200, 3200, 3340], [min_cts, 1e1, 1e2], color=(:black), linewidth=3.5)
+    text!(ax, 2600, 7e4, text=L"\textrm{0\nu\beta\beta ROI}", fontsize=32)
+
+    scatter!(ax, [SNparams["Q"]], [min_cts*1.9], marker= :dtriangle, markersize = 18, color=:red)
 
     text!(ax, 1900, 1.5e-1, text= "Preliminary", fontsize = 40, rotation = pi/6, align = (:center, :baseline), color = (:red, 0.8))
 	ylims!(ax, min_cts, 1e6)
-	xlims!(ax, 200, 3900)
+	xlims!(ax, 200, 3500)
 	ylims!(ax2, 1e-4, 5e2)
 	xlims!(ax2, 2700, 3200)
     ax.xticks = (collect(500:500:3900), string.(collect(500:500:3900)))
     ax.yticks = ([1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
     ax2.xticks= ( [2700, 3200], ["2700", "3200"] )
-    ax2.yticks= ( [1e-4, 1e2], [L"10^{-4.0}", L"10^{2.0}"] )
-    # hideydecorations!(ax2)
-	# f[1, 2] = Legend(f, ax)
-    axislegend(ax, position = :lb)
-	# colgap!(f.layout, 1, Relative(0.05))
+    ax2.yticks= ( [1e-4, 1e-2, 1e0, 1e2], [L"10^{-4}", L"10^{-2}", L"10^{0}", L"10^{2}"] )
+    
+    axislegend(ax, position = :lt, orientation = :horizontal, nbanks=2)
     save(scriptsdir("Neutrino24","fig.png"), f)
 	f
 end
