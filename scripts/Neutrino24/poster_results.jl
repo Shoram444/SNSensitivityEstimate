@@ -86,13 +86,13 @@ bkg_hists = [
 ]
 
 min_cts = minimum(@. minimum( filter(x-> x>0, bincounts(bkg_hists)) ) ) *10
-# colors = colorschemes[:julialegacy] #["#003865", "#FFB948", "#52473B", "#9A3A06", ]
+# colors = colorschemes[:julia] #["#003865", "#FFB948", "#52473B", "#9A3A06", ]
 colors = ["#003865", "#FFB948", "#52473B", "#9A3A06", ]
 
 with_theme(theme_latexfonts()) do 
-	f = Figure(size = (800, 600), fontsize = 24, fonts = (; regular = "TeX"))
+	f = Figure(size = (800, 600), fontsize = 24, fonts = (; regular = "TeX"), figure_padding = 24)
 	ax = Axis(f[1:2,1], xlabel = "Summed 2-electron energy [keV]", ylabel = "Counts per $bw keV" , title = "Simulated SuperNEMO background; 17.5 kg.yr", yscale =log10, xticklabelrotation=45)
-	ax2 = Axis(f, bbox=BBox(590,753,426,540), yscale =log10,yaxisposition = :left,xticklabelrotation=0, xticklabelsize = 20, backgroundcolor=(:blue, 0.1)) #, title = L"\textrm{0\nu\beta\beta ROI}"
+	ax2 = Axis(f, bbox=BBox(590,745,410,530), yscale =log10,yaxisposition = :left,xticklabelrotation=0, xticklabelsize = 20, backgroundcolor=(:blue, 0.1)) #, title = L"\textrm{0\nu\beta\beta ROI}"
 	
     labels= [L"2\nu\beta\beta", "internal", "radon", "external"]
 	st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
@@ -107,8 +107,8 @@ with_theme(theme_latexfonts()) do
 	
     arrows!(ax, [SNparams["Q"]], [0.1], [0 ;10], [-(0.1-min_cts*1.2) ; 10], color=(:red, 0.9), arrowsize=0, linewidth=3.5)
     text!(ax, SNparams["Q"], 0.13, text= L"\mathbf{\textrm{Q_{\beta\beta}}}", fontsize = 26, align = (:center, :baseline), color = (:red, 1))
-    lines!(ax, [2700, 2700, 2555], [min_cts, 1e1, 1e2], color=(:black), linewidth=3.5)
-    lines!(ax, [3200, 3200, 3340], [min_cts, 1e1, 1e2], color=(:black), linewidth=3.5)
+    lines!(ax, [2700, 2700, 2555], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
+    lines!(ax, [3200, 3200, 3340], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
     text!(ax, 2600, 7e4, text=L"\textrm{0\nu\beta\beta ROI}", fontsize=32)
 
     scatter!(ax, [SNparams["Q"]], [min_cts*1.9], marker= :dtriangle, markersize = 18, color=:red)
@@ -125,6 +125,7 @@ with_theme(theme_latexfonts()) do
     
     axislegend(ax, position = :lt, orientation = :horizontal, nbanks=2)
     save(scriptsdir("Neutrino24","fig.png"), f)
+    save(scriptsdir("Neutrino24","fig.svg"), f)
 	f
 end
 
