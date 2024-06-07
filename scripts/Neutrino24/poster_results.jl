@@ -124,6 +124,7 @@ with_theme(theme_latexfonts()) do
     ax2.yticks= ( [1e-4, 1e-2, 1e0, 1e2], [L"10^{-4}", L"10^{-2}", L"10^{0}", L"10^{2}"] )
     
     axislegend(ax, position = :lt, orientation = :horizontal, nbanks=2)
+    
     save(scriptsdir("Neutrino24","fig.png"), f)
     save(scriptsdir("Neutrino24","fig.svg"), f)
 	f
