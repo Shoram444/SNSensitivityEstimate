@@ -86,8 +86,8 @@ bkg_hists = [
 ]
 
 min_cts = minimum(@. minimum( filter(x-> x>0, bincounts(bkg_hists)) ) ) *10
-# colors = colorschemes[:julia] #["#003865", "#FFB948", "#52473B", "#9A3A06", ]
-colors = ["#003865", "#FFB948", "#52473B", "#9A3A06", ]
+colors = colorschemes[:julia] #["#003865", "#FFB948", "#52473B", "#9A3A06", ]
+# colors = ["#003865", "#FFB948", "#52473B", "#9A3A06", ]
 
 with_theme(theme_latexfonts()) do 
 	f = Figure(size = (800, 600), fontsize = 24, fonts = (; regular = "TeX"), figure_padding = 24)
@@ -105,7 +105,7 @@ with_theme(theme_latexfonts()) do
 		hist!(ax2, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
 	end
 	
-    arrows!(ax, [SNparams["Q"]], [0.1], [0 ;10], [-(0.1-min_cts*1.2) ; 10], color=(:red, 0.9), arrowsize=0, linewidth=3.5)
+    lines!(ax, [SNparams["Q"], SNparams["Q"]], [min_cts*1.9, 0.12], color=(:red, 1), linewidth=3.5)
     text!(ax, SNparams["Q"], 0.13, text= L"\mathbf{\textrm{Q_{\beta\beta}}}", fontsize = 26, align = (:center, :baseline), color = (:red, 1))
     lines!(ax, [2700, 2700, 2555], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
     lines!(ax, [3200, 3200, 3340], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
