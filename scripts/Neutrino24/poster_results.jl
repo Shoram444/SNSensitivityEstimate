@@ -61,9 +61,9 @@ nTotalSimDict = Dict(
     :K40_foil_bulk => 958*3e5,
     :Pa234m_foil_bulk => 3e8,
     :Bi214_wire_surface => 3*79e6,
-    :Bi214_hall_surface => 1e9,
-    :Tl208_hall_surface => 1e9,
-    :K40_hall_surface => 1e9,
+    :Bi214_hall_surface => 1.09e10,
+    :Tl208_hall_surface => 1.09e10,
+    :K40_hall_surface => 1.09e10,
 )
 
 bw = 50
@@ -85,7 +85,7 @@ bkg_hists = [
     h1d_Bi214_hall_surface + h1d_Tl208_hall_surface + h1d_K40_hall_surface + h1d_Tl208_foil_bulk*inv(1000)
 ]
 
-min_cts = minimum(@. minimum( filter(x-> x>0, bincounts(bkg_hists)) ) ) *10
+min_cts = minimum(@. minimum( filter(x-> x>0, bincounts(bkg_hists)) ) ) 
 colors = colorschemes[:julia] #["#003865", "#FFB948", "#52473B", "#9A3A06", ]
 # colors = ["#003865", "#FFB948", "#52473B", "#9A3A06", ]
 
@@ -109,24 +109,24 @@ with_theme(theme_latexfonts()) do
     text!(ax, SNparams["Q"], 0.13, text= L"\mathbf{\textrm{Q_{\beta\beta}}}", fontsize = 26, align = (:center, :baseline), color = (:red, 1))
     lines!(ax, [2700, 2700, 2555], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
     lines!(ax, [3200, 3200, 3340], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
-    text!(ax, 2600, 7e4, text=L"\textrm{0\nu\beta\beta ROI}", fontsize=32)
+    text!(ax, 2600, 2e5, text=L"\textrm{0\nu\beta\beta ROI}", fontsize=32)
 
     scatter!(ax, [SNparams["Q"]], [min_cts*1.9], marker= :dtriangle, markersize = 18, color=:red)
 
     text!(ax, 1900, 1.5e-1, text= "Preliminary", fontsize = 40, rotation = pi/6, align = (:center, :baseline), color = (:red, 0.8))
-	ylims!(ax, min_cts, 1e6)
+	ylims!(ax, min_cts, 5e6)
 	xlims!(ax, 200, 3500)
-	ylims!(ax2, 1e-4, 5e2)
+	ylims!(ax2, min_cts, 5e2)
 	xlims!(ax2, 2700, 3200)
     ax.xticks = (collect(500:500:3900), string.(collect(500:500:3900)))
-    ax.yticks = ([1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
+    ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
     ax2.xticks= ( [2700, 3200], ["2700", "3200"] )
-    ax2.yticks= ( [1e-4, 1e-2, 1e0, 1e2], [L"10^{-4}", L"10^{-2}", L"10^{0}", L"10^{2}"] )
+    ax2.yticks= ( [1e-5, 1e-3, 1e-1, 1e1], [L"10^{-5}", L"10^{-3}", L"10^{-1}", L"10^{1}"] )
     
     axislegend(ax, position = :lt, orientation = :horizontal, nbanks=2)
     
-    save(scriptsdir("Neutrino24","fig.png"), f)
-    save(scriptsdir("Neutrino24","fig.svg"), f)
+    save(scriptsdir("Neutrino24","fig_best.png"), f)
+    save(scriptsdir("Neutrino24","fig_best.svg"), f)
 	f
 end
 
