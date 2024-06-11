@@ -7,7 +7,7 @@ Revise.track(SensitivityModule)
 
 include(scriptsdir("Params.jl"))
 
-all_processes = load_processes("fal5_8perc", "sumE")
+all_processes = load_processes("fal5_12perc_Boff", "sumE")
 
 signal = get_process("bb0nu_foil_bulk", all_processes)
 background = [
@@ -19,6 +19,11 @@ background = [
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
 set_signal!(background[1], false)
+set_nTotalSim!( signal, 99e6 )
+set_nTotalSim!( background[1], 267e6 )
+set_nTotalSim!( background[2], 3*99e6 )
+set_nTotalSim!( background[3], 3*79e6 )
+set_nTotalSim!( background[4], 3*98e6 )
 
 Q_keV = SNparams["Q"]
 Q_MeV = Q_keV / 1000.0
@@ -117,15 +122,17 @@ credible_interval_90 = hpd(chains; alpha=0.1) |> DataFrame
 mu_U = credible_interval_90[2,3]
 
 using QuadGK
-f(x) = fit_function_exponential_normal_model(l_mle, sigma_at_Q, 0, nb_mle, x, Q_keV, a, b) 
+# f(x) = fit_function_exponential_normal_model(l_mle, sigma_at_Q, 0, nb_mle, x, Q_keV, a, b) 
 b_exp_mle, error = quadgk(f, ROI_a, ROI_b)
 
 function get_tHalf_bayess( SNparams, eff, mu_U )
 	return log(2)*SNparams["Nₐ"]*SNparams["foilMass"]*SNparams["a"]*SNparams["tYear"]/SNparams["W"]*eff/mu_U 
 end
 
-let 
-    f = Figure(size=(650, 450), fontsize = 16)
+T12_bayes= get_tHalf_bayess(SNparams, effbb,2.37)
+
+let
+    f = Figure(size=(710, 450), fontsize = 16, dpi =600, font="arial")
     a = Axis(
         f[1,1], 
         xlabel = "detector life-time [yr]", 
@@ -133,7 +140,7 @@ let
         limits= (0,6, 0, nothing), 
         title= "SuperNEMO sensitivity as a function of detector life-time \ncalculated at 90% confidence level ")
     p1 = lines!(a, t, t12.(t, effbb,expBkgESum), label = "simulation", linewidth=3)
-    p2 = lines!(a, t, t12.(t, effbb,b_exp_mle), label = "pseudo-data", linewidth=3)
+    # p2 = lines!(a, t, t12.(t, effbb,b_exp_mle), label = "pseudo-data", linewidth=3)
     s1 = scatter!(a, 2.88, get_tHalf_bayess(SNparams, effbb,2.37),  color = :green, marker=:star6, markersize= 16)
     h1 = hlines!(a, [4.6e24], color = :black,  linewidth=3)
     vlines!(a, [2.88], color=(:grey, 0.5), linestyle=:dot, linewidth=2)
@@ -145,10 +152,12 @@ let
         color = (:red, 0.3),
         fontsize = 40
     )
-    axislegend(a,[p1,p2], ["simulation", "pseudo-data"], "frequentist 90% CL", position = :lt, margin= (15,0,0,15))
-    axislegend(a, [s1], ["pseudo-data"],"Bayes 90% CI\n17.5 kg.y exposure", position = :lt, margin= (15,0,0,115), padding=(7,7,3,3), tellwidth = false,)
-    axislegend(a, [h1], ["Cupid-0 data"],"Bayes 90% CI\n8.82 kg.y exposure", position = :rb, margin= (0,15,15,0), padding=(7,7,3,3), tellwidth = false,)
+    axislegend(a,[p1], ["SNEMO simulation"], "Frequentist limit", position = :rb, margin= (15,10,10,15))
+    axislegend(a, [s1, h1], ["SNEMO simulation (17.5 kg.yr)", "CUPID-0 data (8.82 kg.yr)"],"Bayes limit", position = :lt, margin= (10,0,0,10), padding=(7,7,3,3), tellwidth = false,)
+    # axislegend(a, [h1], ["Cupid-0 data"],"Bayes 90% CI\n8.82 kg.y exposure", position = :rb, margin= (0,15,15,0), padding=(7,7,3,3), tellwidth = false,)
     save("SuperNEMO_sensitivity.png", f)
+    save("SuperNEMO_sensitivity.svg", f)
+    save("SuperNEMO_sensitivity.pdf", f)
     f
 end
 

@@ -457,7 +457,7 @@ md"""
 # ╔═╡ 6821c511-ef71-401e-9f36-1719886e7b54
 # ╠═╡ show_logs = false
 begin
-	allProcesses = load_processes("fal5_8perc_Boff", "sumE")
+	allProcesses = load_processes("fal5_8perc", "sumE")
 	signalProcessName = "bb0nu_foil_bulk"
 	sigProcessESum = get_process(signalProcessName, allProcesses)
 	
@@ -927,40 +927,6 @@ md"""
 
 """
 
-# ╔═╡ 8ba6e3d9-3529-4c8d-bc5c-98a91743f29a
-@model function full_model_exponential(data; Q=2997.9-a, sigma=60)
-	lambda ~ Uniform(1e-3, 1e3)
-    # Prior distributions for the proportions
-    nSignal ~ Uniform(0.0, 10.0)  # Prior for proportion of Normal data
-    nBkg ~ Uniform(0.0, 1e3)  # Prior for proportion of Normal data
-    
-    # Likelihood of data
-    for x in data
-        likelihood_normal = pdf(Normal(Q, sigma), x)
-        likelihood_exponential = pdf(Exponential(inv(lambda)), x)
-        likelihood_mixture = (nSignal * likelihood_normal + nBkg * likelihood_exponential) 
-        likelihood_extended = pdf(Poisson(nSignal + nBkg), length(data))
-        Turing.@addlogprob! (log(likelihood_extended) + log(likelihood_mixture))
-    end
-end;
-
-# ╔═╡ c145389c-b760-42d2-afe2-18ea3d31b49f
-@model function full_model_exponential_1(data; Q=2997.9-a, sigma=60)
-	lambda ~ truncated(Normal(1/100.0, 1.0), 0.0, Inf)
-    # Prior distributions for the proportions
-    nSignal ~ Uniform(0.0, 10.0)  # Prior for proportion of Normal data
-    nBkg ~ Uniform(0.0, 1e3)  # Prior for proportion of Normal data
-    
-    # Likelihood of data
-    for x in data
-        likelihood_normal = pdf(Normal(Q, sigma), x)
-        likelihood_exponential = pdf(Exponential(inv(lambda)), x)
-        likelihood_mixture = (nSignal * likelihood_normal + nBkg * likelihood_exponential) 
-        likelihood_extended = pdf(Poisson(nSignal + nBkg), length(data))
-        Turing.@addlogprob! (log(likelihood_extended) + log(likelihood_mixture))
-    end
-end;
-
 # ╔═╡ 6376b61a-f6a2-4dbd-9ba1-b2bcd96f5d9d
 md"""
 # Sampling from posterior:
@@ -1342,11 +1308,45 @@ muSsUnbinned = [m[2] for m in unbinned_unshaped_samples.v]
 # ╔═╡ aa299272-0ff1-497c-95bf-66c122594489
 n_S_BAT = IntervalSets.rightendpoint(sci(muSsUnbinned, nsigma_equivalent=1.65)[1])
 
-# ╔═╡ e4822025-24e7-4390-a98f-6b2137174d2c
-chains2 = Turing.sample(full_model_exponential_1(sample_ROI_data), NUTS(0.65), MCMCThreads(), 5_000, 2 );
-
 # ╔═╡ eddc431c-0560-4cc1-a5e5-93c0459eb9ea
 lambda = fit_mle(Exponential, sample_ROI_data).θ |> inv;
+
+# ╔═╡ 8ba6e3d9-3529-4c8d-bc5c-98a91743f29a
+@model function full_model_exponential(data; Q=2997.9-a, sigma=60)
+	lambda ~ Uniform(1e-3, 1e3)
+    # Prior distributions for the proportions
+    nSignal ~ Uniform(0.0, 10.0)  # Prior for proportion of Normal data
+    nBkg ~ Uniform(0.0, 1e3)  # Prior for proportion of Normal data
+    
+    # Likelihood of data
+    for x in data
+        likelihood_normal = pdf(Normal(Q, sigma), x)
+        likelihood_exponential = pdf(Exponential(inv(lambda)), x)
+        likelihood_mixture = (nSignal * likelihood_normal + nBkg * likelihood_exponential) 
+        likelihood_extended = pdf(Poisson(nSignal + nBkg), length(data))
+        Turing.@addlogprob! (log(likelihood_extended) + log(likelihood_mixture))
+    end
+end;
+
+# ╔═╡ c145389c-b760-42d2-afe2-18ea3d31b49f
+@model function full_model_exponential_1(data; Q=2997.9-a, sigma=60)
+	lambda ~ truncated(Normal(1/100.0, 1.0), 0.0, Inf)
+    # Prior distributions for the proportions
+    nSignal ~ Uniform(0.0, 10.0)  # Prior for proportion of Normal data
+    nBkg ~ Uniform(0.0, 1e3)  # Prior for proportion of Normal data
+    
+    # Likelihood of data
+    for x in data
+        likelihood_normal = pdf(Normal(Q, sigma), x)
+        likelihood_exponential = pdf(Exponential(inv(lambda)), x)
+        likelihood_mixture = (nSignal * likelihood_normal + nBkg * likelihood_exponential) 
+        likelihood_extended = pdf(Poisson(nSignal + nBkg), length(data))
+        Turing.@addlogprob! (log(likelihood_extended) + log(likelihood_mixture))
+    end
+end;
+
+# ╔═╡ e4822025-24e7-4390-a98f-6b2137174d2c
+chains2 = Turing.sample(full_model_exponential_1(sample_ROI_data), NUTS(0.65), MCMCThreads(), 5_000, 2 );
 
 # ╔═╡ 33fe2df3-81e5-4b1c-8930-56651e09228d
 N = bw * length(sample_ROI_data) * lambda;

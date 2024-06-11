@@ -132,7 +132,7 @@ end
 
 
 
-
+### B-field on
 signal = get_process("bb0nu_foil_bulk", processes)
 background = [
     get_process("bb_foil_bulk", processes),
@@ -151,6 +151,35 @@ set_nTotalSim!( background[1], 267e6 )
 set_nTotalSim!( background[2], 3*99e6 )
 set_nTotalSim!( background[3], 3*79e6 )
 set_nTotalSim!( background[4], 3*98e6 )
+
+Q_keV = SNparams["Q"]
+α = 1.64485362695147
+
+
+t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
+best_t12ESum = get_max_bin(t12MapESum)
+expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+effbb = lookup(signal, best_t12ESum)
+
+
+
+### B-field off
+processes = load_processes("fal5_12perc", "sumE")
+signal = get_process("bb0nu_foil_bulk", processes)
+background = [
+    get_process("bb_foil_bulk", processes),
+    get_process("Bi214_foil_bulk", processes),
+    get_process("Bi214_wire_surface", processes),
+    get_process("Tl208_foil_bulk", processes),
+]
+
+# set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
+set_signal!(background[1], false)
+set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( background[1], 1e8 )
+set_nTotalSim!( background[2], 1e8 )
+set_nTotalSim!( background[3], 1e8 )
+set_nTotalSim!( background[4], 1e8 )
 
 Q_keV = SNparams["Q"]
 α = 1.64485362695147
