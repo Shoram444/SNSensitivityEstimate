@@ -225,7 +225,7 @@ prior = distprod(
 )
 
 unbinned_posterior = PosteriorMeasure(BAT_normal_exponential_model(pseudo_data, Q_keV, 0.08), prior)
-unbinned_samples = bat_sample(unbinned_posterior, MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^5, nchains=4)).result
+unbinned_samples = bat_sample(unbinned_posterior, MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^4, nchains=4)).result
 unbinned_unshaped_samples, f_flatten = bat_transform(Vector, unbinned_samples)
 muSsUnbinned = [m[2] for m in unbinned_unshaped_samples.v]
 

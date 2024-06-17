@@ -8,12 +8,12 @@
 
 
 ## Used backgrounds/acitivities:
-|process        |activitiy [Bq/kg or Bq/m3]|amount [kg of m3]|
-|---------------|--------------------------|-----------------|
-|2nubb_foil_bulk| 0.001721                 | 6.07 kg         |
-|Bi214_foil_bulk| 1e-5                     | 6.25 kg         |
-|Bi214_wire_furface| 0.00015               | 15 m3           |
-|Tl208_foil_bulk| 2e-6                     | 6.25 kg         |
+|process           |activitiy [Bq/kg or Bq/m3]|amount [kg of m3]|
+|------------------|--------------------------|-----------------|
+|2nubb_foil_bulk   | 0.001721                 | 6.07 kg         |
+|Bi214_foil_bulk   | 1e-5                     | 6.25 kg         |
+|Bi214_wire_furface| 0.00015                  | 15 m3           |
+|Tl208_foil_bulk   | 2e-6                     | 6.25 kg         |
 
 
 ## Sensitivity table:
