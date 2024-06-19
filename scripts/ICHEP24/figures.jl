@@ -166,10 +166,10 @@ with_theme(theme_latexfonts()) do
     a2 = Axis(f[3,2],title= L"Angular distribution $$", xlabel = L"Angle between electrons $[^{\circ}]$", ylabel = L"Rate [a.u.] $$", yaxisposition = :right)
      
     p1 = lines!(a1,range(0,3000, length(sum_spectrum)) ,sum_spectrum, color = dark_orange, linewidth = 3.5, label= L"standard $2\nu\beta\beta$")
-    p2 = lines!(a1,range(0,3000, length(sum_spectrum_RH)) ,sum_spectrum_RH, color = light_blue, linewidth = 3.5, label= L"$2\nu\beta\beta$ with $\bar{\nu}_R$")
+    p2 = lines!(a1,range(0,3000, length(sum_spectrum_RH)) ,sum_spectrum_RH, color = dark_blue, linewidth = 3.5, label= L"$2\nu\beta\beta$ with $\bar{\nu}_R$")
 
     p3 = lines!(a2, range(0,180, length(ys)), ys, color = dark_orange, linewidth = 3.5, label = L"standard $2\nu\beta\beta$")
-    p4 = lines!(a2, range(0,180, length(ys_RH)), ys_RH, color = light_blue, linewidth = 3.5, label = L"$2\nu\beta\beta$ with $\bar{\nu}_R")
+    p4 = lines!(a2, range(0,180, length(ys_RH)), ys_RH, color = dark_blue, linewidth = 3.5, label = L"$2\nu\beta\beta$ with $\bar{\nu}_R")
 
     xlims!(a1, 0, 3000)
     ylims!(a1, 0, 1.1)
