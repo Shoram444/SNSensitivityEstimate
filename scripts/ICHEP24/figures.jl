@@ -33,9 +33,9 @@ with_theme(theme_latexfonts()) do
     xlims!(a, 0, 3000)
     ylims!(a, 0, 1.1)
 
-    save(scriptsdir("ICHEP24","standard_single.png"), f)
-    save(scriptsdir("ICHEP24","standard_single.svg"), f)
-    save(scriptsdir("ICHEP24","standard_single.pdf"), f)
+    save(scriptsdir("ICHEP24", "Figs","standard_single.png"), f)
+    save(scriptsdir("ICHEP24", "Figs","standard_single.svg"), f)
+    save(scriptsdir("ICHEP24", "Figs","standard_single.pdf"), f)
     f
 end
 
@@ -71,9 +71,9 @@ with_theme(theme_latexfonts()) do
     xlims!(a, 0, 180)
     ylims!(a, 0, 1.1)
     axislegend(a, margin = (15, 15, 15, 15), tellwidth = true,patchsize = (35, 4), position=:cb)
-    save(scriptsdir("ICHEP24","standard_phi.png"), f)
-    save(scriptsdir("ICHEP24","standard_phi.svg"), f)
-    save(scriptsdir("ICHEP24","standard_phi.pdf"), f)
+    save(scriptsdir("ICHEP24", "Figs","standard_phi.png"), f)
+    save(scriptsdir("ICHEP24", "Figs","standard_phi.svg"), f)
+    save(scriptsdir("ICHEP24", "Figs","standard_phi.pdf"), f)
     f
 end
 
@@ -104,9 +104,9 @@ with_theme(theme_latexfonts()) do
     xlims!(a, 0, 3000)
     ylims!(a, 0, 1.1)
 
-    save(scriptsdir("ICHEP24","RH_single.png"), f)
-    save(scriptsdir("ICHEP24","RH_single.svg"), f)
-    save(scriptsdir("ICHEP24","RH_single.pdf"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_single.png"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_single.svg"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_single.pdf"), f)
     f
 end
 
@@ -127,9 +127,9 @@ with_theme(theme_latexfonts()) do
     ylims!(a, 0, 1.1)
     axislegend(a, margin = (15, 15, 15, 15), tellwidth = true,patchsize = (35, 4))
     
-    save(scriptsdir("ICHEP24","RH_sum.png"), f)
-    save(scriptsdir("ICHEP24","RH_sum.svg"), f)
-    save(scriptsdir("ICHEP24","RH_sum.pdf"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_sum.png"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_sum.svg"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_sum.pdf"), f)
     f
 end
 
@@ -149,9 +149,9 @@ with_theme(theme_latexfonts()) do
     xlims!(a, 0, 180)
     ylims!(a, 0, 1.1)
     axislegend(a, margin = (15, 15, 15, 15), tellwidth = true,patchsize = (35, 4), position=:cb)
-    save(scriptsdir("ICHEP24","RH_phi.png"), f)
-    save(scriptsdir("ICHEP24","RH_phi.svg"), f)
-    save(scriptsdir("ICHEP24","RH_phi.pdf"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_phi.png"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_phi.svg"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_phi.pdf"), f)
     f
 end
 
@@ -182,9 +182,9 @@ with_theme(theme_latexfonts()) do
     Legend(f[2,1:2], [p1, p2], [L"standard $2\nu\beta\beta$",L"$2\nu\beta\beta$ with $\bar{\nu}_R$"], orientation = :horizontal, patchsize = (35, 4))
     colgap!(f.layout, 1, Fixed(38))
 
-    save(scriptsdir("ICHEP24","RH_standard_together.png"), f)
-    save(scriptsdir("ICHEP24","RH_standard_together.svg"), f)
-    save(scriptsdir("ICHEP24","RH_standard_together.pdf"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_standard_together.png"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_standard_together.svg"), f)
+    save(scriptsdir("ICHEP24", "Figs","RH_standard_together.pdf"), f)
 
     f
 end
@@ -213,9 +213,9 @@ with_theme(theme_latexfonts()) do
     Legend(f[2,1:2], [p1], [L"standard $2\nu\beta\beta$"], orientation = :horizontal, patchsize = (35, 4))
     colgap!(f.layout, 1, Fixed(38))
 
-    save(scriptsdir("ICHEP24","standard_together.png"), f)
-    save(scriptsdir("ICHEP24","standard_together.svg"), f)
-    save(scriptsdir("ICHEP24","standard_together.pdf"), f)
+    save(scriptsdir("ICHEP24", "Figs","standard_together.png"), f)
+    save(scriptsdir("ICHEP24", "Figs","standard_together.svg"), f)
+    save(scriptsdir("ICHEP24", "Figs","standard_together.pdf"), f)
 
     f
 end
