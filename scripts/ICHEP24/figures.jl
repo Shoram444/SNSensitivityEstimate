@@ -78,6 +78,20 @@ with_theme(theme_latexfonts()) do
     f
 end
 
+### Xi
+
+inPath_xi = joinpath("/home/shoram/Work/PhD_Thesis/Data/Se82/2vbb_Angular/FourOrders/FromRasto_xi31=0.3738_K=-0.6638.dat")
+df_xi = CSV.File(inPath_xi, delim = "    ", header = ["E1", "E2", "dGdE"]) |> DataFrame
+
+df_xi.dGdE ./= maximum(df_xi.dGdE)
+gdf_xi = groupby(df_xi, :E1)
+
+thetas_xi = [rad2deg(sample_theta_dif(-0.66)) for _=1:1e7]
+h_xi = Hist1D(thetas_xi; binedges=0:5:180) 
+ys_xi = bincounts(h_xi) ./ maximum(bincounts(h_xi))
+
+# make a projection onto E2 axis
+single_spectrum_xi = [maximum(g.dGdE) for g in gdf_xi]
 
 ### RH
 inPath_RH = joinpath("/home/shoram/Work/PhD_Thesis/Data/Se82/Right_Handed/EnDistroRightDataSe10keV.dat")
@@ -205,8 +219,9 @@ end
 
 with_theme(theme_latexfonts()) do 
     lh_label = rich( "2νββ", color = dark_orange )
+    xi_label = rich( "2νββ (ξ", subscript("31"), "=0.37, ξ", subscript("51"), "=0.14)", color = light_blue )
 
-    title = rich("Theoretical prediction: ", lh_label)
+    title = rich("Theoretical prediction: ", lh_label, " vs ", xi_label)
 
 
     f = Figure(size = (750, 600), fontsize = 22,  figure_padding = 22)
@@ -214,11 +229,11 @@ with_theme(theme_latexfonts()) do
     a1 = Axis(f[2,1], xlabel = L"Single electron energy [keV] $$", ylabel = L"Rate [a.u.] $$" )
     a2 = Axis(f[2,2], xlabel = L"Angle between electrons $[^{\circ}]$", ylabel = L"Rate [a.u.] $$", yaxisposition = :right)
      
-    p1 = lines!(a1,range(0,3000, length(sum_spectrum)) ,sum_spectrum, color = dark_orange, linewidth = 3.5, label= L"standard $2\nu\beta\beta$")
-    # p2 = lines!(a1,range(0,3000, length(sum_spectrum_RH)) ,sum_spectrum_RH, color = light_blue, linewidth = 3.5, label= L"$2\nu\beta\beta$ with $\bar{\nu}_R$")
+    p1 = lines!(a1,range(0,3000, length(single_spectrum)) ,single_spectrum, color = dark_orange, linewidth = 3.5, label= L"standard $2\nu\beta\beta$")
+    p2 = lines!(a1,range(0,3000, length(single_spectrum_xi)) ,single_spectrum_xi, color = light_blue, linewidth = 3.5, label= L"$2\nu\beta\beta$ with $\bar{\nu}_R$")
 
     p3 = lines!(a2, range(0,180, length(ys)), ys, color = dark_orange, linewidth = 3.5, label = L"standard $2\nu\beta\beta$")
-    # p4 = lines!(a2, range(0,180, length(ys_RH)), ys_RH, color = light_blue, linewidth = 3.5, label = L"$2\nu\beta\beta$ with $\bar{\nu}_R")
+    p4 = lines!(a2, range(0,180, length(ys_xi)), ys_xi, color = light_blue, linewidth = 3.5, label = L"$2\nu\beta\beta$ with $\bar{\nu}_R")
 
     xlims!(a1, 0, 3000)
     ylims!(a1, 0, 1.1)
@@ -226,7 +241,10 @@ with_theme(theme_latexfonts()) do
     ylims!(a2, 0, 1.1)
 
     a2.xticks= ([0,60, 120, 180])
-    hideydecorations!(a2, ticks = true, grid = false)
+    hidedecorations!(a1, label=false,ticks = false, ticklabels = false, grid = true)
+    hidedecorations!(a2, label=false,ticks = false, ticklabels = false, grid = true)
+    hideydecorations!(a2, label=true,ticks = true, ticklabels = true, grid = true)
+
     # axislegend(a, margin = (15, 15, 15, 15), tellwidth = true,patchsize = (35, 4), position=:cb)
 
     # Legend(f[2,1:2], [p1], [L"standard $2\nu\beta\beta$"], orientation = :horizontal, patchsize = (35, 4))
