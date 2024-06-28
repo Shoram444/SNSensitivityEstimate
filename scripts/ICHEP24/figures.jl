@@ -1,5 +1,6 @@
 using DrWatson
 
+
 @quickactivate "SNSensitivityEstimate"
 
 push!(LOAD_PATH, srcdir())
@@ -107,7 +108,7 @@ gdf_RH = groupby(df_RH, :E1)
 # make a projection onto E2 axis
 single_spectrum_RH = [maximum(g.dGdE) for g in gdf_RH] 
 with_theme(theme_latexfonts()) do 
-    f = Figure(size = (750, 500), fontsize = 36,  figure_padding = 36)
+    f = Figure(size = (750, 600), fontsize = 45,  figure_padding = 36)
     a = Axis(f[1,1], xlabel = L"Single electron energy [keV] $$", ylabel = L"Rate [a.u.] $$" , title = L"Theoretical single-electron energy spectrum $$", )
      
     p = lines!(a, range(-15,3000, length(single_spectrum)),single_spectrum, label = L"standard $2\nu\beta\beta$", color = dark_orange, linewidth = 5)
@@ -179,13 +180,19 @@ with_theme(theme_latexfonts()) do
 
     title = rich("Theoretical prediction: ", lh_label, " vs ", rh_label)
 
-    f = Figure(size = (750, 600), fontsize = 22,  figure_padding = 22)
+    f = Figure(size = (750, 650), fontsize = 32,  figure_padding = 26)
     # Label(f[1, 1], L"Theoretical prediction: $lh_label vs $\nu_R\nu_L\beta\beta$", tellwidth = false)
     Label(f[1, 1], title, tellwidth = false)
-    l = 530 
-    b = 420 
+    l = 540 
+    b = 450 
     
-    a1 = Axis(f,bbox=BBox(l,l+120,b, b+120), xlabel = L"Single electron energy [keV] $$", ylabel = L"Rate [a.u.] $$", xaxisposition=:bottom)
+    a1 = Axis(
+        f,
+        bbox=BBox(l,l+120,b, b+120),
+        xticklabelsize=20,xticksize = 8, yticklabelsize=20,yticksize = 8,
+        ylabelsize= 20,xlabelsize= 20,
+        xlabel = L"Single electron energy [keV] $$", 
+        ylabel = L"Rate [a.u.] $$", xaxisposition=:bottom)
     a2 = Axis(f[2,1], xlabel = L"Angle between electrons $[^{\circ}]$", ylabel = L"Rate [a.u.] $$", yaxisposition = :left)
      
     p1 = lines!(a1,range(0,3000, length(single_spectrum)) ,single_spectrum, color = dark_orange, linewidth = 3.5, label= L"standard $2\nu\beta\beta$")
@@ -219,15 +226,15 @@ end
 
 with_theme(theme_latexfonts()) do 
     lh_label = rich( "2νββ", color = dark_orange )
-    xi_label = rich( "2νββ (ξ", subscript("31"), "=0.37, ξ", subscript("51"), "=0.14)", color = light_blue )
+    xi_label = rich( "improved 2νββ", color = light_blue )
 
     title = rich("Theoretical prediction: ", lh_label, " vs ", xi_label)
 
 
-    f = Figure(size = (750, 600), fontsize = 22,  figure_padding = 22)
-    Label(f[1, 1:2], title, tellwidth = false)
+    f = Figure(size = (750, 650), fontsize = 32,  figure_padding = 32)
+    Label(f[1, 1], title, tellwidth = false, halign=:right)
     a1 = Axis(f[2,1], xlabel = L"Single electron energy [keV] $$", ylabel = L"Rate [a.u.] $$" )
-    a2 = Axis(f[2,2], xlabel = L"Angle between electrons $[^{\circ}]$", ylabel = L"Rate [a.u.] $$", yaxisposition = :right)
+    a2 = Axis(f[3,1], xlabel = L"Angle between electrons $[^{\circ}]$", ylabel = L"Rate [a.u.] $$", yaxisposition = :left)
      
     p1 = lines!(a1,range(0,3000, length(single_spectrum)) ,single_spectrum, color = dark_orange, linewidth = 3.5, label= L"standard $2\nu\beta\beta$")
     p2 = lines!(a1,range(0,3000, length(single_spectrum_xi)) ,single_spectrum_xi, color = light_blue, linewidth = 3.5, label= L"$2\nu\beta\beta$ with $\bar{\nu}_R$")
@@ -243,12 +250,13 @@ with_theme(theme_latexfonts()) do
     a2.xticks= ([0,60, 120, 180])
     hidedecorations!(a1, label=false,ticks = false, ticklabels = false, grid = true)
     hidedecorations!(a2, label=false,ticks = false, ticklabels = false, grid = true)
-    hideydecorations!(a2, label=true,ticks = true, ticklabels = true, grid = true)
+    # hideydecorations!(a2, label=true,ticks = true, ticklabels = true, grid = true)
 
     # axislegend(a, margin = (15, 15, 15, 15), tellwidth = true,patchsize = (35, 4), position=:cb)
 
     # Legend(f[2,1:2], [p1], [L"standard $2\nu\beta\beta$"], orientation = :horizontal, patchsize = (35, 4))
-    colgap!(f.layout, 1, Fixed(38))
+    # colgap!(f.layout, 1, Fixed(38))
+    rowgap!(f.layout, 1, Fixed(7))
 
     save(scriptsdir("ICHEP24", "Figs","standard_together.png"), f)
     save(scriptsdir("ICHEP24", "Figs","standard_together.svg"), f)
