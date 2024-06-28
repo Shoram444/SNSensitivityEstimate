@@ -160,29 +160,42 @@ end
 ## Together standard RH
 
 with_theme(theme_latexfonts()) do 
-    f = Figure(size = (750, 500), fontsize = 22,  figure_padding = 22)
-    Label(f[1, 1:2], "Theoretical predictions", tellwidth = false)
-    a1 = Axis(f[3,1],title= L"Energy spectrum $$", xlabel = L"Single electron energy [keV] $$", ylabel = L"Rate [a.u.] $$" )
-    a2 = Axis(f[3,2],title= L"Angular distribution $$", xlabel = L"Angle between electrons $[^{\circ}]$", ylabel = L"Rate [a.u.] $$", yaxisposition = :right)
-     
-    p1 = lines!(a1,range(0,3000, length(sum_spectrum)) ,sum_spectrum, color = dark_orange, linewidth = 3.5, label= L"standard $2\nu\beta\beta$")
-    p2 = lines!(a1,range(0,3000, length(sum_spectrum_RH)) ,sum_spectrum_RH, color = dark_blue, linewidth = 3.5, label= L"$2\nu\beta\beta$ with $\bar{\nu}_R$")
+    lh_label = rich( "2νββ", color = dark_orange )
+    rh_label = rich( "ν", subscript("R"),"ν", subscript("L"), "ββ", color = dark_blue )
 
-    p3 = lines!(a2, range(0,180, length(ys)), ys, color = dark_orange, linewidth = 3.5, label = L"standard $2\nu\beta\beta$")
-    p4 = lines!(a2, range(0,180, length(ys_RH)), ys_RH, color = dark_blue, linewidth = 3.5, label = L"$2\nu\beta\beta$ with $\bar{\nu}_R")
+    title = rich("Theoretical prediction: ", lh_label, " vs ", rh_label)
+
+    f = Figure(size = (750, 600), fontsize = 22,  figure_padding = 22)
+    # Label(f[1, 1], L"Theoretical prediction: $lh_label vs $\nu_R\nu_L\beta\beta$", tellwidth = false)
+    Label(f[1, 1], title, tellwidth = false)
+    l = 530 
+    b = 420 
+    
+    a1 = Axis(f,bbox=BBox(l,l+120,b, b+120), xlabel = L"Single electron energy [keV] $$", ylabel = L"Rate [a.u.] $$", xaxisposition=:bottom)
+    a2 = Axis(f[2,1], xlabel = L"Angle between electrons $[^{\circ}]$", ylabel = L"Rate [a.u.] $$", yaxisposition = :left)
+     
+    p1 = lines!(a1,range(0,3000, length(single_spectrum)) ,single_spectrum, color = dark_orange, linewidth = 3.5, label= L"standard $2\nu\beta\beta$")
+    p2 = lines!(a1,range(0,3000, length(single_spectrum_RH)) ,single_spectrum_RH, color = dark_blue, linewidth = 3.5, label= L"$2\nu\beta\beta$ with $\bar{\nu}_R$")
+
+    p3 = lines!(a2, range(0,180, length(ys)), ys, color = dark_orange, linewidth = 3.5, label = L"$2\nu\beta\beta$")
+    p4 = lines!(a2, range(0,180, length(ys_RH)), ys_RH, color = dark_blue, linewidth = 3.5, label = L"$\nu_R\nu_L\beta\beta$")
 
     xlims!(a1, 0, 3000)
     ylims!(a1, 0, 1.1)
     xlims!(a2, 0, 180)
-    ylims!(a2, 0, 1.1)
+    ylims!(a2, 0, 1.7)
 
     a2.xticks= ([0,60, 120, 180])
-    hideydecorations!(a2, ticks = true, grid = false)
+    a1.xticks= ([0, 3000])
+    a1.yticks= ([0, 1.0])
+    hidedecorations!(a1, label=false,ticks = false, ticklabels = false, grid = true)
+    hidedecorations!(a2, label=false,ticks = false, ticklabels = false, grid = true)
     # axislegend(a, margin = (15, 15, 15, 15), tellwidth = true,patchsize = (35, 4), position=:cb)
 
-    Legend(f[2,1:2], [p1, p2], [L"standard $2\nu\beta\beta$",L"$2\nu\beta\beta$ with $\bar{\nu}_R$"], orientation = :horizontal, patchsize = (35, 4))
-    colgap!(f.layout, 1, Fixed(38))
-
+    # Legend(f[2,1], [p1, p2], [L"$2\nu\beta\beta$",L"$\nu_R\nu_L\beta\beta$"], orientation = :vertical, patchsize = (35, 4))
+    # axislegend(a1, [p1, p2], [L"$2\nu\beta\beta$",L"$\nu_R\nu_L\beta\beta$"], orientation = :vertical, patchsize = (35, 4))
+    rowgap!(f.layout, 1, Fixed(7))
+    # rowgap!(f.layout, 2, Fixed(7))
     save(scriptsdir("ICHEP24", "Figs","RH_standard_together.png"), f)
     save(scriptsdir("ICHEP24", "Figs","RH_standard_together.svg"), f)
     save(scriptsdir("ICHEP24", "Figs","RH_standard_together.pdf"), f)
@@ -191,10 +204,15 @@ with_theme(theme_latexfonts()) do
 end
 
 with_theme(theme_latexfonts()) do 
-    f = Figure(size = (750, 500), fontsize = 22,  figure_padding = 22)
-    Label(f[1, 1:2], "Theoretical predictions", tellwidth = false)
-    a1 = Axis(f[3,1],title= L"Energy spectrum $$", xlabel = L"Single electron energy [keV] $$", ylabel = L"Rate [a.u.] $$" )
-    a2 = Axis(f[3,2],title= L"Angular distribution $$", xlabel = L"Angle between electrons $[^{\circ}]$", ylabel = L"Rate [a.u.] $$", yaxisposition = :right)
+    lh_label = rich( "2νββ", color = dark_orange )
+
+    title = rich("Theoretical prediction: ", lh_label)
+
+
+    f = Figure(size = (750, 600), fontsize = 22,  figure_padding = 22)
+    Label(f[1, 1:2], title, tellwidth = false)
+    a1 = Axis(f[2,1], xlabel = L"Single electron energy [keV] $$", ylabel = L"Rate [a.u.] $$" )
+    a2 = Axis(f[2,2], xlabel = L"Angle between electrons $[^{\circ}]$", ylabel = L"Rate [a.u.] $$", yaxisposition = :right)
      
     p1 = lines!(a1,range(0,3000, length(sum_spectrum)) ,sum_spectrum, color = dark_orange, linewidth = 3.5, label= L"standard $2\nu\beta\beta$")
     # p2 = lines!(a1,range(0,3000, length(sum_spectrum_RH)) ,sum_spectrum_RH, color = light_blue, linewidth = 3.5, label= L"$2\nu\beta\beta$ with $\bar{\nu}_R$")
@@ -211,7 +229,7 @@ with_theme(theme_latexfonts()) do
     hideydecorations!(a2, ticks = true, grid = false)
     # axislegend(a, margin = (15, 15, 15, 15), tellwidth = true,patchsize = (35, 4), position=:cb)
 
-    Legend(f[2,1:2], [p1], [L"standard $2\nu\beta\beta$"], orientation = :horizontal, patchsize = (35, 4))
+    # Legend(f[2,1:2], [p1], [L"standard $2\nu\beta\beta$"], orientation = :horizontal, patchsize = (35, 4))
     colgap!(f.layout, 1, Fixed(38))
 
     save(scriptsdir("ICHEP24", "Figs","standard_together.png"), f)
