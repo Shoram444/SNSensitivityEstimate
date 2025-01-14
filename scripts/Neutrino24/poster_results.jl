@@ -66,7 +66,7 @@ nTotalSimDict = Dict(
     :K40_hall_surface => 1.09e10,
 )
 
-bw = 50
+bw = 100
 
 h1d_bb_foil_bulk = get_estimated_counts("bb_foil_bulk", bkgActivitiesDict, nTotalSimDict, SNparams["t"];  bins = 0:bw:3500)
 h1d_Bi214_foil_bulk = get_estimated_counts("Bi214_foil_bulk" , bkgActivitiesDict, nTotalSimDict, SNparams["t"];  bins = 0:bw:3500)
@@ -78,114 +78,130 @@ h1d_Bi214_hall_surface = get_estimated_counts("Bi214_hall_surface" , bkgActiviti
 h1d_Tl208_hall_surface = get_estimated_counts("Tl208_hall_surface" , bkgActivitiesDict, nTotalSimDict, SNparams["t"];  bins = 0:bw:3500)
 h1d_K40_hall_surface = get_estimated_counts("K40_hall_surface" , bkgActivitiesDict, nTotalSimDict, SNparams["t"];  bins = 0:bw:3500)
 
-bkg_hists = [
-    h1d_bb_foil_bulk,
-    h1d_Bi214_foil_bulk + h1d_Tl208_foil_bulk + h1d_K40_foil_bulk + h1d_Pa234m_foil_bulk,
-    h1d_Bi214_wire_surface,
-    h1d_Bi214_hall_surface + h1d_Tl208_hall_surface + h1d_K40_hall_surface + h1d_Tl208_foil_bulk*inv(1000)
-]
 
-min_cts = minimum(@. minimum( filter(x-> x>0, bincounts(bkg_hists)) ) ) 
-colors = colorschemes[:julia] #["#003865", "#FFB948", "#52473B", "#9A3A06", ]
-# colors = ["#003865", "#FFB948", "#52473B", "#9A3A06", ]
+pars = (
+    Bfield= "off",
+    Eresolution = "12",
+)
 
-with_theme(theme_latexfonts()) do 
-	f = Figure(size = (800, 600), fontsize = 24, fonts = (; regular = "TeX"), figure_padding = 24)
-	ax = Axis(f[1:2,1], xlabel = "Summed 2-electron energy [keV]", ylabel = "Counts per $bw keV" , title = "Simulated SuperNEMO background; 17.5 kg.yr", yscale =log10, xticklabelrotation=45)
-	ax2 = Axis(f, bbox=BBox(590,745,410,530), yscale =log10,yaxisposition = :left,xticklabelrotation=0, xticklabelsize = 20, backgroundcolor=(:blue, 0.1)) #, title = L"\textrm{0\nu\beta\beta ROI}"
+@show sum( [lookup(h1d_bb_foil_bulk, b) for b = 2750:bw:3150])
+@show sum( [lookup(h1d_Bi214_foil_bulk, b) for b = 2750:bw:3150])
+@show sum( [lookup(h1d_Tl208_foil_bulk, b) for b = 2750:bw:3150])
+@show sum( [lookup(h1d_K40_foil_bulk, b) for b = 2750:bw:3150])
+@show sum( [lookup(h1d_Pa234m_foil_bulk, b) for b = 2750:bw:3150])
+@show sum( [lookup(h1d_Bi214_wire_surface, b) for b = 2750:bw:3150])
+@show sum( [lookup(h1d_Bi214_hall_surface, b) for b = 2750:bw:3150])
+@show sum( [lookup(h1d_Tl208_hall_surface, b) for b = 2750:bw:3150])
+@show sum( [lookup(h1d_K40_hall_surface, b) for b = 2750:bw:3150])
+
+# bkg_hists = [
+#     h1d_bb_foil_bulk,
+#     h1d_Bi214_foil_bulk + h1d_Tl208_foil_bulk + h1d_K40_foil_bulk + h1d_Pa234m_foil_bulk,
+#     h1d_Bi214_wire_surface,
+#     h1d_Bi214_hall_surface + h1d_Tl208_hall_surface + h1d_K40_hall_surface + h1d_Tl208_foil_bulk*inv(1000)
+# ]
+
+# min_cts = minimum(@. minimum( filter(x-> x>0, bincounts(bkg_hists)) ) ) 
+# colors = colorschemes[:julia] #["#003865", "#FFB948", "#52473B", "#9A3A06", ]
+# # colors = ["#003865", "#FFB948", "#52473B", "#9A3A06", ]
+
+# with_theme(theme_latexfonts()) do 
+# 	f = Figure(size = (800, 600), fontsize = 24, fonts = (; regular = "TeX"), figure_padding = 24)
+# 	ax = Axis(f[1:2,1], xlabel = "Summed 2-electron energy [keV]", ylabel = "Counts per $bw keV" , title = "Simulated SuperNEMO background; 17.5 kg.yr", yscale =log10, xticklabelrotation=45)
+# 	ax2 = Axis(f, bbox=BBox(590,745,410,530), yscale =log10,yaxisposition = :left,xticklabelrotation=0, xticklabelsize = 20, backgroundcolor=(:blue, 0.1)) #, title = L"\textrm{0\nu\beta\beta ROI}"
 	
-    labels= [L"2\nu\beta\beta", "internal", "radon", "external"]
-	st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
-	for i=2:length(bkg_hists)
-		hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
-	end
+#     labels= [L"2\nu\beta\beta", "internal", "radon", "external"]
+# 	st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
+# 	for i=2:length(bkg_hists)
+# 		hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
+# 	end
 
-	st2 = hist!(ax2, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
-	for i=2:length(bkg_hists)
-		hist!(ax2, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
-	end
+# 	st2 = hist!(ax2, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
+# 	for i=2:length(bkg_hists)
+# 		hist!(ax2, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
+# 	end
 	
-    lines!(ax, [SNparams["Q"], SNparams["Q"]], [min_cts*1.9, 0.12], color=(:red, 1), linewidth=3.5)
-    text!(ax, SNparams["Q"], 0.13, text= L"\mathbf{\textrm{Q_{\beta\beta}}}", fontsize = 26, align = (:center, :baseline), color = (:red, 1))
-    lines!(ax, [2700, 2700, 2555], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
-    lines!(ax, [3200, 3200, 3340], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
-    text!(ax, 2600, 2e5, text=L"\textrm{0\nu\beta\beta ROI}", fontsize=32)
+#     lines!(ax, [SNparams["Q"], SNparams["Q"]], [min_cts*1.9, 0.12], color=(:red, 1), linewidth=3.5)
+#     text!(ax, SNparams["Q"], 0.13, text= L"\mathbf{\textrm{Q_{\beta\beta}}}", fontsize = 26, align = (:center, :baseline), color = (:red, 1))
+#     lines!(ax, [2700, 2700, 2555], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
+#     lines!(ax, [3200, 3200, 3340], [min_cts, 1e1, 0.45e2], color=(:black), linewidth=3.5)
+#     text!(ax, 2600, 2e5, text=L"\textrm{0\nu\beta\beta ROI}", fontsize=32)
 
-    scatter!(ax, [SNparams["Q"]], [min_cts*1.9], marker= :dtriangle, markersize = 18, color=:red)
+#     scatter!(ax, [SNparams["Q"]], [min_cts*1.9], marker= :dtriangle, markersize = 18, color=:red)
 
-    text!(ax, 1900, 1.5e-1, text= "Preliminary", fontsize = 40, rotation = pi/6, align = (:center, :baseline), color = (:red, 0.8))
-	ylims!(ax, min_cts, 5e6)
-	xlims!(ax, 200, 3500)
-	ylims!(ax2, min_cts, 5e2)
-	xlims!(ax2, 2700, 3200)
-    ax.xticks = (collect(500:500:3900), string.(collect(500:500:3900)))
-    ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
-    ax2.xticks= ( [2700, 3200], ["2700", "3200"] )
-    ax2.yticks= ( [1e-5, 1e-3, 1e-1, 1e1], [L"10^{-5}", L"10^{-3}", L"10^{-1}", L"10^{1}"] )
+#     text!(ax, 1900, 1.5e-1, text= "Preliminary", fontsize = 40, rotation = pi/6, align = (:center, :baseline), color = (:red, 0.8))
+# 	ylims!(ax, min_cts, 5e6)
+# 	xlims!(ax, 200, 3500)
+# 	ylims!(ax2, min_cts, 5e2)
+# 	xlims!(ax2, 2700, 3200)
+#     ax.xticks = (collect(500:500:3900), string.(collect(500:500:3900)))
+#     ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
+#     ax2.xticks= ( [2700, 3200], ["2700", "3200"] )
+#     ax2.yticks= ( [1e-5, 1e-3, 1e-1, 1e1], [L"10^{-5}", L"10^{-3}", L"10^{-1}", L"10^{1}"] )
     
-    axislegend(ax, position = :lt, orientation = :horizontal, nbanks=2)
+#     axislegend(ax, position = :lt, orientation = :horizontal, nbanks=2)
     
-    save(scriptsdir("Neutrino24","fig_best.png"), f)
-    save(scriptsdir("Neutrino24","fig_best.svg"), f)
-	f
-end
+#     save(scriptsdir("Neutrino24","fig_best.png"), f)
+#     save(scriptsdir("Neutrino24","fig_best.svg"), f)
+# 	f
+# end
 
 
 
-### B-field on
-signal = get_process("bb0nu_foil_bulk", processes)
-background = [
-    get_process("bb_foil_bulk", processes),
-    get_process("Bi214_foil_bulk", processes),
-    get_process("Bi214_wire_surface", processes),
-    get_process("Tl208_foil_bulk", processes),
-    get_process("Bi214_hall_surface", processes),
-    get_process("Tl208_hall_surface", processes),
-    get_process("K40_hall_surface", processes),
-]
+# ### B-field on
+# signal = get_process("bb0nu_foil_bulk", processes)
+# background = [
+#     get_process("bb_foil_bulk", processes),
+#     get_process("Bi214_foil_bulk", processes),
+#     get_process("Bi214_wire_surface", processes),
+#     get_process("Tl208_foil_bulk", processes),
+#     get_process("Bi214_hall_surface", processes),
+#     get_process("Tl208_hall_surface", processes),
+#     get_process("K40_hall_surface", processes),
+# ]
 
-# set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
-set_signal!(background[1], false)
-set_nTotalSim!( signal, 99e6 )
-set_nTotalSim!( background[1], 267e6 )
-set_nTotalSim!( background[2], 3*99e6 )
-set_nTotalSim!( background[3], 3*79e6 )
-set_nTotalSim!( background[4], 3*98e6 )
+# # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
+# set_signal!(background[1], false)
+# set_nTotalSim!( signal, 99e6 )
+# set_nTotalSim!( background[1], 267e6 )
+# set_nTotalSim!( background[2], 3*99e6 )
+# set_nTotalSim!( background[3], 3*79e6 )
+# set_nTotalSim!( background[4], 3*98e6 )
 
-Q_keV = SNparams["Q"]
-α = 1.64485362695147
-
-
-t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
-best_t12ESum = get_max_bin(t12MapESum)
-expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
-effbb = lookup(signal, best_t12ESum)
+# Q_keV = SNparams["Q"]
+# α = 1.64485362695147
 
 
-
-### B-field off
-processes = load_processes("fal5_12perc", "sumE")
-signal = get_process("bb0nu_foil_bulk", processes)
-background = [
-    get_process("bb_foil_bulk", processes),
-    get_process("Bi214_foil_bulk", processes),
-    get_process("Bi214_wire_surface", processes),
-    get_process("Tl208_foil_bulk", processes),
-]
-
-# set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
-set_signal!(background[1], false)
-set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 1e8 )
-set_nTotalSim!( background[2], 1e8 )
-set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 1e8 )
-
-Q_keV = SNparams["Q"]
-α = 1.64485362695147
+# t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
+# best_t12ESum = get_max_bin(t12MapESum)
+# expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+# effbb = lookup(signal, best_t12ESum)
 
 
-t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
-best_t12ESum = get_max_bin(t12MapESum)
-expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
-effbb = lookup(signal, best_t12ESum)
+
+# ### B-field off
+# processes = load_processes("fal5_12perc", "sumE")
+# signal = get_process("bb0nu_foil_bulk", processes)
+# background = [
+#     get_process("bb_foil_bulk", processes),
+#     get_process("Bi214_foil_bulk", processes),
+#     get_process("Bi214_wire_surface", processes),
+#     get_process("Tl208_foil_bulk", processes),
+# ]
+
+# # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
+# set_signal!(background[1], false)
+# set_nTotalSim!( signal, 1e8 )
+# set_nTotalSim!( background[1], 1e8 )
+# set_nTotalSim!( background[2], 1e8 )
+# set_nTotalSim!( background[3], 1e8 )
+# set_nTotalSim!( background[4], 1e8 )
+
+# Q_keV = SNparams["Q"]
+# α = 1.64485362695147
+
+
+# t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
+# best_t12ESum = get_max_bin(t12MapESum)
+# expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+# effbb = lookup(signal, best_t12ESum)
