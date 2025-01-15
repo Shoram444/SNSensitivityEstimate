@@ -3,12 +3,12 @@ using DrWatson
 @quickactivate "SNSensitivityEstimate"
 
 push!(LOAD_PATH, srcdir())
-using SensitivityModule, CairoMakie, UnROOT, ColorSchemes,DataFramesMeta, LaTeXStrings, Revise, StatsBase, FHist, Distributions
-Revise.track(SensitivityModule)
+using SensitivityModule, CairoMakie, UnROOT, ColorSchemes,DataFramesMeta, LaTeXStrings, Revise, StatsBase, FHist, Distributions, PrettyTables
+# Revise.track(SensitivityModule)
 
 include(scriptsdir("Params.jl"))
 
-function get_estimated_counts(data::Vector{<:Real}, activity::Real, nTotalSim::Real, time::Real; bins = 0:50:3500)
+function get_estimated_counts(data::Vector{<:Real}, activity::Real, nTotalSim::Real, time::Real; bins = 0:100:3500)
     h = Hist1D(; binedges = bins, counttype=Float64)
     efficiency = length(data) / nTotalSim
     w = activity*efficiency*time 
@@ -21,12 +21,17 @@ function get_estimated_counts(data::Vector{<:Real}, activity::Real, nTotalSim::R
     return h
 end
 
-function get_estimated_counts(isotopeName::String, bkgActivitiesDict::Dict, nTotalSimDict::Dict, time::Real;  bins = 0:50:3500)
+function get_estimated_counts(isotopeName::String, bkgActivitiesDict::Dict, nTotalSimDict::Dict, time::Real;  bins = 0:100:3500)
     data = get_process(isotopeName, processes).dataVector
-    return get_estimated_counts(data, bkgActivitiesDict[Symbol(isotopeName)], nTotalSimDict[Symbol(isotopeName)], time; bins = 0:50:3500)
+    return get_estimated_counts(data, bkgActivitiesDict[Symbol(isotopeName)], nTotalSimDict[Symbol(isotopeName)], time; bins = 0:100:3500)
 end
 
-processes = load_processes("fal5_12perc_Boff", "sumE")
+pars = (
+    data_folder = "fal5_12perc_Boff",
+    mode = "sumE"
+)
+
+processes = load_processes(pars.data_folder, pars.mode)
 
 # scaled to Bq
 
@@ -77,6 +82,47 @@ h1d_Bi214_wire_surface = get_estimated_counts("Bi214_wire_surface" , bkgActiviti
 h1d_Bi214_hall_surface = get_estimated_counts("Bi214_hall_surface" , bkgActivitiesDict, nTotalSimDict, SNparams["t"];  bins = 0:bw:3500)
 h1d_Tl208_hall_surface = get_estimated_counts("Tl208_hall_surface" , bkgActivitiesDict, nTotalSimDict, SNparams["t"];  bins = 0:bw:3500)
 h1d_K40_hall_surface = get_estimated_counts("K40_hall_surface" , bkgActivitiesDict, nTotalSimDict, SNparams["t"];  bins = 0:bw:3500)
+
+
+
+ROI_a, ROI_b = 2700, 3200
+bb_cts = @show sum(bincounts(restrict(h1d_bb_foil_bulk, ROI_a, ROI_b)))
+Bi214_foil_bulk_cts = @show sum( [lookup(h1d_Bi214_foil_bulk, b) for b = 2750:bw:3150])
+Tl208_foil_bulk_cts = @show sum( [lookup(h1d_Tl208_foil_bulk, b) for b = 2750:bw:3150])
+K40_foil_bulk_cts = @show sum( [lookup(h1d_K40_foil_bulk, b) for b = 2750:bw:3150])
+Pa234m_foil_bulk_cts = @show sum( [lookup(h1d_Pa234m_foil_bulk, b) for b = 2750:bw:3150])
+Bi214_wire_surface_cts = @show sum( [lookup(h1d_Bi214_wire_surface, b) for b = 2750:bw:3150])
+Bi214_hall_surface_cts = @show sum( [lookup(h1d_Bi214_hall_surface, b) for b = 2750:bw:3150])
+Tl208_hall_surface_cts = @show sum( [lookup(h1d_Tl208_hall_surface, b) for b = 2750:bw:3150])
+K40_hall_surface_cts = @show sum( [lookup(h1d_K40_hall_surface, b) for b = 2750:bw:3150])
+
+
+pretty_table(DataFrame(
+    process = [
+        "bb",
+        "Bi214_foil_bulk",
+        "Tl208_foil_bulk",
+        # "K40_foil_bulk",
+        # "Pa234m_foil_bulk",
+        "Bi214_wire_surface",
+        "total"
+    ],
+    bkg_cts = [
+        bb_cts,
+        Bi214_foil_bulk_cts,
+        Tl208_foil_bulk_cts,
+        # K40_foil_bulk_cts,
+        # Pa234m_foil_bulk_cts,
+        Bi214_wire_surface_cts,
+        sum([bb_cts,
+        Bi214_foil_bulk_cts,
+        Tl208_foil_bulk_cts,
+        # K40_foil_bulk_cts,
+        # Pa234m_foil_bulk_cts,
+        Bi214_wire_surface_cts])
+    ]
+)
+)
 
 
 pars = (

@@ -7,7 +7,7 @@ Revise.track(SensitivityModule)
 
 include(scriptsdir("Params.jl"))
 
-all_processes = load_processes("fal5_8perc", "sumE")
+all_processes = load_processes("fal5_12perc_Boff", "sumE")
 
 signal = get_process("bb0nu_foil_bulk", all_processes)
 background = [
@@ -72,10 +72,25 @@ let
     f
 end
 
+background[1].nTotalSim
+
 a = 2600.0
 b = 3500.0
 
-ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge] 
+ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
+
+bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
+sum(bkgs)
+
+using PrettyTables
+pretty_table(
+    DataFrame(
+        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "total"],
+        counts = vcat(bkgs, sum(bkgs)),
+        activity_used = vcat([background[i].activity for i in 1:4], "--"),
+    ),
+    backend = Val(:markdown),
+)
 
 h1d_background = get_bkg_counts_1D.(background) |> sum
 h1d_background = restrict(h1d_background, a, b)
