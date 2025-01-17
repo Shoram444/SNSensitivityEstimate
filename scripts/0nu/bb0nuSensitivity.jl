@@ -113,6 +113,21 @@ pretty_table(
     backend = Val(:markdown),
 )
 
+bincounts(get_bkg_counts_1D(background[1]))
+
+pretty_table(
+    DataFrame(
+        left_bin_edge = collect(binedges(get_bkg_counts_1D(background[1])))[1:end-1],
+        bb_foil_bulk = bincounts(get_bkg_counts_1D(background[1])),
+        Bi214_foil_bulk = bincounts(get_bkg_counts_1D(background[2])),
+        Bi214_radon = bincounts(get_bkg_counts_1D(background[3])),
+        Tl208_foil_bulk = bincounts(get_bkg_counts_1D(background[4])),
+        total = bincounts(get_bkg_counts_1D(background[1])) .+ bincounts(get_bkg_counts_1D(background[2])) .+ bincounts(get_bkg_counts_1D(background[3])) .+ bincounts(get_bkg_counts_1D(background[4])),
+    ),
+    backend = Val(:markdown),
+)
+
+
 # h1d_background = get_bkg_counts_1D.(background) |> sum
 # h1d_background = restrict(h1d_background, a, b)
 
