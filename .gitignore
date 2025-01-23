@@ -8,6 +8,7 @@
 /videos
 .CondaPkg
 /Marseille_presentation
+.vscode
 
 ################################################################################
 #                                    Julia                                     #
