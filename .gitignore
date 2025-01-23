@@ -9,6 +9,7 @@
 .CondaPkg
 /Marseille_presentation
 .vscode
+notebooks/.ipynb_checkpoints
 
 ################################################################################
 #                                    Julia                                     #
