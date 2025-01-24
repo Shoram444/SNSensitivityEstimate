@@ -8,19 +8,15 @@
 /videos
 .CondaPkg
 /Marseille_presentation
-<<<<<<< HEAD
 .vscode
 notebooks/.ipynb_checkpoints
-=======
 /scripts/Makie_Examples
 /scripts/other
 /scripts/vertex_cut
 /scripts/0nu/0nu_Bayess_sensitivity.jl
 /scripts/0nu/SensitivityEstimate.jl
 /scripts/0nu/bb0nuSensitivity.jl
-
-
->>>>>>> e5aa04c (cleanup, example, readme)
+/scripts/slurm_jobs
 
 ################################################################################
 #                                    Julia                                     #
