@@ -72,7 +72,7 @@ SimulationParams = Dict(
 )
 
 binningDict = Dict(
-    :SumE => 0:100:3500,
+    :SumE => 0:50:3500,
     :SingleE => 0:50:3500,
     :Phi => 0:5:180,
 )

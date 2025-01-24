@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate "SNSensitivityEstimate"
 
 push!(LOAD_PATH, srcdir())
-using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist
+using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta
 
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
@@ -135,8 +135,23 @@ with_theme(theme_latexfonts()) do
 		hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
 	end
     
+    ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
     axislegend(ax, position = :lt, orientation = :horizontal, nbanks=2)
     saveName = savename("background_model", analysisDict, "png")
     safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f
 end
+
+# Background by source:
+ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
+
+bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
+
+pretty_table(
+    DataFrame(
+        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "total"],
+        counts = vcat(bkgs, sum(bkgs)),
+        activity_used = vcat([background[i].activity for i in 1:4], "--"),
+    ),
+    backend = Val(:markdown),
+)

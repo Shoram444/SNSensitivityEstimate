@@ -91,3 +91,22 @@
 | 3200.0                           | 0.0                             | 0.0                                | 0.0                           | 0.00574413                         | 0.00574413             |
 | 3300.0                           | 0.0                             | 0.0                                | 0.0                           | 0.00489702                         | 0.00489702             |
 | 3400.0                           | 0.0                             | 0.0                                | 0.0                           | 0.00392226                         | 0.00392226             |
+
+
+## Boff 12% + TKReconstruct + gamma tracking + 2 distinct assoc caloHits + ROI (2700, 3200)keV
+| **process**<br>`String` | **counts**<br>`Float64` | **activity\_used**<br>`Any` |
+|------------------------:|------------------------:|----------------------------:|
+| bb\_foil\_bulk          | 1.17369                 | 0.001721±3.1e-5             |
+| Bi214\_foil\_bulk       | 0.0897984               | 1.0e-5                      |
+| Bi214\_radon            | 0.0791443               | 0.00015                     |
+| Tl208\_foil\_bulk       | 0.0376894               | 2.0e-6                      |
+| total                   | 1.38032                 | --                          |
+
+## Boff 12% + TKReconstruct + gamma tracking + 2 distinct assoc caloHits + ROI (0, 3500)keV
+| **process**<br>`String` | **counts**<br>`Float64` | **activity\_used**<br>`Any` |
+|------------------------:|------------------------:|----------------------------:|
+| bb\_foil\_bulk          | 75735.1                 | 0.001721±3.1e-5             |
+| Bi214\_foil\_bulk       | 7.91996                 | 1.0e-5                      |
+| Bi214\_radon            | 14.0674                 | 0.00015                     |
+| Tl208\_foil\_bulk       | 0.913531                | 2.0e-6                      |
+| total                   | 75758.0                 | --                          |
