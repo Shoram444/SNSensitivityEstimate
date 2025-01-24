@@ -7,12 +7,9 @@ using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, DataFramesMeta, LaTeXS
 
 include(scriptsdir("Params.jl"))
 
-<<<<<<< HEAD
-=======
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 # 1. dir::String -> the name of the directory where the root files are stored
 # 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
->>>>>>> e5aa04c (cleanup, example, readme)
 all_processes = load_processes("fal5_12perc_Boff", "sumE")
 
 # declare which process is signal
