@@ -126,7 +126,7 @@ bkg_hists = get_bkg_counts_1D.(background)
 
 with_theme(theme_latexfonts()) do
     f = Figure()
-    ax = Axis(f[1,1], xlabel = analysisDict[:mode], ylabel = "counts")
+    ax = Axis(f[1,1], xlabel = analysisDict[:mode], ylabel = "counts", yscale = log10, limits = (nothing, nothing, 1e-5, 1e6))
     
     colors = colorschemes[:tableau_colorblind]
     labels = [b.isotopeName for b in background]
