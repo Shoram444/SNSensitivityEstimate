@@ -11,32 +11,63 @@ The methodology of calculating sensitivities is described in `docdb:4816` with a
 **EXAMPLES**
 ========
 
+Main example of how to use this repository to calculate sensitivity to 0nu is provided in `scripts/0nu/Example_bb0nu_Sensitivity.jl`.
+
 There are example notebooks in the `notebooks/` folder. 
 
 **DATA**
 ========
+## Input data format for this repository:
+The input data **must** be provided in form of a `root` file, which contains (at least) the following information **per event**:
+- `float reconstructedEnergy1`
+- `float reconstructedEnergy2`
+- `float phi`
 
-The data used as of **11th December** is described by the following:
-1. $10^8$ events were generated for each of the following processes: 
-   1. Internal Background processes:
-      - ${}^{214}Bi$ (source_foil_bulk)
-      - ${}^{208}Tl$ (source_foil_bulk)
-      - ${}^{214}Bi$ (anode_wires)
-      - ${}^{208}Tl$ (anode_wires)
-      - ${}^{234m}Pa$ (source_foil_bulk)
-      - ${}^{40}K$ (source_foil_bulk) - the activities of these is obtained from table 1 in [paper](https://link.springer.com/article/10.1140/epjc/s10052-018-6295-x)
-   3. Signal processes: "standard" $2\nu\beta\beta$, *refined* Xi spectra with $\xi_{31} = 0.378, \xi_{51} = 0.1397, K^{2\nu} = -0.66$
-2. The following data-cuts were applied to data:
-   1. two negatively charged particle tracks reconstructed,
-   2. two vertices on the source foil,
-   3. sum of reconstructed electron energies within the range: $(0 - 3500) keV$,
-   4. two individual OM hits,
-   5. two associated OM hits. 
-3. The following variables are extracted from the simulation:
-   1. Individual electron energies (2 per event)
-   2. The angle of escape between the two electrons - obtained by drawing a line between the vertex on foil and on the calorimeter **NOT FROM TRACKING ALGORITHM!!**
-   3. The vertex positions on foil (to be used for vertex separation cuts)
-4. The so-called *mock* calibration was used (this is roughly 8% at 1MeV) to obtain reconstructed energies
+Each filename must match the naming convention: `isotope_vertex_generator.root`, (i.e. `Bi214_foil_bulk.root`) for the process to be compatible with the `LoadData::load_processes(dir::String, mode::String)` function. 
+( Optionally you can initiaite your own processes and work with them manually, see documentation in `src/Process.jl` or `? Process` in `REPL`. )
+
+A very important file is the: `scripts/Params.jl`. This contains the dictionaries for all the processes/acitvitites/info about the detector/etc. Look through the file and make sure you follow the conventions there. 
+
+## Most recent simulation performed is in `/sps/nemo/scratch/mpetro/Projects/Phd/SNSensitivityEstimate/data/sims/fal5_12perc_Boff_TIT`:
+
+## Simulated processes
+- [x] 2nubb - foil_bulk
+- [x] 0nubb - foil_bulk
+- [x] Bi214 - foil_bulk
+- [x] Tl208 - foil_bulk
+- [ ] Pa234m - foil_bulk
+- [ ] K40 - foil_bulk
+- [x] Bi214 - wire_surface (radon)
+
+## Data-cuts using `SNCuts`
+```bash
+useEventHasTwoTracks : boolean = true
+useEventHasTwoFoilVertices : boolean = true
+useEventHasTwoCaloHits : boolean = true
+useEventHasTwoDistinctAssociatedCaloHits : boolean = true
+
+useEventHasSumEnergyAbove : boolean = true
+minSumEnergy : real = 300.0
+useEventHasSumEnergyBelow : boolean = true
+maxSumEnergy : real = 3500.0
+
+useEventHasFoilVertexDistanceBelow : boolean = true
+maxFoilVertexDistance : real = 50.0  # mm
+
+useEventHasPintAbove : boolean = true  # internal probability ToF cut
+minPint : real = 0.04
+
+useEventHasPextBelow : boolean = true   # external probability ToF cut
+maxPext : real = 0.01
+```
+
+## Simulation setup
+- Use `realistic_flat` source foil geometry 
+- Use magnetic field off
+- Use TKReconstrcut to reconstruct the trajectories (with polylines)
+- Use 12% FWHM across main OMs (Or do we have some better solution ready?)
+- Use basic SimRC setup
+
 
 **CODE**
 ========
@@ -45,10 +76,20 @@ The main bulk of the analysis is done in the file `scripts/main.jl`. There is a 
 
 **REPRODUCIBILITY**
 ========
+## To get Julia
+**Download Juliaup**
+```bash
+curl -fsSL https://install.julialang.org | sh
+``` 
+**install version 1.10.0**
+```bash
+juliaup add 1.10.0
+```
 
-**To (locally) reproduce this project, do the following**:
 
-0. Download this code base. Notice that raw data are typically not included in the git-history and may need to be downloaded independently.
+## To (locally) reproduce this project, do the following:
+
+0. Download this code base. Notice that raw data not included in the git repository.
 1. Open a Julia console and do:
    ```
    julia> using Pkg

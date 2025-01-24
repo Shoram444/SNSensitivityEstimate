@@ -7,9 +7,18 @@ using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, DataFramesMeta, LaTeXS
 
 include(scriptsdir("Params.jl"))
 
+<<<<<<< HEAD
+=======
+# Load all the processes in the directory. Function `load_processes` takes two arguments:
+# 1. dir::String -> the name of the directory where the root files are stored
+# 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
+>>>>>>> e5aa04c (cleanup, example, readme)
 all_processes = load_processes("fal5_12perc_Boff", "sumE")
 
+# declare which process is signal
 signal = get_process("bb0nu_foil_bulk", all_processes)
+
+# declare background processes
 background = [
     get_process("bb_foil_bulk", all_processes),
     get_process("Bi214_foil_bulk", all_processes),
@@ -19,14 +28,18 @@ background = [
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
 set_signal!(background[1], false)
-# set_nTotalSim!( signal, 99e6 )
-# set_nTotalSim!( background[1], 267e6 )
-# set_nTotalSim!( background[2], 3*99e6 )
-# set_nTotalSim!( background[3], 3*79e6 )
-# set_nTotalSim!( background[4], 3*98e6 )
 
+# set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
+set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( background[1], 1e8 )
+set_nTotalSim!( background[2], 1e8 )
+set_nTotalSim!( background[3], 1e8 )
+set_nTotalSim!( background[4], 1e8 )
+
+println("Processes initialized.")
+
+#
 Q_keV = SNparams["Q"]
-Q_MeV = Q_keV / 1000.0
 α = 1.64485362695147
 
 

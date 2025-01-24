@@ -92,6 +92,7 @@ bkg_processes = [
     get_process("Bi214_wire_surface", processes),
     ]
 
+<<<<<<< HEAD
 ROI_a, ROI_b = 2300, 3200
 bb_cts = @show sum(bincounts(restrict(h1d_bb_foil_bulk, ROI_a, ROI_b)))
 Bi214_foil_bulk_cts = @show sum(bincounts(restrict(h1d_Bi214_foil_bulk, ROI_a, ROI_b)))
@@ -146,6 +147,65 @@ pretty_table(
 @show sum( [lookup(h1d_Bi214_hall_surface, b) for b = 2750:bw:3150])
 @show sum( [lookup(h1d_Tl208_hall_surface, b) for b = 2750:bw:3150])
 @show sum( [lookup(h1d_K40_hall_surface, b) for b = 2750:bw:3150])
+=======
+
+
+bb_cts = @show sum( [lookup(h1d_bb_foil_bulk, b) for b = 2700:bw:3200])
+Bi214_foil_bulk_cts = @show sum( [lookup(h1d_Bi214_foil_bulk, b) for b = 2700:bw:3200])
+Tl208_foil_bulk_cts = @show sum( [lookup(h1d_Tl208_foil_bulk, b) for b = 2700:bw:3200])
+K40_foil_bulk_cts = @show sum( [lookup(h1d_K40_foil_bulk, b) for b = 2700:bw:3200])
+Pa234m_foil_bulk_cts = @show sum( [lookup(h1d_Pa234m_foil_bulk, b) for b = 2700:bw:3200])
+Bi214_wire_surface_cts = @show sum( [lookup(h1d_Bi214_wire_surface, b) for b = 2700:bw:3200])
+Bi214_hall_surface_cts = @show sum( [lookup(h1d_Bi214_hall_surface, b) for b = 2700:bw:3200])
+Tl208_hall_surface_cts = @show sum( [lookup(h1d_Tl208_hall_surface, b) for b = 2700:bw:3200])
+K40_hall_surface_cts = @show sum( [lookup(h1d_K40_hall_surface, b) for b = 2700:bw:3200])
+
+
+pretty_table(DataFrame(
+    process = [
+        "bb",
+        "Bi214_foil_bulk",
+        "Tl208_foil_bulk",
+        # "K40_foil_bulk",
+        # "Pa234m_foil_bulk",
+        "Bi214_wire_surface",
+        "total"
+    ],
+    bkg_cts = [
+        bb_cts,
+        Bi214_foil_bulk_cts,
+        Tl208_foil_bulk_cts,
+        # K40_foil_bulk_cts,
+        # Pa234m_foil_bulk_cts,
+        Bi214_wire_surface_cts,
+        sum([bb_cts,
+        Bi214_foil_bulk_cts,
+        Tl208_foil_bulk_cts,
+        # K40_foil_bulk_cts,
+        # Pa234m_foil_bulk_cts,
+        Bi214_wire_surface_cts])
+    ]
+)
+)
+
+signal = get_process("bb0nu_foil_bulk", processes)
+background = [
+    get_process("bb_foil_bulk", processes),
+    get_process("Bi214_foil_bulk", processes),
+    get_process("Bi214_wire_surface", processes),
+    get_process("Tl208_foil_bulk", processes),
+]
+set_signal!(background[1], false)
+Q_keV = SNparams["Q"]
+Q_MeV = Q_keV / 1000.0
+α = 1.64485362695147
+t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
+@show best_t12ESum = get_max_bin(t12MapESum)
+@show expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+@show effbb = lookup(signal, best_t12ESum)
+@show ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
+
+>>>>>>> e5aa04c (cleanup, example, readme)
 
 # bkg_hists = [
 #     h1d_bb_foil_bulk,

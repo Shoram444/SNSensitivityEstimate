@@ -1,1 +1,0 @@
-I'm trying to learn Makie as the second plotting library next to `Plots.jl`. Here are a few examples that may or may not be relevant for this project. The figures are slightly changed examples from [https://beautiful.makie.org/](https://beautiful.makie.org/). 

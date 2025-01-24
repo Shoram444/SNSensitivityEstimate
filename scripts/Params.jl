@@ -47,6 +47,7 @@ SigActivityParams = Dict(
 )
 
 SimulationParams = Dict(
+<<<<<<< HEAD
     # for 12% Boff
     :bb_foil_bulk => 267e6,
     :Bi214_foil_bulk => 3*99e6,
@@ -65,22 +66,39 @@ SimulationParams = Dict(
     :Bi214_wire_bulk => 1e7,
     # :Bi214_wire_surface => 5e8, # 5e8 for 8% fal5, 1e7 for 8%, 1e8 for 11%
     # :Bi214_hall_surface => 1e9, # 
+=======
+    :Bi214_foil_bulk => 1e8, 
+    :Bi214_foil_surface => 5e8,
+    :Bi214_PMT_glass_bulk => 1e7,
+    :Bi214_wire_bulk => 1e7,
+    :Bi214_wire_surface => 1e8,
+    :Bi214_hall_surface => 1e9, 
+>>>>>>> e5aa04c (cleanup, example, readme)
     :Bi210_foil_bulk => 1e6 ,       
     :Bi210_foil_surface => 1e6 ,    
     :Bi210_wire_surface => 1e6 ,    
     :Bi210_wire_bulk => 1e6 ,       
+<<<<<<< HEAD
     # :Tl208_foil_bulk => 5e8, # 5e8 for 8% fal5, 1e8 for fal4 8%
+=======
+    :Tl208_foil_bulk => 1e8,
+>>>>>>> e5aa04c (cleanup, example, readme)
     :Tl208_foil_surface => 117e6,
     :Tl208_PMT_glass_bulk => 1e8,
     # :Tl208_hall_surface => 1e9,
     # :Pa234m_foil_bulk => 1e8,
     # :K40_foil_bulk => 1e8,
     :K40_PMT_glass_bulk => 1e8,
+<<<<<<< HEAD
     # :K40_hall_surface => 1e9,
     # :bb_foil_bulk => 5e8, # 1e8 for 12% fal5, 5e8 for 8% fal5, 1e8 for 8% fal4, 1e7 for 11%
+=======
+    :K40_hall_surface => 1e9,
+    :bb_foil_bulk => 1e8, 
+>>>>>>> e5aa04c (cleanup, example, readme)
     :Xi037_foil_bulk => 1e8 ,
     :RH037_foil_bulk => 1e7 ,
-    :bb0nu_foil_bulk => 1e8, # 1e8 for fal5 8%, 1e7 for fal4 8%
+    :bb0nu_foil_bulk => 1e8,
 )
 
 binningDict = Dict(
