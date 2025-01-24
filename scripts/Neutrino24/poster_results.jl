@@ -92,62 +92,6 @@ bkg_processes = [
     get_process("Bi214_wire_surface", processes),
     ]
 
-<<<<<<< HEAD
-ROI_a, ROI_b = 2300, 3200
-bb_cts = @show sum(bincounts(restrict(h1d_bb_foil_bulk, ROI_a, ROI_b)))
-Bi214_foil_bulk_cts = @show sum(bincounts(restrict(h1d_Bi214_foil_bulk, ROI_a, ROI_b)))
-Tl208_foil_bulk_cts = @show sum(bincounts(restrict(h1d_Tl208_foil_bulk, ROI_a, ROI_b)))
-K40_foil_bulk_cts = @show sum(bincounts(restrict(h1d_K40_foil_bulk, ROI_a, ROI_b)))
-Pa234m_foil_bulk_cts = @show sum(bincounts(restrict(h1d_Pa234m_foil_bulk, ROI_a, ROI_b)))
-Bi214_wire_surface_cts = @show sum(bincounts(restrict(h1d_Bi214_wire_surface, ROI_a, ROI_b)))
-Bi214_hall_surface_cts = @show sum(bincounts(restrict(h1d_Bi214_hall_surface, ROI_a, ROI_b)))
-Tl208_hall_surface_cts = @show sum(bincounts(restrict(h1d_Tl208_hall_surface, ROI_a, ROI_b)))
-K40_hall_surface_cts = @show sum(bincounts(restrict(h1d_K40_hall_surface, ROI_a, ROI_b)))
-
-
-pretty_table(
-    DataFrame(
-        process = [
-            "bb_foil_bulk",
-            "Bi214_foil_bulk",
-            "Tl208_foil_bulk",
-            "K40_foil_bulk",
-            "Pa234m_foil_bulk",
-            "Bi214_wire_surface",
-            # "external",
-            "total"
-        ],
-        bkg_cts = [
-            bb_cts,
-            Bi214_foil_bulk_cts,
-            Tl208_foil_bulk_cts,
-            K40_foil_bulk_cts,
-            Pa234m_foil_bulk_cts,
-            Bi214_wire_surface_cts,
-            # Bi214_hall_surface_cts + Tl208_hall_surface_cts + K40_hall_surface_cts,
-            sum([bb_cts,
-            Bi214_foil_bulk_cts,
-            Tl208_foil_bulk_cts,
-            # K40_foil_bulk_cts,
-            # Pa234m_foil_bulk_cts,
-            Bi214_wire_surface_cts])
-        ],
-        activity_used = vcat([p.activity for p in bkg_processes], "--"),
-    ),
-    backend = Val(:markdown),
-)
-
-
-@show sum( [lookup(h1d_bb_foil_bulk, b) for b = 2750:bw:3150])
-@show sum( [lookup(h1d_Bi214_foil_bulk, b) for b = 2750:bw:3150])
-@show sum( [lookup(h1d_Tl208_foil_bulk, b) for b = 2750:bw:3150])
-@show sum( [lookup(h1d_K40_foil_bulk, b) for b = 2750:bw:3150])
-@show sum( [lookup(h1d_Pa234m_foil_bulk, b) for b = 2750:bw:3150])
-@show sum( [lookup(h1d_Bi214_wire_surface, b) for b = 2750:bw:3150])
-@show sum( [lookup(h1d_Bi214_hall_surface, b) for b = 2750:bw:3150])
-@show sum( [lookup(h1d_Tl208_hall_surface, b) for b = 2750:bw:3150])
-@show sum( [lookup(h1d_K40_hall_surface, b) for b = 2750:bw:3150])
-=======
 
 
 bb_cts = @show sum( [lookup(h1d_bb_foil_bulk, b) for b = 2700:bw:3200])
@@ -205,7 +149,6 @@ t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="fo
 @show effbb = lookup(signal, best_t12ESum)
 @show ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
 
->>>>>>> e5aa04c (cleanup, example, readme)
 
 # bkg_hists = [
 #     h1d_bb_foil_bulk,

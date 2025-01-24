@@ -31,7 +31,7 @@ all_processes = load_processes(
 # declare which process is signal
 signal = get_process("bb0nu_foil_bulk", all_processes)
 
-#declare background processes
+# declare background processes
 background = [
     get_process("bb_foil_bulk", all_processes),
     get_process("Bi214_foil_bulk", all_processes),
