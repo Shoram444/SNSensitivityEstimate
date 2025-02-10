@@ -110,3 +110,29 @@
 | Bi214\_radon            | 14.0674                 | 0.00015                     |
 | Tl208\_foil\_bulk       | 0.913531                | 2.0e-6                      |
 | total                   | 75758.0                 | --                          |
+
+
+
+## Boff 12% + TKReco + gamma tracking + 2 distinct assoc caloHits + ROI (2700, 3100) + neutron fullshielding no florr
+| **process**<br>`String`                             | **counts**<br>`Float64` |
+|----------------------------------------------------:|------------------------:|
+| bb\_foil\_bulk                                      | 1.29397                 |
+| Bi214\_foil\_bulk                                   | 0.0849167               |
+| Bi214\_radon                                        | 0.0963836               |
+| Tl208\_foil\_bulk                                   | 0.0295838               |
+| K40\_foil\_bulk                                     | 0.0                     |
+| Pa234m\_foil\_bulk                                  | 0.0                     |
+| neutron\_external\nfull\_shielding\_no\_floor\_flux | 0.136586                |
+| total                                               | 1.64144                 |
+
+## Boff 12% + TKReco + gamma tracking + 2 distinct assoc caloHits + ROI (2700, 3000) + neutron current setup
+| **process**<br>`String`               | **counts**<br>`Float64` |
+|--------------------------------------:|------------------------:|
+| bb\_foil\_bulk                        | 1.29397                 |
+| Bi214\_foil\_bulk                     | 0.0824589               |
+| Bi214\_radon                          | 0.0943502               |
+| Tl208\_foil\_bulk                     | 0.0224918               |
+| K40\_foil\_bulk                       | 0.0                     |
+| Pa234m\_foil\_bulk                    | 0.0                     |
+| neutron\_external\ncurrent\_shielding | 0.356625                |
+| total                                 | 1.84989                 |

@@ -72,7 +72,7 @@ SimulationParams = Dict(
 )
 
 binningDict = Dict(
-    :SumE => 0:50:3500,
+    :SumE => 0:100:3500,
     :SingleE => 0:50:3500,
     :Phi => 0:5:180,
 )
@@ -336,6 +336,13 @@ sumEbb0nuParams = Dict(
     :amount => SNparams["foilMass"]
 )
 
+### neutron
+sumNeutronParams = Dict(
+    :isotopeName => "neutron_external", 
+    :signal => :false, 
+    :bins => binningDict[:SumE],
+)
+
 sumEParams = Dict(
     :Bi214_foil_bulk => sumEBi214_foil_bulk_Params,
     :Bi214_foil_surface => sumEBi214_foil_surface_Params,
@@ -359,6 +366,7 @@ sumEParams = Dict(
     :Xi037_foil_bulk => sumEXiParams,
     :RH037_foil_bulk => sumERH037Params,
     :bb0nu_foil_bulk => sumEbb0nuParams,
+    :neutron_external => sumNeutronParams
 )
 ###############################################################################
 ###############################################################################
@@ -626,6 +634,14 @@ singleEbb0nuParams = Dict(
     :amount => SNparams["foilMass"]
 )
 
+### neutron_external
+
+singleNeutronParams = Dict(
+    :isotopeName => "neutron_external",
+    :signal => :false,
+    :bins => binningDict[:SingleE],
+)
+
 singleEParams = Dict(
     :Bi214_foil_bulk => singleEBi214_foil_bulk_Params,
     :Bi214_foil_surface => singleEBi214_foil_surface_Params,
@@ -649,6 +665,7 @@ singleEParams = Dict(
     :Xi037_foil_bulk => singleEXiParams,
     :RH037_foil_bulk => singleERH037Params,
     :bb0nu_foil_bulk => singleEbb0nuParams,
+    :neutron_external => singleNeutronParams
 )
 
 #### Angular Study
@@ -910,6 +927,13 @@ phibb0nuParams = Dict(
     :amount => SNparams["foilMass"]
 )
 
+### neutron_external
+phiNeutronParams = Dict(
+    :isotopeName => "neutron_external",
+    :signal => :false,
+    :bins => binningDict[:Phi],
+)
+
 phiParams = Dict(
     :Bi214_foil_bulk => phiBi214_foil_bulk_Params,
     :Bi214_foil_surface => phiBi214_foil_surface_Params,
@@ -933,4 +957,5 @@ phiParams = Dict(
     :Xi037_foil_bulk => phiXiParams,
     :RH037_foil_bulk => phiRH037Params,
     :bb0nu_foil_bulk => phibb0nuParams,
+    :neutron_external => phiNeutronParams
 )

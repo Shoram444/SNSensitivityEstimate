@@ -15,6 +15,8 @@ using
     BAT,
     DensityInterface
 
+# Define main module abstract type
+
 
 include("Misc.jl")
 export 
@@ -42,27 +44,42 @@ include("HistFuncs.jl")
 export 
     get_max_bin
 
-include("Process.jl")
+include("AbstractProcess.jl")
+export  
+    AbstractProcess,
+    get_process,
+    set_signal!,
+    get_bkg_counts,
+    get_bkg_counts_1D,
+    get_sig_counts,
+    get_epsilon_to_b,
+    get_sToBRatio,
+    get_tHalf_map,
+    get_bkg_counts_ROI
+
+include("HistProcess.jl")
 export 
-    Process,
-    get_process,                # returns the Process by isotopeName from vector of processes
-    get_efficiency,
-    set_signal!,                # experimental feature!
+    HistProcess,
+    get_counts,
+    get_nPassed,
+    get_bkg_counts,
+    get_bkg_counts_1D,
+    get_isotope_details,
+    print_isotope_details,
+    get_process
+
+include("DataProcess.jl")
+export 
+    DataProcess,
     set_activity!,
     set_timeMeas!,
     set_nTotalSim!,
     set_bins!,
     set_amount!,
+    get_efficiency,
     get_nPassed,
-    get_bkg_counts,               # obtain the expected number of bkg processes per ROI: b_rate = α * sqrt( sum_i A_i * eff_i * t * amount) (where i is the individual bkg process)
-    get_sig_counts,               # obtain the rate of sig processes per ROI: s_rate = sum_i A_i * eff_i  (where i is the individual sig process)
-    get_sToBRatio,              # sig / bkg
-    get_epsilon_to_b,           # epsilon / bkg
-    get_tHalf_map,              # returns the Hist2D object with T1/2 per ROI
-    get_bkg_counts_ROI,          # obtain the estimated bkg numbers in given ROI (scaled to mass and Tmeas)
-    get_bkg_counts_1D,             # returns Hist1D of expected backgrounds
-    get_isotope_details,
-    print_isotope_details
+    get_bkg_counts_1D,
+    get_bkg_counts
     
 include("PlotsRecipes.jl")
 
@@ -78,7 +95,8 @@ export
 include("LoadData.jl")
 export 
     load_files,
-    load_processes
+    load_data_processes,
+    load_hist_processes
 
 include("Models.jl")
 export 
