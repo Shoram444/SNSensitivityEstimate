@@ -44,6 +44,8 @@ SigActivityParams = Dict(
     :Xi037_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
     :RH037_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
     :bb0nu_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf0nu"]), # mock value
+    :bb0nuM1_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf0nu"]), # mock value
+    :bb0nuM2_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf0nu"]), # mock value
 )
 
 SimulationParams = Dict(
@@ -69,11 +71,13 @@ SimulationParams = Dict(
     :Xi037_foil_bulk => 1e8 ,
     :RH037_foil_bulk => 1e7 ,
     :bb0nu_foil_bulk => 1e8,
+    :bb0nuM1_foil_bulk => 1e8,
+    :bb0nuM2_foil_bulk => 1e8,
 )
 
 binningDict = Dict(
-    :SumE => 0:50:3500,
-    :SingleE => 0:50:3500,
+    :SumE => 0:100:3500,
+    :SingleE => 0:100:3500,
     :Phi => 0:5:180,
 )
 

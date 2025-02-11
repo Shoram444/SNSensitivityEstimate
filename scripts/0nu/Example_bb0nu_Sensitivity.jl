@@ -13,7 +13,7 @@ include(scriptsdir("Params.jl"))
 # Dictionary with the analysis parameters. (Nice for when you want to save stuff and make sure you know what params you used in this analysis.)
 analysisDict = Dict(
     :Bfield => "Boff", # magnetic field on/off
-    :Eres => "12perc", # FWHM of the OMs (sorry for the naming...)
+    :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
     :mode => "sumE", 
     :trackAlgo => "TIT",
     :signal => "bb0nu",
@@ -24,7 +24,7 @@ analysisDict = Dict(
 #  1. dir::String -> the name of the directory where the root files are stored
 #  2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
 all_processes = load_processes(
-    "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])", 
+    "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct", 
     analysisDict[:mode]
 )
 
