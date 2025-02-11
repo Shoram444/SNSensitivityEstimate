@@ -21,10 +21,10 @@ function load_files(dir::String)
     return filesDict
 end
 
-function load_processes(dir::String, mode::String)
+function load_data_processes(dir::String, mode::String)
     filesDict = Dict()
     full_dir = datadir("sims", dir)
-    processes = []
+    processes = DataProcess[]
 
     println("Loading files from: $full_dir ...")
     println("mode: $mode ")
@@ -36,13 +36,18 @@ function load_processes(dir::String, mode::String)
             continue
         end
         
-        df = ROOTFile(joinpath(full_dir, file)) |> ffrf
+        f = ROOTFile(joinpath(full_dir, file)) 
+        if(!haskey(f, "tree"))
+            continue
+        end
+
+        df = ffrf(f)
         fileName = split(file, ".")[1]  |> split |> first 
         
         if mode == "sumE"
             push!(
                 processes,
-                Process(
+                DataProcess(
                     df.reconstructedEnergy1 .+ df.reconstructedEnergy2,
                     sumEParams[Symbol(fileName)]
                 )
@@ -50,7 +55,7 @@ function load_processes(dir::String, mode::String)
         elseif mode == "singleE"
             push!(
                 processes,
-                Process(
+                DataProcess(
                     vcat(df.reconstructedEnergy1, df.reconstructedEnergy2),
                     singleEParams[Symbol(fileName)]
                 )
@@ -58,13 +63,76 @@ function load_processes(dir::String, mode::String)
         elseif mode == "phi"
             push!(
                 processes,
-                Process(
+                DataProcess(
                     df.phi,
                     phiParams[Symbol(fileName)]
                 )
             )
         else
             @error "mode must be one of: sumE, singleE, phi. Chosen mode: $mode!"
+        end
+    end
+    println("Loaded $nFiles files.")
+
+    return processes
+end
+
+
+
+function load_hist_processes(dir::String, mode::String)
+    filesDict = Dict()
+    full_dir = datadir("sims", dir)
+    processes = HistProcess[]
+
+    println("Loading files from: $full_dir ...")
+    println("mode: $mode ")
+
+    nFiles = 0
+    for file in readdir(full_dir)
+        nFiles += 1
+        if( split(file, ".")[end] != "root" )
+            continue
+        end
+        
+        f = ROOTFile(joinpath(full_dir, file)) 
+        if(haskey(f, "tree"))
+            continue
+        end
+        fileName = split(file, ".")[1]  |> split |> first 
+
+        for k in keys(f) # if there are multiple histograms in the root file we save each?
+            h1 = UnROOT.parseTH(f[k], raw= false)
+            if mode == "sumE"
+                push!(
+                    processes,
+                    HistProcess(
+                        h1,
+                        k,
+                        sumEParams[Symbol(fileName)]
+                    )
+                )
+
+            elseif mode == "singleE"
+                push!(
+                    processes,
+                    HistProcess(
+                        h1,
+                        k,
+                        singleEParams[Symbol(fileName)]
+                    )
+                )
+            elseif mode == "phi"
+                push!(
+                    processes,
+                    HistProcess(
+                        h1,
+                        k,
+                        phiParams[Symbol(fileName)]
+                    )
+                )
+            else
+                @error "mode must be one of: sumE, singleE, phi. Chosen mode: $mode!"
+            end
         end
     end
     println("Loaded $nFiles files.")

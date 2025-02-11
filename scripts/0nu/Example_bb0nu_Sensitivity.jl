@@ -3,7 +3,8 @@ using DrWatson
 
 push!(LOAD_PATH, srcdir())
 using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta
-
+using Revise
+Revise.track(SensitivityModule)
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -16,27 +17,39 @@ analysisDict = Dict(
     :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
     :mode => "sumE", 
     :trackAlgo => "TIT",
-    :signal => "bb0nu",
+    :signal => "bb0nuM1",
+    :neutron_config => "full_shielding_no_floor"
 )
 
+files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct"
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 #  1. dir::String -> the name of the directory where the root files are stored
 #  2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
-all_processes = load_processes(
-    "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct", 
+data_processes = load_data_processes(
+    files_directory, 
     analysisDict[:mode]
 )
 
+hist_processes = load_hist_processes(
+    files_directory, 
+
+
+
 # declare which process is signal
-signal = get_process("bb0nu_foil_bulk", all_processes)
+# signal = get_process("bb0nu_foil_bulk", data_processes)
+# signal = get_process("bb0nuM1_foil_bulk", data_processes)
+signal = get_process("bb0nuM2_foil_bulk", data_processes)
 
 # declare background processes
 background = [
-    get_process("bb_foil_bulk", all_processes),
-    get_process("Bi214_foil_bulk", all_processes),
-    get_process("Bi214_wire_surface", all_processes),
-    get_process("Tl208_foil_bulk", all_processes),
+    get_process("bb_foil_bulk", data_processes),
+    get_process("Bi214_foil_bulk", data_processes),
+    get_process("Bi214_wire_surface", data_processes),
+    get_process("Tl208_foil_bulk", data_processes),
+    # get_process("K40_foil_bulk", data_processes),
+    # get_process("Pa234m_foil_bulk", data_processes),
+    get_process("neutron_external", hist_processes, "full shielding")
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -44,10 +57,12 @@ set_signal!(background[1], false)
 
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
 set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 1e8 )
+set_nTotalSim!( background[1], 0.99e8 )
 set_nTotalSim!( background[2], 1e8 )
 set_nTotalSim!( background[3], 1e8 )
 set_nTotalSim!( background[4], 1e8 )
+# set_nTotalSim!( background[5], 6e8 )
+# set_nTotalSim!( background[6], 6e8 )
 
 println("Processes initialized.")
 
@@ -80,7 +95,7 @@ ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
 
 lbl = "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV 
       b  = $(round(expBkgESum, sigdigits = 3)) 
-      T12 ≥  $(round(ThalfbbESum, sigdigits=2)) yr 
+      T12 ≥  $(round(ThalfbbESum, sigdigits=3)) yr 
       ε = $(round(effbb, sigdigits = 3)*100)%"
 
 let 
@@ -105,7 +120,7 @@ t12(t, e, b) = get_tHalf(
     t,
     SNparams["a"],
     e,
-    b / SNparams["tYear"] * t,
+    (b )/ SNparams["tYear"] * t,
     α;
     approximate="formula"
 )
@@ -113,7 +128,7 @@ t12(t, e, b) = get_tHalf(
 let 
     f = Figure(size=(600, 400))
     a = Axis(f[1,1], xlabel = "detector life-time [yr]", ylabel = "sensitivity [yr]", limits= (0,6, nothing, nothing))
-    p = lines!(a, t, t12.(t, effbb,expBkgESum), label = "FC: 8% resolution; simulation")
+    p = lines!(a, t, t12.(t, effbb,expBkgESum), label = "FC: $(analysisDict[:Eres]) resolution; B: off, TKReconstruct \nneutron config = $(background[end].histName)")
     axislegend(a, position = :lt)
     saveName = savename("sensitivity_in_time", analysisDict, "png")
     safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
@@ -126,17 +141,26 @@ bkg_hists = get_bkg_counts_1D.(background)
 
 with_theme(theme_latexfonts()) do
     f = Figure()
-    ax = Axis(f[1,1], xlabel = analysisDict[:mode], ylabel = "counts", yscale = log10, limits = (nothing, nothing, 1e-5, 1e6))
+    ax = Axis(
+        f[1,1], 
+        xlabel = analysisDict[:mode], 
+        ylabel = "counts", 
+        yscale = log10, 
+        limits = (300, 3500, 1e-5, 1e6),
+        title = "Total background model"
+    )
     
-    colors = colorschemes[:tableau_colorblind]
+    colors = colorschemes[:tol_bright]
     labels = [b.isotopeName for b in background]
+    labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
     st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
 	for i=2:length(bkg_hists)
 		hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
 	end
     
     ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
-    axislegend(ax, position = :lt, orientation = :horizontal, nbanks=2)
+    ax.xticks = 0:500:3500
+    Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 3)
     saveName = savename("background_model", analysisDict, "png")
     safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f
@@ -149,9 +173,10 @@ bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(b
 
 pretty_table(
     DataFrame(
-        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "total"],
+        # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"],
+        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"],
         counts = vcat(bkgs, sum(bkgs)),
-        activity_used = vcat([background[i].activity for i in 1:4], "--"),
     ),
     backend = Val(:markdown),
 )
+

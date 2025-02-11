@@ -340,6 +340,37 @@ sumEbb0nuParams = Dict(
     :amount => SNparams["foilMass"]
 )
 
+### 0nubbM1
+sumEbb0nuM1Params = Dict(
+    :isotopeName => "bb0nuM1_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:bb0nuM1_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:bb0nuM1_foil_bulk],
+    :bins => binningDict[:SumE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+
+### 0nubbM2
+sumEbb0nuM2Params = Dict(
+    :isotopeName => "bb0nuM2_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:bb0nuM2_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:bb0nuM2_foil_bulk],
+    :bins => binningDict[:SumE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+
+### neutron
+sumNeutronParams = Dict(
+    :isotopeName => "neutron_external", 
+    :signal => :false, 
+    :bins => binningDict[:SumE],
+)
+
 sumEParams = Dict(
     :Bi214_foil_bulk => sumEBi214_foil_bulk_Params,
     :Bi214_foil_surface => sumEBi214_foil_surface_Params,
@@ -363,6 +394,9 @@ sumEParams = Dict(
     :Xi037_foil_bulk => sumEXiParams,
     :RH037_foil_bulk => sumERH037Params,
     :bb0nu_foil_bulk => sumEbb0nuParams,
+    :bb0nuM1_foil_bulk => sumEbb0nuM1Params,
+    :bb0nuM2_foil_bulk => sumEbb0nuM2Params,
+    :neutron_external => sumNeutronParams
 )
 ###############################################################################
 ###############################################################################
@@ -630,6 +664,41 @@ singleEbb0nuParams = Dict(
     :amount => SNparams["foilMass"]
 )
 
+### bb0nuM1_foil_bulk
+
+singleEbb0nuM1Params = Dict(
+    :isotopeName => "bb0nuM1_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:bb0nuM1_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:bb0nuM1_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+
+### bb0nuM2_foil_bulk
+
+singleEbb0nuM2Params = Dict(
+    :isotopeName => "bb0nuM2_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:bb0nuM2_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:bb0nuM2_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+
+
+### neutron_external
+
+singleNeutronParams = Dict(
+    :isotopeName => "neutron_external",
+    :signal => :false,
+    :bins => binningDict[:SingleE],
+)
+
 singleEParams = Dict(
     :Bi214_foil_bulk => singleEBi214_foil_bulk_Params,
     :Bi214_foil_surface => singleEBi214_foil_surface_Params,
@@ -653,6 +722,9 @@ singleEParams = Dict(
     :Xi037_foil_bulk => singleEXiParams,
     :RH037_foil_bulk => singleERH037Params,
     :bb0nu_foil_bulk => singleEbb0nuParams,
+    :bb0nuM1_foil_bulk => singleEbb0nuM1Params,
+    :bb0nuM2_foil_bulk => singleEbb0nuM2Params,
+    :neutron_external => singleNeutronParams
 )
 
 #### Angular Study
@@ -914,6 +986,39 @@ phibb0nuParams = Dict(
     :amount => SNparams["foilMass"]
 )
 
+### bb0nuM1_foil_bulk
+
+phibb0nuM1Params = Dict(
+    :isotopeName => "bb0nuM1_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:bb0nuM1_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:bb0nuM1_foil_bulk],
+    :bins => binningDict[:Phi],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+
+### bb0nu_foil_bulk
+
+phibb0nuM2Params = Dict(
+    :isotopeName => "bb0nuM2_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:bb0nuM2_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:bb0nuM2_foil_bulk],
+    :bins => binningDict[:Phi],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+
+### neutron_external
+phiNeutronParams = Dict(
+    :isotopeName => "neutron_external",
+    :signal => :false,
+    :bins => binningDict[:Phi],
+)
+
 phiParams = Dict(
     :Bi214_foil_bulk => phiBi214_foil_bulk_Params,
     :Bi214_foil_surface => phiBi214_foil_surface_Params,
@@ -937,4 +1042,7 @@ phiParams = Dict(
     :Xi037_foil_bulk => phiXiParams,
     :RH037_foil_bulk => phiRH037Params,
     :bb0nu_foil_bulk => phibb0nuParams,
+    :bb0nuM1_foil_bulk => phibb0nuM1Params,
+    :bb0nuM2_foil_bulk => phibb0nuM2Params,
+    :neutron_external => phiNeutronParams
 )
