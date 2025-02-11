@@ -33,8 +33,7 @@ data_processes = load_data_processes(
 
 hist_processes = load_hist_processes(
     files_directory, 
-    analysisDict[:mode]
-)
+
 
 
 # declare which process is signal
