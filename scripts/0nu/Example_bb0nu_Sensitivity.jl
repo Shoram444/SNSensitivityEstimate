@@ -18,7 +18,7 @@ analysisDict = Dict(
     :mode => "sumE", 
     :trackAlgo => "TIT",
     :signal => "bb0nu",
-    :neutron_config => "full_shielding_no_floor"
+    :neutron_config => "current_shielding"
 )
 
 files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct"
@@ -50,7 +50,7 @@ background = [
     get_process("Tl208_foil_bulk", data_processes),
     # get_process("K40_foil_bulk", data_processes),
     # get_process("Pa234m_foil_bulk", data_processes),
-    get_process("neutron_external", hist_processes, "full shielding")
+    get_process("neutron_external", hist_processes, "current shielding")
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
