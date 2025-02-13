@@ -1,4 +1,4 @@
-# Signal = 0nubbM1, 8% res, current neutron shielding, ROI: 2400 - 3100 keV
+# Signal = 0nubbM1, 8% res, current neutron shielding, ROI: 2400 - 3000 keV
 
 
 | **process**                           | **bkg counts in ROI** |
