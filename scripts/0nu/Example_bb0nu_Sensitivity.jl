@@ -17,7 +17,7 @@ analysisDict = Dict(
     :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
     :mode => "sumE", 
     :trackAlgo => "TIT",
-    :signal => "bb0nuM1",
+    :signal => "bb0nu",
     :neutron_config => "full_shielding_no_floor"
 )
 
@@ -32,14 +32,15 @@ data_processes = load_data_processes(
 )
 
 hist_processes = load_hist_processes(
-    files_directory, 
-
+    files_directory,  
+    analysisDict[:mode]
+)
 
 
 # declare which process is signal
-# signal = get_process("bb0nu_foil_bulk", data_processes)
+signal = get_process("bb0nu_foil_bulk", data_processes)
 # signal = get_process("bb0nuM1_foil_bulk", data_processes)
-signal = get_process("bb0nuM2_foil_bulk", data_processes)
+# signal = get_process("bb0nuM2_foil_bulk", data_processes)
 
 # declare background processes
 background = [
@@ -171,12 +172,99 @@ ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
 
 bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
 
-pretty_table(
-    DataFrame(
-        # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"],
-        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"],
-        counts = vcat(bkgs, sum(bkgs)),
-    ),
-    backend = Val(:markdown),
-)
+let 
+    saveName = savename("background_counts", analysisDict, "md")
+    open(plotsdir("backgroundTables", saveName), "w") do f
+        labels = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
+        header = ["process", "bkg counts in ROI"]
+        pretty_table(f,
+            DataFrame(
+                # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"],
+                process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external_$(analysisDict[:neutron_config])", "total"],
+                counts = vcat(bkgs, sum(bkgs)),
+            ),
+            header = header,
+            alignment = [:l, :l],
+            backend = Val(:markdown),
+        )
+   end
+end
 
+
+
+# save signal tables
+function save_sensitivity_table(
+    signals, 
+    background, 
+    outDir;
+    analysisDict = analysisDict,
+    α = α,
+    SNparams = SNparams,
+    )
+    df = DataFrame(signal = [], ROI = [], bkg_counts = [], eff = [], t12 = [])
+    for s in signals
+        t12MapESum = get_tHalf_map(SNparams, α, s, background...; approximate ="formula")
+        best_t12ESum = get_max_bin(t12MapESum)
+        expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+        effbb = lookup(s, best_t12ESum)
+        ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
+        push!(df, (s.isotopeName, "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV", round(expBkgESum, sigdigits = 3), round(effbb, sigdigits = 3), round(ThalfbbESum, sigdigits=3)))
+    end
+
+    saveName = savename("sensitivity_", analysisDict, "md")
+    open(plotsdir(outDir, saveName), "w") do f
+        header = ["signal", "ROI", "bkg counts in ROI", "efficiency", "t12"]
+        pretty_table(f, df, header = header, backend = Val(:markdown))
+    end
+end
+
+signals = [
+    get_process("bb0nu_foil_bulk", data_processes),
+    get_process("bb0nuM1_foil_bulk", data_processes),
+    get_process("bb0nuM2_foil_bulk", data_processes)
+]
+
+set_nTotalSim!.( signals, 1e8 )
+
+save_sensitivity_table(signals, background, "sensitivityTables")
+
+
+#save background tables for each signals ROI
+function save_background_table(
+    signal, 
+    background, 
+    outDir;
+    analysisDict = analysisDict,
+    α = α,
+    SNparams = SNparams,
+    )
+    t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
+    best_t12ESum = get_max_bin(t12MapESum)
+
+
+    ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
+
+    bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
+
+    analysisDict[:signal] = signal.isotopeName
+
+    saveName = savename("background_counts", analysisDict, "md")
+    open(plotsdir("backgroundTables", saveName), "w") do f
+        labels = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
+        header = ["process", "bkg counts in ROI"]
+        pretty_table(f,
+            DataFrame(
+                # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"],
+                process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external_$(analysisDict[:neutron_config])", "total"],
+                counts = vcat(bkgs, sum(bkgs)),
+            ),
+            header = header,
+            alignment = [:l, :l],
+            backend = Val(:markdown),
+        )
+    end
+end
+
+for s in signals
+    save_background_table(s, background, "backgroundTables")
+end
