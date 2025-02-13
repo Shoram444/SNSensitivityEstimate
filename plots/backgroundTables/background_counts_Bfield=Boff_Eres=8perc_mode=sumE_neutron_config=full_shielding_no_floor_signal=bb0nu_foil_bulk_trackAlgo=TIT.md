@@ -1,3 +1,5 @@
+# Signal = 0nubb, 8% res, full neutron shielding, ROI: 2700 - 3100 keV
+
 | **process**                                   | **bkg counts in ROI** |
 |:----------------------------------------------|:----------------------|
 | bb\_foil\_bulk                                | 0.499691              |
