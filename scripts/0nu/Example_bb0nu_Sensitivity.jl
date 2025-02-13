@@ -168,12 +168,12 @@ with_theme(theme_latexfonts()) do
 end
 
 # Background by source:
-ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
+ROI_a, ROI_b = 2700, 3100#best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
 
 bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
 
 let 
-    saveName = savename("background_counts", analysisDict, "md")
+    saveName = savename("background_counts_ROI=$(ROI_a):$(ROI_b)_", analysisDict, "md")
     open(plotsdir("backgroundTables", saveName), "w") do f
         labels = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
         header = ["process", "bkg counts in ROI"]
