@@ -1,3 +1,5 @@
+using CSV, DataFrames
+
 """
     halfLife_to_activity( NA::Real, W::Real, Thalf::Real ) -> returns activity in [Bq/kg]
 """
@@ -20,10 +22,17 @@ function get_tHalf(W, foilMass, Nₐ, tYear, a , efficiency, bkgCounts, α; appr
     tHalf = log(2) * (Nₐ / W) * (foilMass * a * tYear) * efficiency / b
 end
 
-function get_FC(b, α; approximate="formula")
+function get_FC(b, α; approximate="table")
     if( approximate == "formula")
         if (b < 30 && isapprox(1.64, α, atol=0.1))
             b = 2.44+0.8467*b-0.08849*b^2+0.00625*b^3-0.0002124*b^4+0.000002712*b^5
+        else
+            b = α * sqrt(b)
+        end
+    elseif( approximate == "table")
+        if (b < 200 && isapprox(1.64, α, atol=0.1))
+            tbl = CSV.read("src/MPFC_table90.csv", DataFrame)
+            b = tbl[findfirst(tbl[:,1].== round(b, digits =1)), 2]
         else
             b = α * sqrt(b)
         end

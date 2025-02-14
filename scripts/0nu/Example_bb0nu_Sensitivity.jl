@@ -18,10 +18,10 @@ analysisDict = Dict(
     :mode => "sumE", 
     :trackAlgo => "TIT",
     :signal => "bb0nu",
-    :neutron_config => "current_shielding"
+    :neutron_config => "full_shielding"
 )
 
-files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct"
+files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edepbcu"
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 #  1. dir::String -> the name of the directory where the root files are stored
@@ -48,22 +48,22 @@ background = [
     get_process("Bi214_foil_bulk", data_processes),
     get_process("Bi214_wire_surface", data_processes),
     get_process("Tl208_foil_bulk", data_processes),
-    # get_process("K40_foil_bulk", data_processes),
-    # get_process("Pa234m_foil_bulk", data_processes),
-    get_process("neutron_external", hist_processes, "current shielding")
+    get_process("K40_foil_bulk", data_processes),
+    get_process("Pa234m_foil_bulk", data_processes),
+    get_process("neutron_external", hist_processes, "full shielding no floor flux")
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
 set_signal!(background[1], false)
 
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( signal, 0.98e8 )
 set_nTotalSim!( background[1], 0.99e8 )
-set_nTotalSim!( background[2], 1e8 )
+set_nTotalSim!( background[2], 0.96e8 )
 set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 1e8 )
-# set_nTotalSim!( background[5], 6e8 )
-# set_nTotalSim!( background[6], 6e8 )
+set_nTotalSim!( background[4], 0.76e8 )
+set_nTotalSim!( background[5], 1e8 )
+set_nTotalSim!( background[6], 1e8 )
 
 println("Processes initialized.")
 
@@ -79,7 +79,7 @@ println("Processes initialized.")
 # 
 # Having the map (which is essentially a 2D histogram), we pick the highest value (and the bin edges) with `get_max_bin`.
 # That's basically it, if you're only interested in sensitvity.
-t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
+t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
 best_t12ESum = get_max_bin(t12MapESum)
 
 # If you want additional info, like background counts in the ROI, use: `get_bkg_counts_ROI`.
@@ -191,7 +191,6 @@ let
 end
 
 
-
 # save signal tables
 function save_sensitivity_table(
     signals, 
@@ -250,12 +249,12 @@ function save_background_table(
 
     saveName = savename("background_counts", analysisDict, "md")
     open(plotsdir("backgroundTables", saveName), "w") do f
-        labels = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
+        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
         header = ["process", "bkg counts in ROI"]
         pretty_table(f,
             DataFrame(
-                # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"],
-                process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external_$(analysisDict[:neutron_config])", "total"],
+                process = process,
+                # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external_$(analysisDict[:neutron_config])", "total"],
                 counts = vcat(bkgs, sum(bkgs)),
             ),
             header = header,
