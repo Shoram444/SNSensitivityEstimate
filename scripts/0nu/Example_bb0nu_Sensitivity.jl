@@ -50,7 +50,7 @@ background = [
     get_process("Tl208_foil_bulk", data_processes),
     get_process("K40_foil_bulk", data_processes),
     get_process("Pa234m_foil_bulk", data_processes),
-    get_process("neutron_external", hist_processes, "full shielding no floor flux")
+    get_process("neutron_external", hist_processes, "full shielding")
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -69,6 +69,9 @@ println("Processes initialized.")
 
 # For now I only implemented 90% CL estimation, maybe someday I'll get to more...
 α = 1.64485362695147
+
+t = range(0, 5, 100)
+
 
 # The base structure of the `SensitivityModule` is the `Process`. For details, take a look into `src/Process.jl`, or hit `? Process` in REPL.
 # The way this works is that by loading a process, we create an efficiency map for each isotope (process). For description of what these maps represent
@@ -112,7 +115,6 @@ end
 
 
 # Sensitivity as a function of detector life-time:
-t = range(0, 6, 60)
 
 t12(t, e, b) = get_tHalf(
     SNparams["W"],
@@ -121,9 +123,9 @@ t12(t, e, b) = get_tHalf(
     t,
     SNparams["a"],
     e,
-    (b )/ SNparams["tYear"] * t,
+    (b)/ SNparams["tYear"] * t,
     α;
-    approximate="formula"
+    approximate="table"
 )
 
 let 
@@ -168,7 +170,7 @@ with_theme(theme_latexfonts()) do
 end
 
 # Background by source:
-ROI_a, ROI_b = 2700, 3100#best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
+ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
 
 bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
 
@@ -232,7 +234,6 @@ save_sensitivity_table(signals, background, "sensitivityTables")
 function save_background_table(
     signal, 
     background, 
-    outDir;
     analysisDict = analysisDict,
     α = α,
     SNparams = SNparams,
@@ -254,7 +255,6 @@ function save_background_table(
         pretty_table(f,
             DataFrame(
                 process = process,
-                # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external_$(analysisDict[:neutron_config])", "total"],
                 counts = vcat(bkgs, sum(bkgs)),
             ),
             header = header,
@@ -266,4 +266,226 @@ end
 
 for s in signals
     save_background_table(s, background, "backgroundTables")
+end
+
+
+
+function get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        neutron_bkg = 0.0,
+        effFactor = 1.0
+    )
+    t = range(0, 5, 100)
+    sensitivities = []
+    
+    t12(t, e, b) = get_tHalf(
+        SNparams["W"],
+        SNparams["foilMass"],
+        SNparams["Nₐ"],
+        t,
+        SNparams["a"],
+        e*effFactor,
+        (b+neutron_bkg)/ SNparams["tYear"] * t,
+        α;
+        approximate="table"
+    )
+    t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
+    best_t12ESum = get_max_bin(t12MapESum)
+    expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+    effbb = lookup(signal, best_t12ESum)
+    append!(sensitivities, t12.(t, effbb,expBkgESum))
+    return sensitivities
+end
+
+
+#### bb0nuM1_foil_bul
+signal = get_process("bb0nuM1_foil_bulk", data_processes)
+set_nTotalSim!( signal, 1e8 )
+
+background[end] =  get_process("neutron_external", hist_processes, "current shielding")
+
+t_current_nu0M1 = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams
+)
+
+
+
+#################
+
+background[end] = get_process("neutron_external", hist_processes, "full shielding")
+
+t_full_nu0M1 = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams
+)
+
+
+
+let
+    f = Figure(size=(600, 400))
+    a = Axis(
+        f[1,1], 
+        xlabel = "detector life-time [yr]", 
+        ylabel = "sensitivity [yr]", 
+        limits= (0,5, nothing, nothing),
+        title = L"Sensitivity for $0\nu\beta\beta\chi^0$ at 90% CL",
+        # yscale = log10
+        )
+    p = lines!(a, t, t_current_nu0M1, label = "current shielding", linewidth = 4, linestyle=(:dash, :loose))
+    lines!(a, t, t_full_nu0M1, label = "full shielding no floor flux", linewidth = 4, linestyle=(:dot, :loose))
+    hlines!(a, [1.2e23], color = :black, linestyle = :dash, label = "CUPID-0 90% CL", linewidth = 2)
+    axislegend(a, position = :lt, patchsize = (30, 20))
+    saveName = savename("sensitivity_in_time_nu0M1", analysisDict, "png")
+    safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
+    f 
+end
+
+
+#### M2
+signal = get_process("bb0nuM2_foil_bulk", data_processes)
+background[end] = get_process("neutron_external", hist_processes, "current shielding")
+
+# set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
+set_nTotalSim!(signal, 1e8 )
+
+t_current_nu0M2 = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams
+)
+
+
+
+#################
+background[end] = get_process("neutron_external", hist_processes, "full shielding")
+
+t_full_nu0M2 = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams
+)
+
+
+let
+    f = Figure(size=(600, 400))
+    a = Axis(
+        f[1,1], 
+        xlabel = "detector life-time [yr]", 
+        ylabel = "sensitivity [yr]", 
+        limits= (0,5, nothing, nothing),
+        title = L"Sensitivity for $0\nu\beta\beta\chi^0\chi^0$ at 90% CL"
+        )
+    p = lines!(a, t, t_current_nu0M2, label = "current shielding", linewidth = 4, linestyle=(:dash, :loose))
+    p = lines!(a, t, t_full_nu0M2, label = "full shielding no floor flux", linewidth = 4, linestyle=(:dot, :loose))
+    hlines!(a, [1.4e22], color = :black, linestyle = :dash, label = "CUPID-0 90% CL", linewidth = 2)
+    axislegend(a, position = :lt, patchsize = (30, 20))
+    saveName = savename("sensitivity_in_time_nu0M2", analysisDict, "png")
+    safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
+    f 
+end
+
+
+#### 0nu
+signal = get_process("bb0nu_foil_bulk", data_processes)
+set_nTotalSim!( signal, 0.98e8 )
+
+
+background[end] = get_process("neutron_external", hist_processes, "current shielding")
+
+t_current_nu0 = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams
+)
+
+
+#################
+background[end] = get_process("neutron_external", hist_processes, "full shielding")
+
+t_full_nu0 = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams
+)
+
+t_none100_nu0 = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams;
+    neutron_bkg = 0.01*100
+)
+
+
+t_none500_nu0 = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams;
+    neutron_bkg = 0.01*500
+)
+
+let
+    f = Figure(size=(600, 400))
+    a = Axis(
+        f[1,1], 
+        xlabel = "detector life-time [yr]", 
+        ylabel = "sensitivity [yr]", 
+        limits= (0,5, nothing, nothing),
+        title = L"Sensitivity for $0\nu\beta\beta$ at 90% CL"
+        )
+    p = lines!(a, t, t_current_nu0, label = "current shielding", linewidth = 4)
+    lines!(a, t, t_full_nu0, label = "full shielding", linewidth = 4)
+    lines!(a, t, t_none100_nu0, label = "no neutron shielding (x100)", linewidth = 4)
+    lines!(a, t, t_none500_nu0, label = "no neutron shielding (x500)", linewidth = 4)
+    hlines!(a, [4.6e24], color = :black, linestyle = :dash, label = "CUPID-0 90% CL", linewidth = 2)
+    axislegend(a, position = :lt, patchsize = (30, 20))
+    saveName = savename("sensitivity_in_time_nu0", analysisDict, "png")
+    safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
+    f 
+end
+
+
+## RH 
+signal = get_process("bb0nu_foil_bulk", data_processes)
+set_nTotalSim!( signal, 0.98e8 )
+
+background[end] = get_process("neutron_external", hist_processes, "full shielding")
+
+
+t_full_RH_L = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams;
+    effFactor = 0.489
+)
+
+
+t_full_RH_e = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams;
+    effFactor = 0.888
+)
+
+let
+    f = Figure(size=(600, 400))
+    a = Axis(
+        f[1,1], 
+        xlabel = "detector life-time [yr]", 
+        ylabel = "sensitivity [yr]", 
+        limits= (0,5, nothing, nothing),
+        title = L"Sensitivity for $0\nu\beta\beta$ (V+A) at 90% CL"
+        )
+    p = lines!(a, t, t_full_RH_L, label = L"$\lambda$: SuperNEMO", linewidth = 4)
+    lines!(a, t, t_full_RH_e, label = L"$\eta$: SuperNEMO", linewidth = 4)
+    hlines!(a, [1.6e23], color = :black, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
+    hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
+    axislegend(a, position = :lt, patchsize = (30, 20))
+    saveName = savename("sensitivity_in_time_nu0_V+A", analysisDict, "png")
+    safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
+    f 
 end
