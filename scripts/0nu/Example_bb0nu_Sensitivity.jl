@@ -130,7 +130,7 @@ t12(t, e, b) = get_tHalf(
 
 let 
     f = Figure(size=(600, 400))
-    a = Axis(f[1,1], xlabel = "detector life-time [yr]", ylabel = "sensitivity [yr]", limits= (0,6, nothing, nothing))
+    a = Axis(f[1,1], xlabel = "running time (yr)", ylabel = "sensitivity (yr)", limits= (0,6, nothing, nothing))
     p = lines!(a, t, t12.(t, effbb,expBkgESum), label = "FC: $(analysisDict[:Eres]) resolution; B: off, TKReconstruct \nneutron config = $(background[end].histName)")
     axislegend(a, position = :lt)
     saveName = savename("sensitivity_in_time", analysisDict, "png")
@@ -330,8 +330,8 @@ let
     f = Figure(size=(600, 400))
     a = Axis(
         f[1,1], 
-        xlabel = "detector life-time [yr]", 
-        ylabel = "sensitivity [yr]", 
+        xlabel = "running time (yr)", 
+        ylabel = "sensitivity (yr)", 
         limits= (0,5, nothing, nothing),
         title = L"Sensitivity for $0\nu\beta\beta\chi^0$ at 90% CL",
         # yscale = log10
@@ -375,8 +375,8 @@ let
     f = Figure(size=(600, 400))
     a = Axis(
         f[1,1], 
-        xlabel = "detector life-time [yr]", 
-        ylabel = "sensitivity [yr]", 
+        xlabel = "running time (yr)", 
+        ylabel = "sensitivity (yr)", 
         limits= (0,5, nothing, nothing),
         title = L"Sensitivity for $0\nu\beta\beta\chi^0\chi^0$ at 90% CL"
         )
@@ -432,8 +432,8 @@ let
     f = Figure(size=(600, 400))
     a = Axis(
         f[1,1], 
-        xlabel = "detector life-time [yr]", 
-        ylabel = "sensitivity [yr]", 
+        xlabel = "running time (yr)", 
+        ylabel = "sensitivity (yr)", 
         limits= (0,5, nothing, nothing),
         title = L"Sensitivity for $0\nu\beta\beta$ at 90% CL"
         )
@@ -475,14 +475,16 @@ let
     f = Figure(size=(600, 400))
     a = Axis(
         f[1,1], 
-        xlabel = "detector life-time [yr]", 
-        ylabel = "sensitivity [yr]", 
+        xlabel = "running time (yr)", 
+        ylabel = "sensitivity (yr)", 
         limits= (0,5, nothing, nothing),
         title = L"Sensitivity for $0\nu\beta\beta$ $\lambda$ (V+A) at 90% CL"
         )
     p = lines!(a, t, t_full_RH_L, label = L"full shielding $$", linewidth = 4)
     lines!(a, t, t_curr_RH_L, label = L"current shielding $$", linewidth = 4)
-    hlines!(a, [1.6e23], color = :black, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
+    hlines!(a, [1.6e23], color = :black, linestyle = :dash, label = L"best $^{82}$Se: $\langle \lambda \rangle$", linewidth = 2)
+    band!([0,5], [9.56e23], [13.35e23], color = (:red, 0.4), label = L"best world: $\langle \lambda \rangle$")
+    
     # hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
     axislegend(a, position = :lt, patchsize = (30, 20))
     saveName = savename("sensitivity_in_time_nu0_V+A_L", analysisDict, "png")
@@ -517,15 +519,16 @@ let
     f = Figure(size=(600, 400))
     a = Axis(
         f[1,1], 
-        xlabel = "detector life-time [yr]", 
-        ylabel = "sensitivity [yr]", 
+        xlabel = "running time (yr)", 
+        ylabel = "sensitivity (yr)", 
         limits= (0,5, nothing, nothing),
         title = L"Sensitivity for $0\nu\beta\beta$ $\eta$ (V+A) at 90% CL"
         )
     p = lines!(a, t, t_full_RH_e, label = L"full shielding $$", linewidth = 4)
     lines!(a, t, t_curr_RH_e, label = L"current shielding $$", linewidth = 4)
     # hlines!(a, [1.6e23], color = :black, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
-    hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\eta$: NEMO3", linewidth = 2)
+    hlines!(a, [2.2e23], color = :black, linestyle = :dash, label = L"best $^{82}$Se: $\langle \eta \rangle$", linewidth = 2)
+    band!([0,5], [25.43e23], [38.81e23], color = (:red, 0.4), label = L"best world: $\langle \eta \rangle$")
     axislegend(a, position = :lt, patchsize = (30, 20))
     saveName = savename("sensitivity_in_time_nu0_V+A_e", analysisDict, "png")
     safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
