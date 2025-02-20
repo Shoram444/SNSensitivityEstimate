@@ -13,7 +13,8 @@ using
     Turing,
     CairoMakie,
     BAT,
-    DensityInterface
+    DensityInterface,
+    Combinatorics
 
 # Define main module abstract type
 
@@ -81,6 +82,16 @@ export
     get_bkg_counts_1D,
     get_bkg_counts
     
+include("NDimDataProcess.jl")
+export
+    NDimSensitivityEstimate,
+    NDimROIEfficiency,
+    NDimDataProcess,
+    make_ROI_combinations,
+    get_nDim_effciency,
+    get_bkg_counts,
+    get_sensitivities
+
 include("PlotsRecipes.jl")
 
 include("Makie.jl")
@@ -96,7 +107,8 @@ include("LoadData.jl")
 export 
     load_files,
     load_data_processes,
-    load_hist_processes
+    load_hist_processes,
+    load_ndim_processes
 
 include("Models.jl")
 export 

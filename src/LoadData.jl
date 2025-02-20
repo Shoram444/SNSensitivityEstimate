@@ -139,3 +139,49 @@ function load_hist_processes(dir::String, mode::String)
 
     return processes
 end
+
+
+
+
+function load_ndim_processes(dir::String, binsAngle, binsESingle, binsESum)
+    filesDict = Dict()
+    full_dir = datadir("sims", dir)
+    processes = NDimDataProcess[]
+
+    println("Loading files from: $full_dir ...")
+    println("mode: NDim ")
+
+    nFiles = 0
+    for file in readdir(full_dir)
+        nFiles += 1
+        if( split(file, ".")[end] != "root" )
+            continue
+        end
+        
+        f = ROOTFile(joinpath(full_dir, file)) 
+        if(!haskey(f, "tree"))
+            continue
+        end
+
+        df = ffrf(f)
+        fileName = split(file, ".")[1]  |> split |> first 
+        
+        push!(
+                processes,
+                NDimDataProcess(
+                    df.phi,
+                    [maximum([df.reconstructedEnergy1[i], df.reconstructedEnergy2[i]]) for i in 1:nrow(df)],
+                    [sum([df.reconstructedEnergy1[i], df.reconstructedEnergy2[i]]) for i in 1:nrow(df)],
+                    binsAngle,
+                    binsESingle,
+                    binsESum,
+                    singleEParams[Symbol(fileName)]
+                )
+            )
+        println("$fileName loaded")
+
+    end
+    println("Loaded $nFiles files.")
+
+    return processes
+end

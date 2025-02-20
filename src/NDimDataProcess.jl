@@ -1,183 +1,186 @@
+import Base: *, maximum
+
+"""
+    aa
+"""
+mutable struct NDimSensitivityEstimate
+    binESingle
+    binESum
+    binPhi
+    tHalf
+    signalEff
+    bkgCounts
+end
 
 
 """
-    struct DataProcess -> `(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, efficiency)`
-
-The following fields are defined:
-    + dataVector::Vector{<:Real} - vector of initial data points
-    + isotopeName::String - isotope name 
-    + signal::Bool - signal or background
-    + activity::Real - activity of the given process in units [Bq]
-    + timeMeas::Real - time of measurement in units [s]
-    + nTotalSim::Real - total number of originally simulated events from Falaise
-    + bins::AbstractRange - binning to be used in format (min:step:max)
-    + amount::Real - mass [kg] or volume [l / m³] of the object where the isotope is present: i.e. source foil
-    + efficiency::Hist2D - the 2D histogram with efficiencies per bin 
+    Holds information about ROI efficiency
 """
+mutable struct NDimROIEfficiency
+    binESingle
+    binESum
+    binPhi
+    eff
+end
 
-mutable struct DataProcess <: AbstractProcess
-    dataVector::Vector{<:Real}
+
+*(x::Float64, e::NDimROIEfficiency) = x * e.eff
+
+mutable struct NDimDataProcess <: AbstractProcess
+    dataAngle::Vector{<:Real}
+    dataESingle::Vector{<:Real}
+    dataESum::Vector{<:Real}
     isotopeName::String
     signal::Bool
     activity::Real
     timeMeas::Real
     nTotalSim::Real
-    bins::AbstractRange
+    binsAngle::AbstractRange
+    binsESingle::AbstractRange
+    binsESum::AbstractRange
     amount::Real
-    efficiency::Hist2D
+    eff::Vector{NDimROIEfficiency}
 end
 
-"""
-    mutable struct DataProcess -> `(dataVector, isotopeNam, signal, activity, timeMeas, nTotalSim, bins, efficiency)`
-
-The following fields are defined:
-    + dataVector::Vector{<:Real} - vector of initial data points
-    + isotopeName::String - isotope name 
-    + signal::Bool - signal or background
-    + activity::Real - activity of the given process in units [Bq]
-    + timeMeas::Real - time of measurement in units [s]
-    + nTotalSim::Real - total number of originally simulated events from Falaise
-    + bins::AbstractRange - binning to be used in format (min:step:max)
-    + amount::Real - mass [kg] or volume [l / m³] of the object where the isotope is present: i.e. source foil
-    + efficiency::Hist2D - the 2D histogram with efficiencies per bin 
-"""
-function DataProcess(
-    dataVector::Vector{<:Real},
-    isotopeName::String,
-    signal::Bool,
-    activity::Real,
-    timeMeas::Real,
-    nTotalSim::Real,
-    bins::AbstractRange,
-    amount::Real
-) 
-    eff = get_efficiency(dataVector, bins, nTotalSim)
-    return DataProcess(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount, eff)
+function make_ROI_combinations(bins::AbstractRange)
+    return collect(combinations(bins, 2))
 end
 
-function DataProcess(
-    dataVector::Vector{<:Real},
-    processDict::Dict
-)
+
+function get_nDim_effciency(
+        dataAngle::Vector{<:Real}, 
+        dataESingle::Vector{<:Real}, 
+        dataESum::Vector{<:Real}, 
+        binsAngle::Vector{<:Real}, 
+        binsESingle::Vector{<:Real}, 
+        binsESum::Vector{<:Real}, 
+        nTotalSim::Real
+    )
+    nPassed = 0
+    for i in 1:length(dataAngle)
+        if (
+            binsAngle[1] <= dataAngle[i] < binsAngle[2] && 
+            binsESingle[1] <= dataESingle[i] < binsESingle[2] && 
+            binsESum[1] <= dataESum[i] < binsESum[2]
+        )
+            nPassed += 1
+        end
+    end
+    return nPassed/nTotalSim
+end
+
+
+function NDimDataProcess(
+        dataAngle::Vector{<:Real},
+        dataESingle::Vector{<:Real},
+        dataESum::Vector{<:Real},
+        isotopeName::String,
+        signal::Bool,
+        activity::Real,
+        timeMeas::Real,
+        nTotalSim::Real,
+        binsAngle::AbstractRange,
+        binsESingle::AbstractRange,
+        binsESum::AbstractRange,
+        amount::Real,
+    )
+    comb_angle = make_ROI_combinations(binsAngle)
+    comb_esingle = make_ROI_combinations(binsESingle)
+    comb_esum = make_ROI_combinations(binsESum)
+
+    all_combinations = collect(Iterators.product(comb_angle, comb_esingle, comb_esum))
+
+    eff = Vector{NDimROIEfficiency}(undef, length(all_combinations))
+    for (i, comb) in enumerate(all_combinations)
+        ROIAngle = comb[1]
+        ROIESingle = comb[2]
+        ROIESum = comb[3]
+         
+        _eff = NDimROIEfficiency(
+            ROIAngle,
+            ROIESingle,
+            ROIESum,
+            get_nDim_effciency(dataAngle, dataESingle, dataESum, ROIAngle, ROIESingle, ROIESum, nTotalSim)
+        )
+        eff[i]  = _eff
+    end
+
+    return NDimDataProcess(dataAngle, dataESingle, dataESum, isotopeName, signal, activity, timeMeas, nTotalSim, binsAngle, binsESingle, binsESum, amount, eff)
+end
+
+function NDimDataProcess(
+        dataAngle::Vector{<:Real},
+        dataESingle::Vector{<:Real},
+        dataESum::Vector{<:Real},
+        binsAngle,
+        binsESingle,
+        binsESum,
+        processDict::Dict
+    )
     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
-    eff = get_efficiency(dataVector, bins, nTotalSim)
-    return DataProcess(dataVector, isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount, eff)
-end
 
+    comb_angle = make_ROI_combinations(binsAngle)
+    comb_esingle = make_ROI_combinations(binsESingle)
+    comb_esum = make_ROI_combinations(binsESum)
 
+    all_combinations = collect(Iterators.product(comb_angle, comb_esingle, comb_esum))
 
-############################################################
-########### setters!
-############################################################
-
-
-function set_activity!(process::DataProcess, activity::Real)
-    process.activity = activity
-    return process
-end
-
-function set_timeMeas!(process::DataProcess, timeMeas::Real)
-    process.timeMeas = timeMeas
-    return process
-end
-
-function set_nTotalSim!(process::DataProcess, nTotalSim::Real)
-    process.nTotalSim = nTotalSim
-    process.efficiency = get_efficiency(process.dataVector, process.bins, nTotalSim)
-    return process
-end
-
-function set_bins!(process::DataProcess, bins)
-    process.bins = bins
-    process.efficiency = get_efficiency(process.dataVector, bins, process.nTotalSim::Real)
-    return process
-end
-
-
-function set_amount!(process::DataProcess, amount::Real)
-    process.amount = amount
-    return process
-end
-
-
-"""
-    get_efficiency(dataVector::Vector{<:Real}, bins::AbstractRange, nTotalSim::Real)
-
-    returns a 2D histgoram of type Hist2D with efficiencies per bin.
-
-"""
-function get_efficiency(dataVector::Vector{<:Real}, bins::AbstractRange, nTotalSim::Real)
-    h2d=get_nPassed(dataVector, bins, wgt=inv(nTotalSim)) # nPassed scaled by total simulated events
-    h2d.sumw2 .= sqrt.(h2d.sumw2) # weights scaled 
-    return h2d
-end
-
-"""
-!!
-    get_nPassed(process::DataProcess, bins)
-
-    returns a 2D histgoram of type Hist2D with passed events per bin.
-
-"""
-function get_nPassed(process::DataProcess, bins::AbstractRange; wgt=1)
-    return get_nPassed(process.dataVector, bins, wgt=wgt)
-end
-
-
-function get_nPassed(dataVector::Vector{<:Real}, bins::AbstractRange; wgt=1)
-    h1d = Hist1D(dataVector; binedges=bins)
-    h2d = Hist2D(; counttype=Float64, binedges=(bins, bins))#prepare empty 2d Histogram
-
-    bc=bincenters(h1d)
-    for (i,b) in enumerate(bc)
-        cs=cumsum(bincounts(h1d)[i:end]) * wgt
-        push!.(h2d, b, bc[i:end], cs)
-        # bincounts(h2d)[i, i:end]=cumsum(bincounts(h1d)[i:end])
+    eff = Vector{NDimROIEfficiency}(undef, length(all_combinations))
+    for (i, comb) in enumerate(all_combinations)
+        ROIAngle = comb[1]
+        ROIESingle = comb[2]
+        ROIESum = comb[3]
+         
+        _eff = NDimROIEfficiency(
+            ROIAngle,
+            ROIESingle,
+            ROIESum,
+            get_nDim_effciency(dataAngle, dataESingle, dataESum, ROIAngle, ROIESingle, ROIESum, nTotalSim)
+        )
+        eff[i]  = _eff
     end
 
-    h2d
+    return NDimDataProcess(dataAngle, dataESingle, dataESum, isotopeName, signal, activity, timeMeas, nTotalSim, binsAngle, binsESingle, binsESum, amount, eff)
 end
 
-
-"""
-!! - here it's free for HistProcess
-    Returns the number of expected counts of the given process. 
-    ( n = (ε⋅t⋅m⋅A) ); 
-"""
-function get_bkg_counts_1D(process::DataProcess)
-    fh1 = Hist1D(; binedges=process.bins) 
-    push!.(fh1, process.dataVector )
-
-    totalEff = length(process.dataVector) / process.nTotalSim
-    fh1 = normalize(fh1, width = false) 
-    fh1 *= totalEff * process.amount * process.timeMeas * Measurements.value(process.activity)
+function get_bkg_counts(processes::Vector{NDimDataProcess})
+    bkg = zeros(length(processes[1].eff))
     
-    return fh1
-end
-
-
-function get_bkg_counts(process::DataProcess)
-    h2d = Hist2D(; binedges=(process.bins, process.bins))
-
-    if (eltype(process.activity) <: Measurement) # check if measurement with uncertainties
-        merge!(h2d, process.efficiency * process.activity.val * process.amount * process.timeMeas)
-    else
-        merge!(h2d, process.efficiency * process.activity * process.amount * process.timeMeas)
+    for p in processes
+        p.signal && continue
+        bkg += [p.amount * e.eff * p.activity * p.timeMeas for e in p.eff]
     end
-    return h2d
+    return bkg
 end
 
 
-function get_sig_counts(process::DataProcess)
-    h2d = Hist2D(; binedges=(process.bins, process.bins))
-    if (eltype(process.activity) <: Measurement) # check if measurement with uncertainties
-        merge!(h2d, process.efficiency * process.activity.val * process.amount * process.timeMeas)
-    else
-        merge!(h2d, process.efficiency * process.activity * process.amount * process.timeMeas)
+function get_sensitivities(SNparams, α, processes::Vector{NDimDataProcess}; approximate="formula")
+    signal_id = findall([p.signal for p in processes])
+    length(signal_id) > 1 && @error "Only one signal process allowed! Provided $(length(signal_id))"
+    
+    signal_process = processes[first(signal_id)]
+    ε = signal_process.eff
+    b = get_bkg_counts(processes)
+
+    @unpack W, foilMass, Nₐ, tYear, a = SNparams
+    constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
+    S_b = get_FC.(b, α; approximate=approximate)
+
+    tHalf = @. constantTerm * ε / S_b
+    length(tHalf)
+    sensitivities = Vector{NDimSensitivityEstimate}(undef, length(tHalf))
+    for i in 1:length(tHalf)
+        sensitivities[i] = NDimSensitivityEstimate(
+            signal_process.eff[i].binESingle,
+            signal_process.eff[i].binESum,
+            signal_process.eff[i].binPhi,
+            tHalf[i],
+            ε[i].eff,
+            b[i]
+        )
     end
-    return h2d
+    return sensitivities
 end
 
 
-
-
+maximum(sensitivities::Vector{NDimSensitivityEstimate}) = sensitivities[argmax([s.tHalf for s in sensitivities])]
