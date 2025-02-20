@@ -21,9 +21,6 @@ mutable struct NDimSensitivityEstimate
     bkgCounts
 end
 
-function NDimSensitivityEstimate(binESingle, binESum, binPhi, tHalf, signalEff, bkgCounts)
-    NDimSensitivityEstimate(binESingle, binESum, binPhi, tHalf, signalEff, bkgCounts)
-end
 
 mutable struct NDimROIEfficiency
     binESingle
@@ -31,6 +28,10 @@ mutable struct NDimROIEfficiency
     binPhi
     eff
 end
+
+import Base: *
+
+*(x::Float64, e::NDimROIEfficiency) = x * e.eff
 
 mutable struct NDimDataProcess <: AbstractProcess
     dataAngle::Vector{<:Real}
@@ -131,8 +132,8 @@ p1 = NDimDataProcess(
     1.0,
     1e8,
     range(0, 180, 2),
-    range(500, 3500, 3),
-    range(500, 3500, 3),
+    range(0, 3500, 8),
+    range(0, 3500, 8),
     1.0
 )
 
@@ -142,20 +143,66 @@ phi2 = collect(d2.phi)
 e2 = [maximum([ev.reconstructedEnergy1, ev.reconstructedEnergy2]) for ev in d2]
 es2 = [sum([ev.reconstructedEnergy1, ev.reconstructedEnergy2]) for ev in d2]
 
-p1 = NDimDataProcess(
+p2 = NDimDataProcess(
     phi2,
     e2,
     es2,
     "K40",
-    true,
+    false,
     1.0,
     1.0,
     1e8,
     range(0, 180, 2),
-    range(500, 3500, 3),
-    range(500, 3500, 3),
+    range(0, 3500, 8),
+    range(0, 3500, 8),
     1.0
 )
 
+function get_bkg_counts(processes::Vector{NDimDataProcess})
+    bkg = zeros(length(processes[1].eff))
+    
+    for p in processes
+        p.signal && continue
+        bkg += [p.amount * e.eff * p.activity * p.timeMeas for e in p.eff]
+    end
+    return bkg
+end
 
 
+function get_sensitivities(SNparams, α, processes::Vector{NDimDataProcess}; approximate="formula")
+    signal_id = findall([p.signal for p in processes])
+    length(signal_id) > 1 && @error "Only one signal process allowed! Provided $(length(signal_id))"
+    
+    signal_process = processes[first(signal_id)]
+    ε = signal_process.eff
+    b = get_bkg_counts(processes)
+
+    @unpack W, foilMass, Nₐ, tYear, a = SNparams
+    constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
+    S_b = get_FC.(b, α; approximate=approximate)
+
+    @show tHalf = @. constantTerm * ε / S_b
+    length(tHalf)
+    sensitivities = Vector{NDimSensitivityEstimate}(undef, length(tHalf))
+    for i in 1:length(tHalf)
+        sensitivities[i] = NDimSensitivityEstimate(
+            signal_process.eff[i].binESingle,
+            signal_process.eff[i].binESum,
+            signal_process.eff[i].binPhi,
+            tHalf[i],
+            ε[i].eff,
+            b[i]
+        )
+    end
+    return sensitivities
+end
+
+α = 1.65
+sensitivities = get_sensitivities(SNparams, α, [p1,p2]; approximate="formula")
+
+sensitivities[1]
+
+import Base: maximum
+maximum(sensitivities::Vector{NDimSensitivityEstimate}) = sensitivities[argmax([s.tHalf for s in sensitivities])]
+
+maximum(sensitivities)
