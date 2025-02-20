@@ -449,12 +449,11 @@ let
 end
 
 
-## RH 
+## RH L
 signal = get_process("bb0nu_foil_bulk", data_processes)
 set_nTotalSim!( signal, 0.98e8 )
 
 background[end] = get_process("neutron_external", hist_processes, "full shielding")
-
 
 t_full_RH_L = get_sensitivities_vs_time(
     signal,
@@ -463,8 +462,51 @@ t_full_RH_L = get_sensitivities_vs_time(
     effFactor = 0.489
 )
 
+background[end] = get_process("neutron_external", hist_processes, "current shielding")
+
+t_curr_RH_L = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams;
+    effFactor = 0.489
+)
+
+let
+    f = Figure(size=(600, 400))
+    a = Axis(
+        f[1,1], 
+        xlabel = "detector life-time [yr]", 
+        ylabel = "sensitivity [yr]", 
+        limits= (0,5, nothing, nothing),
+        title = L"Sensitivity for $0\nu\beta\beta$ $\lambda$ (V+A) at 90% CL"
+        )
+    p = lines!(a, t, t_full_RH_L, label = L"full shielding $$", linewidth = 4)
+    lines!(a, t, t_curr_RH_L, label = L"current shielding $$", linewidth = 4)
+    hlines!(a, [1.6e23], color = :black, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
+    # hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
+    axislegend(a, position = :lt, patchsize = (30, 20))
+    saveName = savename("sensitivity_in_time_nu0_V+A_L", analysisDict, "png")
+    safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
+    f 
+end
+
+## RH E
+
+signal = get_process("bb0nu_foil_bulk", data_processes)
+set_nTotalSim!( signal, 0.98e8 )
+
+background[end] = get_process("neutron_external", hist_processes, "full shielding")
 
 t_full_RH_e = get_sensitivities_vs_time(
+    signal,
+    background,
+    SNparams;
+    effFactor = 0.888
+)
+
+background[end] = get_process("neutron_external", hist_processes, "current shielding")
+
+t_curr_RH_e = get_sensitivities_vs_time(
     signal,
     background,
     SNparams;
@@ -478,14 +520,14 @@ let
         xlabel = "detector life-time [yr]", 
         ylabel = "sensitivity [yr]", 
         limits= (0,5, nothing, nothing),
-        title = L"Sensitivity for $0\nu\beta\beta$ (V+A) at 90% CL"
+        title = L"Sensitivity for $0\nu\beta\beta$ $\eta$ (V+A) at 90% CL"
         )
-    p = lines!(a, t, t_full_RH_L, label = L"$\lambda$: SuperNEMO", linewidth = 4)
-    lines!(a, t, t_full_RH_e, label = L"$\eta$: SuperNEMO", linewidth = 4)
-    hlines!(a, [1.6e23], color = :black, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
-    hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
+    p = lines!(a, t, t_full_RH_e, label = L"full shielding $$", linewidth = 4)
+    lines!(a, t, t_curr_RH_e, label = L"current shielding $$", linewidth = 4)
+    # hlines!(a, [1.6e23], color = :black, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
+    hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\eta$: NEMO3", linewidth = 2)
     axislegend(a, position = :lt, patchsize = (30, 20))
-    saveName = savename("sensitivity_in_time_nu0_V+A", analysisDict, "png")
+    saveName = savename("sensitivity_in_time_nu0_V+A_e", analysisDict, "png")
     safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f 
 end
