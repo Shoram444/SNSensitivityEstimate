@@ -56,17 +56,24 @@ function get_nDim_effciency(
         binsESum::Vector{<:Real}, 
         nTotalSim::Real
     )
-    nPassed = 0
-    for i in 1:length(dataAngle)
-        if (
-            binsAngle[1] <= dataAngle[i] < binsAngle[2] && 
-            binsESingle[1] <= dataESingle[i] < binsESingle[2] && 
-            binsESum[1] <= dataESum[i] < binsESum[2]
-        )
-            nPassed += 1
+    nthreads = Threads.nthreads()  # Get number of available threads
+    local_counts = fill(0, nthreads)  # Create thread-local counters
+
+    Threads.@threads for tid in 1:nthreads
+        local_count = 0  # Local variable for counting
+        @inbounds for i in tid:nthreads:length(dataAngle)  # Chunking work by thread ID
+            if (
+                binsESum[1] ≤ dataESum[i] < binsESum[2] &&
+                binsESingle[1] ≤ dataESingle[i] < binsESingle[2] &&
+                binsAngle[1] ≤ dataAngle[i] < binsAngle[2]
+            )
+                local_count += 1  # Update local count
+            end
         end
+        local_counts[tid] = local_count  # Store count from this thread
     end
-    return nPassed/nTotalSim
+
+    return sum(local_counts) / nTotalSim  # Sum up all thread-local counts
 end
 
 
@@ -84,6 +91,7 @@ function NDimDataProcess(
         binsESum::AbstractRange,
         amount::Real,
     )
+
     comb_angle = make_ROI_combinations(binsAngle)
     comb_esingle = make_ROI_combinations(binsESingle)
     comb_esum = make_ROI_combinations(binsESum)
@@ -92,6 +100,7 @@ function NDimDataProcess(
 
     eff = Vector{NDimROIEfficiency}(undef, length(all_combinations))
     for (i, comb) in enumerate(all_combinations)
+        i%1000 == 0 && println("$i/$(length(all_combinations))  combinations processed!")
         ROIAngle = comb[1]
         ROIESingle = comb[2]
         ROIESum = comb[3]
@@ -117,6 +126,7 @@ function NDimDataProcess(
         binsESum,
         processDict::Dict
     )
+    @show "ahoj2"
     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
 
     comb_angle = make_ROI_combinations(binsAngle)
@@ -126,10 +136,12 @@ function NDimDataProcess(
     all_combinations = collect(Iterators.product(comb_angle, comb_esingle, comb_esum))
 
     eff = Vector{NDimROIEfficiency}(undef, length(all_combinations))
-    for (i, comb) in enumerate(all_combinations)
-        ROIAngle = comb[1]
-        ROIESingle = comb[2]
-        ROIESum = comb[3]
+    for i in 1:length(all_combinations)
+        i%1000 == 0 && println("$i/$(length(all_combinations))  combinations processed!")
+
+        ROIAngle = all_combinations[i][1]
+        ROIESingle = all_combinations[i][2]
+        ROIESum = all_combinations[i][3]
          
         _eff = NDimROIEfficiency(
             ROIAngle,
@@ -184,3 +196,50 @@ end
 
 
 maximum(sensitivities::Vector{NDimSensitivityEstimate}) = sensitivities[argmax([s.tHalf for s in sensitivities])]
+
+function precompute_histogram(dataAngle, dataESingle, dataESum, binsAngle, binsESingle, binsESum)
+    hist = fit(Histogram, (dataAngle, dataESingle, dataESum), (binsAngle, binsESingle, binsESum))
+    return hist.weights  # 3D array storing counts per bin
+end
+
+function get_nDim_effciency(histogram::Array, bin_idx_angle, bin_idx_esingle, bin_idx_esum, nTotalSim)
+    return histogram[bin_idx_angle, bin_idx_esingle, bin_idx_esum] / nTotalSim
+end
+
+
+# function NDimDataProcess(
+#         dataAngle::Vector{<:Real},
+#         dataESingle::Vector{<:Real},
+#         dataESum::Vector{<:Real},
+#         binsAngle,
+#         binsESingle,
+#         binsESum,
+#         processDict::Dict
+#     )
+#     @show "ahoj"
+#     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
+#     comb_angle = make_ROI_combinations(binsAngle)
+#     comb_esingle = make_ROI_combinations(binsESingle)
+#     comb_esum = make_ROI_combinations(binsESum)
+
+#     all_combinations = collect(Iterators.product(comb_angle, comb_esingle, comb_esum))
+
+#     # Precompute histogram
+#     histogram = precompute_histogram(dataAngle, dataESingle, dataESum, binsAngle, binsESingle, binsESum)
+
+#     eff = Vector{NDimROIEfficiency}(undef, length(all_combinations))
+    
+#     for (i, comb) in enumerate(all_combinations)
+#         bin_idx_angle = searchsortedfirst(binsAngle, comb[1][1])
+#         bin_idx_esingle = searchsortedfirst(binsESingle, comb[2][1])
+#         bin_idx_esum = searchsortedfirst(binsESum, comb[3][1])
+
+#         _eff = NDimROIEfficiency(
+#             comb[1], comb[2], comb[3],
+#             get_nDim_effciency(histogram, bin_idx_angle, bin_idx_esingle, bin_idx_esum, nTotalSim)
+#         )
+#         eff[i] = _eff
+#     end
+
+#     return NDimDataProcess(dataAngle, dataESingle, dataESum, isotopeName, signal, activity, timeMeas, nTotalSim, binsAngle, binsESingle, binsESum, amount, eff)
+# end
