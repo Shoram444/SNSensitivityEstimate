@@ -21,7 +21,7 @@ analysisDict = Dict(
     :neutron_config => "current_shielding"
 )
 
-files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct"
+files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edepbcu"
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 #  1. dir::String -> the name of the directory where the root files are stored
@@ -48,9 +48,9 @@ background = [
     get_process("Bi214_foil_bulk", data_processes),
     get_process("Bi214_wire_surface", data_processes),
     get_process("Tl208_foil_bulk", data_processes),
-    # get_process("K40_foil_bulk", data_processes),
-    # get_process("Pa234m_foil_bulk", data_processes),
-    get_process("neutron_external", hist_processes, "current shielding")
+    get_process("K40_foil_bulk", data_processes),
+    get_process("Pa234m_foil_bulk", data_processes),
+    # get_process("neutron_external", hist_processes, "current shielding")
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -59,11 +59,11 @@ set_signal!(background[1], false)
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
 set_nTotalSim!( signal, 1e8 )
 set_nTotalSim!( background[1], 0.99e8 )
-set_nTotalSim!( background[2], 1e8 )
+set_nTotalSim!( background[2], 0.96e8 )
 set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 1e8 )
-# set_nTotalSim!( background[5], 6e8 )
-# set_nTotalSim!( background[6], 6e8 )
+set_nTotalSim!( background[4], 0.76e8 )
+set_nTotalSim!( background[5], 1e8 )
+set_nTotalSim!( background[6], 1e8 )
 
 println("Processes initialized.")
 
@@ -146,20 +146,21 @@ with_theme(theme_latexfonts()) do
         f[1,1], 
         xlabel = analysisDict[:mode], 
         ylabel = "counts", 
-        yscale = log10, 
-        limits = (300, 3500, 1e-5, 1e6),
-        title = "Total background model"
+        # yscale = log10, 
+        # limits = (0, 3500, 1e-5, 1e6),
+        limits = (0, 3500, nothing, nothing),
+        title = "Total background single-electron model"
     )
     
     colors = colorschemes[:tol_bright]
     labels = [b.isotopeName for b in background]
-    labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
+    # labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
     st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
 	for i=2:length(bkg_hists)
 		hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
 	end
     
-    ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
+    # ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
     ax.xticks = 0:500:3500
     Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 3)
     saveName = savename("background_model", analysisDict, "png")
@@ -268,3 +269,17 @@ end
 for s in signals
     save_background_table(s, background, "backgroundTables")
 end
+
+
+
+data_processes = load_data_processes(
+    files_directory, 
+    "sumE"
+)
+
+b = get_bkg_counts_1D(get_process("bb_foil_bulk", data_processes))
+
+restrict(b, 600, 3500) |> integral
+
+
+restrict.(bkg_hists, 0, 1000) .|> integral
