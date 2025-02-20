@@ -17,7 +17,7 @@ analysisDict = Dict(
     :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
     :mode => "sumE", 
     :trackAlgo => "TIT",
-    :signal => "bb0nu",
+    :signal => "bb0nuM1",
     :neutron_config => "full_shielding"
 )
 
@@ -38,9 +38,9 @@ hist_processes = load_hist_processes(
 
 
 # declare which process is signal
-signal = get_process("bb0nu_foil_bulk", data_processes)
+# signal = get_process("bb0nu_foil_bulk", data_processes)
 # signal = get_process("bb0nuM1_foil_bulk", data_processes)
-# signal = get_process("bb0nuM2_foil_bulk", data_processes)
+signal = get_process("bb0nuM2_foil_bulk", data_processes)
 
 # declare background processes
 background = [
@@ -50,14 +50,15 @@ background = [
     get_process("Tl208_foil_bulk", data_processes),
     get_process("K40_foil_bulk", data_processes),
     get_process("Pa234m_foil_bulk", data_processes),
-    get_process("neutron_external", hist_processes, "full shielding")
+    get_process("neutron_external", hist_processes, "full shielding no floor flux")
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
 set_signal!(background[1], false)
 
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-set_nTotalSim!( signal, 0.98e8 )
+# set_nTotalSim!( signal, 0.98e8 )
+set_nTotalSim!( signal, 1e8 )
 set_nTotalSim!( background[1], 0.99e8 )
 set_nTotalSim!( background[2], 0.96e8 )
 set_nTotalSim!( background[3], 1e8 )
@@ -91,7 +92,8 @@ expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 # To get the signal efficiency at the ROI, use: `lookup(signal, best_t12ESum)`
 effbb = lookup(signal, best_t12ESum)
 
-
+neutron = restrict(get_bkg_counts_1D(background[end]), 1000, 2900) |> integral
+other = expBkgESum - neutron
 # Plotting:
 
 # 2D tHalf map:
@@ -483,7 +485,7 @@ let
     p = lines!(a, t, t_full_RH_L, label = L"full shielding $$", linewidth = 4)
     lines!(a, t, t_curr_RH_L, label = L"current shielding $$", linewidth = 4)
     hlines!(a, [1.6e23], color = :black, linestyle = :dash, label = L"best $^{82}$Se: $\langle \lambda \rangle$", linewidth = 2)
-    band!([0,5], [9.56e23], [13.35e23], color = (:red, 0.4), label = L"best world: $\langle \lambda \rangle$")
+    band!([0,5], [4.58e23], [13.35e23], color = (:red, 0.4), label = L"best world: $\langle \lambda \rangle$")
     
     # hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
     axislegend(a, position = :lt, patchsize = (30, 20))
@@ -528,9 +530,10 @@ let
     lines!(a, t, t_curr_RH_e, label = L"current shielding $$", linewidth = 4)
     # hlines!(a, [1.6e23], color = :black, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
     hlines!(a, [2.2e23], color = :black, linestyle = :dash, label = L"best $^{82}$Se: $\langle \eta \rangle$", linewidth = 2)
-    band!([0,5], [25.43e23], [38.81e23], color = (:red, 0.4), label = L"best world: $\langle \eta \rangle$")
+    band!([0,5], [9.93e23], [38.81e23], color = (:red, 0.4), label = L"best world: $\langle \eta \rangle$")
     axislegend(a, position = :lt, patchsize = (30, 20))
     saveName = savename("sensitivity_in_time_nu0_V+A_e", analysisDict, "png")
     safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f 
 end
+
