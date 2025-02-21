@@ -163,15 +163,28 @@ function load_ndim_processes(dir::String, binsAngle, binsESingle, binsESum)
             continue
         end
 
-        df = ffrf(f)
+        data = LazyTree(f, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])
+
+        Ei = Vector{Float64}(undef, length(data)) # Float32[] # individual energies
+        Es = Vector{Float64}(undef, length(data)) #Float32[] # sum of energies
+        phi = Vector{Float64}(undef, length(data)) # Float32[] # phi angle
+
+        Threads.@threads for (i,event) in enumerate(data)
+            i%1_000_000 == 0 && println("$i/$(length(data))  events processed!")
+
+            Ei[i] = maximum([event.reconstructedEnergy1, event.reconstructedEnergy2])
+            phi[i] = event.phi
+            Es[i] = sum([event.reconstructedEnergy1, event.reconstructedEnergy2])
+        end
+
         fileName = split(file, ".")[1]  |> split |> first 
         
         push!(
                 processes,
                 NDimDataProcess(
-                    df.phi,
-                    [maximum([df.reconstructedEnergy1[i], df.reconstructedEnergy2[i]]) for i in 1:nrow(df)],
-                    [sum([df.reconstructedEnergy1[i], df.reconstructedEnergy2[i]]) for i in 1:nrow(df)],
+                    phi,
+                    Ei,
+                    Es,
                     binsAngle,
                     binsESingle,
                     binsESum,

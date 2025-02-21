@@ -12,9 +12,9 @@ Revise.track(SensitivityModule)
 include(scriptsdir("Params.jl"))
 
 # Load the data from the ROOT files
-binsAngle = range(0, 180, 11)
-binsESingle = range(600, 3000, 11)
-binsESum = range(2000, 3000, 11)
+binsAngle = range(0, 180, 7)
+binsESingle = range(1200, 3200, 11)
+binsESum = range(2500, 3200, 8)
 
 function get_total_combinations(binsAngle, binsESingle, binsESum)
     comb_angle = make_ROI_combinations(binsAngle)
@@ -34,8 +34,8 @@ processes = [
     get_process("Bi214_foil_bulk", all_processes),
     get_process("Bi214_wire_surface", all_processes),
     get_process("Tl208_foil_bulk", all_processes),
-    # get_process("K40_foil_bulk", all_processes),
-    # get_process("Pa234m_foil_bulk", all_processes), 
+    get_process("K40_foil_bulk", all_processes),
+    get_process("Pa234m_foil_bulk", all_processes), 
 ]
 
 set_signal!(processes[2], false)

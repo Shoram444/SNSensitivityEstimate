@@ -77,44 +77,22 @@ function get_nDim_effciency(
 end
 
 
-function NDimDataProcess(
-        dataAngle::Vector{<:Real},
-        dataESingle::Vector{<:Real},
-        dataESum::Vector{<:Real},
-        isotopeName::String,
-        signal::Bool,
-        activity::Real,
-        timeMeas::Real,
-        nTotalSim::Real,
-        binsAngle::AbstractRange,
-        binsESingle::AbstractRange,
-        binsESum::AbstractRange,
-        amount::Real,
+using Base.Threads
+import Pkg: GC
+
+function passes_roi(
+        angle_val::Real, 
+        esingle_val::Real, 
+        esum_val::Real, 
+        angle_roi::Vector{<:Real}, 
+        esingle_roi::Vector{<:Real}, 
+        esum_roi::Vector{<:Real}
     )
-
-    comb_angle = make_ROI_combinations(binsAngle)
-    comb_esingle = make_ROI_combinations(binsESingle)
-    comb_esum = make_ROI_combinations(binsESum)
-
-    all_combinations = collect(Iterators.product(comb_angle, comb_esingle, comb_esum))
-
-    eff = Vector{NDimROIEfficiency}(undef, length(all_combinations))
-    for (i, comb) in enumerate(all_combinations)
-        i%1000 == 0 && println("$i/$(length(all_combinations))  combinations processed!")
-        ROIAngle = comb[1]
-        ROIESingle = comb[2]
-        ROIESum = comb[3]
-         
-        _eff = NDimROIEfficiency(
-            ROIAngle,
-            ROIESingle,
-            ROIESum,
-            get_nDim_effciency(dataAngle, dataESingle, dataESum, ROIAngle, ROIESingle, ROIESum, nTotalSim)
-        )
-        eff[i]  = _eff
-    end
-
-    return NDimDataProcess(dataAngle, dataESingle, dataESum, isotopeName, signal, activity, timeMeas, nTotalSim, binsAngle, binsESingle, binsESum, amount, eff)
+    return (
+        angle_roi[1] ≤ angle_val < angle_roi[2] &&
+        esingle_roi[1] ≤ esingle_val < esingle_roi[2] &&
+        esum_roi[1] ≤ esum_val < esum_roi[2]
+    )
 end
 
 function NDimDataProcess(
@@ -126,33 +104,53 @@ function NDimDataProcess(
         binsESum,
         processDict::Dict
     )
-    @show "ahoj2"
     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
 
-    comb_angle = make_ROI_combinations(binsAngle)
-    comb_esingle = make_ROI_combinations(binsESingle)
-    comb_esum = make_ROI_combinations(binsESum)
+    # Generate all possible region of interest (ROI) combinations
+    roi_combinations = collect(Iterators.product(
+        make_ROI_combinations(binsAngle),
+        make_ROI_combinations(binsESingle),
+        make_ROI_combinations(binsESum)
+    ))
 
-    all_combinations = collect(Iterators.product(comb_angle, comb_esingle, comb_esum))
+    # Run garbage collection to free up memory
+    GC.gc()
 
-    eff = Vector{NDimROIEfficiency}(undef, length(all_combinations))
-    for i in 1:length(all_combinations)
-        i%1000 == 0 && println("$i/$(length(all_combinations))  combinations processed!")
+    # Ensure data vectors have the same length
+    (length(dataAngle) == length(dataESingle) == length(dataESum)) || 
+        @error "Data vectors must have the same length!"
 
-        ROIAngle = all_combinations[i][1]
-        ROIESingle = all_combinations[i][2]
-        ROIESum = all_combinations[i][3]
-         
-        _eff = NDimROIEfficiency(
-            ROIAngle,
-            ROIESingle,
-            ROIESum,
-            get_nDim_effciency(dataAngle, dataESingle, dataESum, ROIAngle, ROIESingle, ROIESum, nTotalSim)
-        )
-        eff[i]  = _eff
+    # Initialize multi-threading
+    # n_threads = Threads.nthreads()
+    # local_counts = [zeros(Int, length(roi_combinations)) for _ in 1:n_threads]  # Storage for thread-local counts
+    counts = zeros(Int, length(roi_combinations))
+
+    # Threaded loop for counting events in each ROI
+    Threads.@threads for event_idx in 1:length(dataAngle)
+        # thread_id = Threads.threadid()
+        event_idx % 1_000_000 == 0 && println("$event_idx/$(length(dataAngle)) events processed!")
+
+        angle_val = dataAngle[event_idx]
+        esingle_val = dataESingle[event_idx]
+        esum_val = dataESum[event_idx]
+
+        @inbounds for (roi_idx, (angle_roi, esingle_roi, esum_roi)) in enumerate(roi_combinations)
+            if (passes_roi(angle_val, esingle_val, esum_val, angle_roi, esingle_roi, esum_roi))
+                # local_counts[thread_id][roi_idx] += 1
+                counts[roi_idx] += 1
+            end
+        end
     end
 
-    return NDimDataProcess(dataAngle, dataESingle, dataESum, isotopeName, signal, activity, timeMeas, nTotalSim, binsAngle, binsESingle, binsESum, amount, eff)
+    # Sum up counts from all threads
+    # total_counts = reduce(+, local_counts)
+
+    # Compute efficiency for each ROI
+    efficiencies = [NDimROIEfficiency(angle, esingle, esum, count / nTotalSim) 
+                    for ((angle, esingle, esum), count) in zip(roi_combinations, counts)]
+                    # for ((angle, esingle, esum), count) in zip(roi_combinations, total_counts)]
+
+    return NDimDataProcess(dataAngle, dataESingle, dataESum, isotopeName, signal, activity, timeMeas, nTotalSim, binsAngle, binsESingle, binsESum, amount, efficiencies)
 end
 
 function get_bkg_counts(processes::Vector{NDimDataProcess})
