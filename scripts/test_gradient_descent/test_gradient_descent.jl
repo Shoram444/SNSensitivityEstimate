@@ -3,13 +3,14 @@ Pkg.activate(".")
 using BlackBoxOptim, Distributions, Plots
 
 #mock signal, background data
-Es, As = rand(Normal(3, 1), 100), rand(Normal(4, 1), 100)
-Eb, Ab = rand(Exponential(), 100), rand(Exponential(0.5), 100)
+N = Int(1e7)
+Es, As = rand(Normal(3, 1), N), rand(Normal(7, 3), N)
+Eb, Ab = rand(Exponential(7), N), rand(Exponential(0.5), N)
 
 histogram(Es, label="Signal", alpha=0.5)
 histogram!(Eb, label="Background", alpha=0.5)
 
-histogram(As, label="Signal", alpha=0.5)
+histogram!(As, label="Signal", alpha=0.5)
 histogram!(Ab, label="Background", alpha=0.5)
 
 signal = (
@@ -22,12 +23,12 @@ background = (
     energy = Eb
 )
 
-n = 100
+n = Int(1e8)
 
-Emin = 0:1:6
-Emax = 0:1:6
-Amin = 0:1:10
-Amax = 0:1:10
+Emin = 0:0.1:20
+Emax = 0:0.1:20
+Amin = 0:0.01:20
+Amax = 0:0.01:20
 
 function get_efficiency(x, Amin, Amax, Emin, Emax, n)
     np = 0
@@ -36,7 +37,7 @@ function get_efficiency(x, Amin, Amax, Emin, Emax, n)
             np += 1
         end
     end
-
+    
     return np/n
 end
 
@@ -44,10 +45,9 @@ function get_s_to_b(signal, background, n, rois)
     Amin, Amax, Emin, Emax = rois
     s = get_efficiency(signal, Amin, Amax, Emin, Emax, n)
     b = get_efficiency(background, Amin, Amax, Emin, Emax, n)
+    s == 0 && return 0.0 
     return b != 0 ? s/sqrt(b) : 0.0
 end
-
-roi1 = [0,1, 0, 1]
 
 f(x) = -get_s_to_b(signal, background, n, x)
 
@@ -63,3 +63,10 @@ res = bboptimize(
     SaveTrace = true,
     MaxTime = 0.1
     )
+
+histogram(As, label="Angle Signal", alpha=0.5, xlims=(0.28, 15.2))
+histogram!(Ab, label="Angle Bkg", alpha=0.5, xlims=(0.28, 15.2))
+
+
+histogram(Es, label="Energy Signal", alpha=0.5, xlims=(1.13, 7.25))
+histogram!(Eb, label="Energy Bkg", alpha=0.5, xlims=(1.13, 7.25))
