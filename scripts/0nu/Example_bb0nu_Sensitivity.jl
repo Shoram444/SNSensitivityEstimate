@@ -50,7 +50,7 @@ background = [
     get_process("Tl208_foil_bulk", data_processes),
     get_process("K40_foil_bulk", data_processes),
     get_process("Pa234m_foil_bulk", data_processes),
-    get_process("neutron_external", hist_processes, "full shielding no floor flux")
+    # get_process("neutron_external", hist_processes, "current shielding")
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -150,20 +150,21 @@ with_theme(theme_latexfonts()) do
         f[1,1], 
         xlabel = analysisDict[:mode], 
         ylabel = "counts", 
-        yscale = log10, 
-        limits = (300, 3500, 1e-5, 1e6),
-        title = "Total background model"
+        # yscale = log10, 
+        # limits = (0, 3500, 1e-5, 1e6),
+        limits = (0, 3500, nothing, nothing),
+        title = "Total background single-electron model"
     )
     
     colors = colorschemes[:tol_bright]
     labels = [b.isotopeName for b in background]
-    labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
+    # labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
     st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
 	for i=2:length(bkg_hists)
 		hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
 	end
     
-    ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
+    # ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
     ax.xticks = 0:500:3500
     Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 3)
     saveName = savename("background_model", analysisDict, "png")
@@ -172,12 +173,13 @@ with_theme(theme_latexfonts()) do
 end
 
 # Background by source:
-ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
+ROI_a, ROI_b = 2700, 3100#best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
 
 bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
 
 let 
-    saveName = savename("background_counts_ROI=$(ROI_a):$(ROI_b)_", analysisDict, "md")
+
+    saveName = savename("background_counts_ROI=2700:3100_", analysisDict, "md")
     open(plotsdir("backgroundTables", saveName), "w") do f
         labels = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
         header = ["process", "bkg counts in ROI"]
@@ -271,6 +273,19 @@ for s in signals
 end
 
 
+
+
+data_processes = load_data_processes(
+    files_directory, 
+    "sumE"
+)
+
+b = get_bkg_counts_1D(get_process("bb_foil_bulk", data_processes))
+
+restrict(b, 600, 3500) |> integral
+
+
+restrict.(bkg_hists, 0, 1000) .|> integral
 
 function get_sensitivities_vs_time(
         signal,

@@ -19,7 +19,7 @@ SNparams = Dict(
 ) 
 
 BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-6295-x and docDB 4505
-    :Pa234m_foil_bulk => 8.19 / 1000 / 10,          # [mBq/kg] from Steven's thesis, better case (table7.4)
+    :Pa234m_foil_bulk => 17.3 / 1000 ,          # [mBq/kg] NEMO3
     :Bi214_foil_bulk => 10 / 1_000_000 ,               # [μBq/kg] converted to [Bq/kg] from SN measurements
     :Bi214_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi214_wire_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
@@ -32,7 +32,7 @@ BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-
     :Bi210_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi210_wire_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi210_wire_bulk => 0.00001 ,                       # MOCK VALUE
-    :K40_foil_bulk => 53.59 / 1000 / 10,             # [mBq/kg] from Steven's thesis, better case (table7.4)
+    :K40_foil_bulk => 58.7 / 1000 ,             # [mBq/kg] NEMO3
     :K40_PMT_glass_bulk => 417 / 286 ,                  # [Bq/kg] originally the value is given as 417Bq, I just divide by PMT weight here
     :Bi214_hall_surface => 0.5 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
     :Tl208_hall_surface => 2.4 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
