@@ -144,9 +144,8 @@ end
 
 
 function load_ndim_processes(dir::String, binsAngle, binsESingle, binsESum)
-    filesDict = Dict()
     full_dir = datadir("sims", dir)
-    processes = NDimDataProcess[]
+    processes = DataProcess3D[]
 
     println("Loading files from: $full_dir ...")
     println("mode: NDim ")
@@ -181,7 +180,7 @@ function load_ndim_processes(dir::String, binsAngle, binsESingle, binsESum)
         
         push!(
                 processes,
-                NDimDataProcess(
+                DataProcess3D(
                     phi,
                     Ei,
                     Es,

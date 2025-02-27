@@ -82,15 +82,15 @@ export
     get_bkg_counts_1D,
     get_bkg_counts
     
-include("NDimDataProcess.jl")
+include("DataProcess3D.jl")
 export
-    NDimSensitivityEstimate,
-    NDimROIEfficiency,
-    NDimDataProcess,
-    make_ROI_combinations,
-    get_nDim_effciency,
+    SensitivityEstimate3D,
+    ROIEfficiency3D,
+    DataProcess3D,
+    get_effciency3D,
     get_bkg_counts,
-    get_sensitivities
+    get_sensitivity3D,
+    get_s_to_b
 
 include("PlotsRecipes.jl")
 
