@@ -50,7 +50,7 @@ background = [
     get_process("Tl208_foil_bulk", data_processes),
     get_process("K40_foil_bulk", data_processes),
     get_process("Pa234m_foil_bulk", data_processes),
-    # get_process("neutron_external", hist_processes, "current shielding")
+    get_process("neutron_external", hist_processes, "current shielding")
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -92,7 +92,7 @@ expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 # To get the signal efficiency at the ROI, use: `lookup(signal, best_t12ESum)`
 effbb = lookup(signal, best_t12ESum)
 
-neutron = restrict(get_bkg_counts_1D(background[end]), 1000, 2900) |> integral
+neutron = restrict(get_bkg_counts_1D(background[end]), 1200, 2900) |> integral
 other = expBkgESum - neutron
 # Plotting:
 
