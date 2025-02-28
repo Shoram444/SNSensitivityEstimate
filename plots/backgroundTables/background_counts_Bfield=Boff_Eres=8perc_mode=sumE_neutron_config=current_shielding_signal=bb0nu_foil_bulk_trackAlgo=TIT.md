@@ -1,11 +1,10 @@
-# Signal = 0nubb, 8% res, current neutron shielding, ROI: 2700 - 3000 keV
-
-
 | **process**                           | **bkg counts in ROI** |
 |:--------------------------------------|:----------------------|
-| bb\_foil\_bulk                        | 0.499691              |
-| Bi214\_foil\_bulk                     | 0.0754802             |
-| Bi214\_radon                          | 0.0811737             |
-| Tl208\_foil\_bulk                     | 0.0210488             |
-| neutron\_external\_current\_shielding | 0.356625              |
-| total                                 | 1.03402               |
+| bb\_foil\_bulk                        | 0.225351              |
+| Bi214\_foil\_bulk                     | 0.0658831             |
+| Bi214\_radon                          | 0.0872617             |
+| Tl208\_foil\_bulk                     | 0.0211775             |
+| K40\_foil\_bulk                       | 0.0                   |
+| Pa234m\_foil\_bulk                    | 0.0                   |
+| neutron\_external\ncurrent\_shielding | 0.36381               |
+| total                                 | 0.763483              |

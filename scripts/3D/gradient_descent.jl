@@ -44,6 +44,7 @@ background = [
     # get_process("neutron_external", hist_processes, "current shielding")
 ]
 
+# set_nTotalSim!(signal, 0.98e8)
 set_nTotalSim!(signal, 1e8)
 
 set_nTotalSim!(background[1], 0.99e8)
@@ -52,6 +53,9 @@ set_nTotalSim!(background[3], 1e8)
 set_nTotalSim!(background[4], 0.76e8)
 set_nTotalSim!(background[5], 1e8)
 set_nTotalSim!(background[6], 1e8)
+
+set_activity!(background[2], 10 / 1_000_000)
+set_activity!(background[4], 2 / 1_000_000)
 
 set_signal!(background[1], false)
 
@@ -74,7 +78,7 @@ res = bboptimize(
     SearchRange = searchRange, 
     NumDimensions = 6,
     Method=:adaptive_de_rand_1_bin, 
-    MaxTime = 1*60,
+    MaxTime = 3*60,
     InitialPopulation = [[0, 180, 400, 3000, 2700, 3200]]
 )
 
@@ -92,7 +96,7 @@ best_roi = get_best_ROI3D(res)
 best_sens= get_sensitivity3D(
     SNparams, 
     α, 
-    [ps, pb], 
+    vcat(signal, background), 
     best_roi;
     approximate="table"
 )
@@ -110,3 +114,19 @@ let
     # stephist!(axEsingle, pb.dataESingle, bins=ps.binsESingle, label="signal", normalization = :pdf)
     f
 end
+
+
+
+let 
+    f = Figure()
+    ax = Axis(f[1,1], xlabel = "b", ylabel = "S(b)")
+    p1 = lines!(ax, 0:1:350, map(x -> 1.8 * sqrt(x), 0:1:350), label = "1.8 * √b")
+    p1 = lines!(ax, 0:1:350, map(x -> α * sqrt(x), 0:1:350), label = "α * √b")
+    p1 = lines!(ax, 0:1:350, map(x -> get_FC(x, α; approximate="formula"), 0:1:350), label = "FC approx. formula")
+    p1 = lines!(ax, 0:1:350, map(x -> get_FC(x, α; approximate="table"), 0:1:350), label = "FC lookup table")
+    axislegend(ax, position = :rb)
+    save("FC_comparison.png", f)
+    f
+end
+
+

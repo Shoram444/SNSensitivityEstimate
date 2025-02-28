@@ -1,4 +1,4 @@
-include(scriptsdir("Params.jl"))
+# include(scriptsdir("Params.jl"))
 
 ffrf(file) = fill_from_root_file(file, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])
 
@@ -22,7 +22,7 @@ function load_files(dir::String)
 end
 
 function load_data_processes(dir::String, mode::String)
-    filesDict = Dict()
+    include(scriptsdir("Params.jl"))
     full_dir = datadir("sims", dir)
     processes = DataProcess[]
 
@@ -80,7 +80,7 @@ end
 
 
 function load_hist_processes(dir::String, mode::String)
-    filesDict = Dict()
+    include(scriptsdir("Params.jl"))
     full_dir = datadir("sims", dir)
     processes = HistProcess[]
 
@@ -144,6 +144,7 @@ end
 
 
 function load_ndim_processes(dir::String, binsAngle, binsESingle, binsESum)
+    include(scriptsdir("Params.jl"))
     full_dir = datadir("sims", dir)
     processes = DataProcess3D[]
 

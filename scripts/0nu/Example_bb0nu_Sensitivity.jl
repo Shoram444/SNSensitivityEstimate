@@ -18,7 +18,7 @@ analysisDict = Dict(
     :mode => "sumE", 
     :trackAlgo => "TIT",
     :signal => "bb0nu",
-    :neutron_config => "full_shielding"
+    :neutron_config => "current_shielding"
 )
 
 files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edepbcu"
@@ -38,9 +38,9 @@ hist_processes = load_hist_processes(
 
 
 # declare which process is signal
-# signal = get_process("bb0nu_foil_bulk", data_processes)
+signal = get_process("bb0nu_foil_bulk", data_processes)
 # signal = get_process("bb0nuM1_foil_bulk", data_processes)
-signal = get_process("bb0nuM2_foil_bulk", data_processes)
+# signal = get_process("bb0nuM2_foil_bulk", data_processes)
 
 # declare background processes
 background = [
@@ -50,15 +50,15 @@ background = [
     get_process("Tl208_foil_bulk", data_processes),
     get_process("K40_foil_bulk", data_processes),
     get_process("Pa234m_foil_bulk", data_processes),
-    get_process("neutron_external", hist_processes, "current shielding")
+    get_process("neutron_external", hist_processes, analysisDict[:neutron_config])
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
 set_signal!(background[1], false)
 
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-# set_nTotalSim!( signal, 0.98e8 )
-set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( signal, 0.98e8 )
+# set_nTotalSim!( signal, 1e8 )
 set_nTotalSim!( background[1], 0.99e8 )
 set_nTotalSim!( background[2], 0.96e8 )
 set_nTotalSim!( background[3], 1e8 )
@@ -150,21 +150,21 @@ with_theme(theme_latexfonts()) do
         f[1,1], 
         xlabel = analysisDict[:mode], 
         ylabel = "counts", 
-        # yscale = log10, 
-        # limits = (0, 3500, 1e-5, 1e6),
-        limits = (0, 3500, nothing, nothing),
-        title = "Total background single-electron model"
+        yscale = log10, 
+        limits = (0, 3500, 1e-5, 1e6),
+        # limits = (0, 3500, nothing, nothing),
+        title = "Total background sum-electron model"
     )
     
     colors = colorschemes[:tol_bright]
     labels = [b.isotopeName for b in background]
-    # labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
+    labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
     st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
 	for i=2:length(bkg_hists)
 		hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
 	end
     
-    # ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
+    ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
     ax.xticks = 0:500:3500
     Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 3)
     saveName = savename("background_model", analysisDict, "png")
@@ -229,7 +229,7 @@ signals = [
     get_process("bb0nuM2_foil_bulk", data_processes)
 ]
 
-set_nTotalSim!.( signals, 1e8 )
+set_nTotalSim!.( signals[2:end], 1e8 )
 
 save_sensitivity_table(signals, background, "sensitivityTables")
 
@@ -237,7 +237,7 @@ save_sensitivity_table(signals, background, "sensitivityTables")
 #save background tables for each signals ROI
 function save_background_table(
     signal, 
-    background, 
+    background;
     analysisDict = analysisDict,
     α = α,
     SNparams = SNparams,
@@ -269,7 +269,7 @@ function save_background_table(
 end
 
 for s in signals
-    save_background_table(s, background, "backgroundTables")
+    save_background_table(s, background)
 end
 
 
@@ -321,7 +321,7 @@ end
 signal = get_process("bb0nuM1_foil_bulk", data_processes)
 set_nTotalSim!( signal, 1e8 )
 
-background[end] =  get_process("neutron_external", hist_processes, "current shielding")
+background[end] =  get_process("neutron_external", hist_processes, "current_shielding")
 
 t_current_nu0M1 = get_sensitivities_vs_time(
     signal,
@@ -333,7 +333,7 @@ t_current_nu0M1 = get_sensitivities_vs_time(
 
 #################
 
-background[end] = get_process("neutron_external", hist_processes, "full shielding")
+background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
 t_full_nu0M1 = get_sensitivities_vs_time(
     signal,
@@ -365,7 +365,7 @@ end
 
 #### M2
 signal = get_process("bb0nuM2_foil_bulk", data_processes)
-background[end] = get_process("neutron_external", hist_processes, "current shielding")
+background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
 set_nTotalSim!(signal, 1e8 )
@@ -379,7 +379,7 @@ t_current_nu0M2 = get_sensitivities_vs_time(
 
 
 #################
-background[end] = get_process("neutron_external", hist_processes, "full shielding")
+background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
 t_full_nu0M2 = get_sensitivities_vs_time(
     signal,
@@ -412,7 +412,7 @@ signal = get_process("bb0nu_foil_bulk", data_processes)
 set_nTotalSim!( signal, 0.98e8 )
 
 
-background[end] = get_process("neutron_external", hist_processes, "current shielding")
+background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
 t_current_nu0 = get_sensitivities_vs_time(
     signal,
@@ -422,7 +422,7 @@ t_current_nu0 = get_sensitivities_vs_time(
 
 
 #################
-background[end] = get_process("neutron_external", hist_processes, "full shielding")
+background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
 t_full_nu0 = get_sensitivities_vs_time(
     signal,
@@ -454,7 +454,7 @@ let
         limits= (0,5, nothing, nothing),
         title = L"Sensitivity for $0\nu\beta\beta$ at 90% CL"
         )
-    p = lines!(a, t, t_current_nu0, label = "current shielding", linewidth = 4)
+    p = lines!(a, t, t_current_nu0, label = "currentshielding", linewidth = 4)
     lines!(a, t, t_full_nu0, label = "full shielding", linewidth = 4)
     lines!(a, t, t_none100_nu0, label = "no neutron shielding (x100)", linewidth = 4)
     lines!(a, t, t_none500_nu0, label = "no neutron shielding (x500)", linewidth = 4)
@@ -470,7 +470,7 @@ end
 signal = get_process("bb0nu_foil_bulk", data_processes)
 set_nTotalSim!( signal, 0.98e8 )
 
-background[end] = get_process("neutron_external", hist_processes, "full shielding")
+background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
 t_full_RH_L = get_sensitivities_vs_time(
     signal,
@@ -479,7 +479,7 @@ t_full_RH_L = get_sensitivities_vs_time(
     effFactor = 0.489
 )
 
-background[end] = get_process("neutron_external", hist_processes, "current shielding")
+background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
 t_curr_RH_L = get_sensitivities_vs_time(
     signal,
@@ -514,7 +514,7 @@ end
 signal = get_process("bb0nu_foil_bulk", data_processes)
 set_nTotalSim!( signal, 0.98e8 )
 
-background[end] = get_process("neutron_external", hist_processes, "full shielding")
+background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
 t_full_RH_e = get_sensitivities_vs_time(
     signal,
@@ -523,7 +523,7 @@ t_full_RH_e = get_sensitivities_vs_time(
     effFactor = 0.888
 )
 
-background[end] = get_process("neutron_external", hist_processes, "current shielding")
+background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
 t_curr_RH_e = get_sensitivities_vs_time(
     signal,
