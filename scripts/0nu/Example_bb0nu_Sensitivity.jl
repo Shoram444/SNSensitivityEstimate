@@ -100,9 +100,9 @@ other = expBkgESum - neutron
 ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
 
 lbl = "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV 
-      b  = $(round(expBkgESum, sigdigits = 3)) 
+      b  = $(round(expBkgESum, digits = 2)) 
       T12 ≥  $(round(ThalfbbESum, sigdigits=3)) yr 
-      ε = $(round(effbb, sigdigits = 3)*100)%"
+      ε = $(round(effbb, digits = 2)*100)%"
 
 let 
     f = Figure(size=(600, 400))
@@ -173,7 +173,7 @@ with_theme(theme_latexfonts()) do
 end
 
 # Background by source:
-ROI_a, ROI_b = 2700, 3100#best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
+ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
 
 bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
 
@@ -185,8 +185,8 @@ let
         header = ["process", "bkg counts in ROI"]
         pretty_table(f,
             DataFrame(
-                # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"],
-                process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external_$(analysisDict[:neutron_config])", "total"],
+                process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"],
+                # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "neutron_external_$(analysisDict[:neutron_config])", "total"],
                 counts = vcat(bkgs, sum(bkgs)),
             ),
             header = header,
@@ -208,12 +208,12 @@ function save_sensitivity_table(
     )
     df = DataFrame(signal = [], ROI = [], bkg_counts = [], eff = [], t12 = [])
     for s in signals
-        t12MapESum = get_tHalf_map(SNparams, α, s, background...; approximate ="formula")
+        t12MapESum = get_tHalf_map(SNparams, α, s, background...; approximate ="table")
         best_t12ESum = get_max_bin(t12MapESum)
-        expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+        @show expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
         effbb = lookup(s, best_t12ESum)
-        ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
-        push!(df, (s.isotopeName, "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV", round(expBkgESum, sigdigits = 3), round(effbb, sigdigits = 3), round(ThalfbbESum, sigdigits=3)))
+        ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), digits=2)
+        push!(df, (s.isotopeName, "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV", round(expBkgESum, digits = 2), round(effbb, digits = 2), round(ThalfbbESum, sigdigits=3)))
     end
 
     saveName = savename("sensitivity_", analysisDict, "md")
