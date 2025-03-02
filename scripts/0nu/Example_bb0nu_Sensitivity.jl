@@ -355,17 +355,18 @@ let
     a = Axis(
         f[1,1], 
         xlabel = "running time (yr)", 
-        ylabel = "sensitivity (yr)", 
-        limits= (0,5, nothing, nothing),
+        ylabel = "log sensitivity (yr)", 
+        limits= (0,5, 1e22, 1e24),
         title = L"Sensitivity for $0\nu\beta\beta\chi^0$ at 90% CL",
-        # yscale = log10
+        yscale = log10
         )
     p = lines!(a, t, t_full_nu0M1, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
     lines!(a, t, t_italian_nu0M1, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
     lines!(a, t, t_current_nu0M1, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
     lines!(a, t, t_iron_nu0M1, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
     hlines!(a, [1.2e23], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
-    axislegend(a, position = :lt, patchsize = (25, 10), patchlabelgap = 10) 
+    axislegend(a, position = :rb, patchsize = (25, 10), patchlabelgap = 10) 
+    a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
     saveName = savename("sensitivity_in_time_nu0M1", analysisDict, "png")
     safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f 
@@ -420,8 +421,9 @@ let
     a = Axis(
         f[1,1], 
         xlabel = "running time (yr)", 
-        ylabel = "sensitivity (yr)", 
-        limits= (0,5, nothing, nothing),
+        ylabel = "log sensitivity (yr)", 
+        limits= (0,5, 1e22, 1e24),
+        yscale= log10,
         title = L"Sensitivity for $0\nu\beta\beta\chi^0\chi^0$ at 90% CL"
         )
     p = lines!(a, t, t_full_nu0M2, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
@@ -429,7 +431,8 @@ let
     lines!(a, t, t_current_nu0M2, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
     lines!(a, t, t_iron_nu0M2, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
     hlines!(a, [1.4e22], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
-    axislegend(a, position = :lt, patchsize = (25, 10), patchlabelgap = 10)
+    axislegend(a, position = :rc, patchsize = (25, 10), patchlabelgap = 10)
+    a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
     saveName = savename("sensitivity_in_time_nu0M2", analysisDict, "png")
     safesave(plotsdir("LSM_report","sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f 
