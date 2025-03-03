@@ -6,5 +6,5 @@
 | Tl208\_foil\_bulk                     | 0.0211775             |
 | K40\_foil\_bulk                       | 0.0                   |
 | Pa234m\_foil\_bulk                    | 0.0                   |
-| neutron\_external\ncurrent\_shielding | 0.426132              |
-| total                                 | 0.825805              |
+| neutron\_external\ncurrent\_shielding | 0.633166              |
+| total                                 | 1.03284               |

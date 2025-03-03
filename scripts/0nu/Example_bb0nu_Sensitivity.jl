@@ -11,7 +11,7 @@ Revise.track(SensitivityModule)
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
 # dictionaries into this script, which uses their values. 
 include(scriptsdir("Params.jl"))
-
+begin
 # Dictionary with the analysis parameters. (Nice for when you want to save stuff and make sure you know what params you used in this analysis.)
 analysisDict = Dict(
     :Bfield => "Boff", # magnetic field on/off
@@ -19,7 +19,7 @@ analysisDict = Dict(
     :mode => "sumE", 
     :trackAlgo => "TIT",
     :signal => "bb0nu",
-    :neutron_config => "iron_shielding"
+    :neutron_config => "no_french_wall_shielding"
 )
 
 files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edepbcu"
@@ -277,7 +277,7 @@ end
 for s in signals
     save_background_table(s, background, "LSM_report/backgroundTables/ESum")
 end
-
+end
 
 
 function get_sensitivities_vs_time(
@@ -574,7 +574,7 @@ let
     # hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
     axislegend(a, position = :lt, patchsize = (25, 10), patchlabelgap = 10)
     saveName = savename("sensitivity_in_time_nu0_V+A_L", analysisDict, "png")
-    safesave(plotsdir("LSM_report", "SumE",analysisDict[:mode], saveName), f, px_per_unit = 6)
+    safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f 
 end
 
@@ -636,7 +636,7 @@ let
     band!([0,5], [9.93e23], [38.81e23], color = (:red, 0.4), label = L"best world: $\langle \eta \rangle$")
     axislegend(a, position = :lt, patchsize = (25, 10), patchlabelgap = 10)
     saveName = savename("sensitivity_in_time_nu0_V+A_e", analysisDict, "png")
-    safesave(plotsdir("LSM_report", analysisDict[:mode], saveName), f, px_per_unit = 6)
+    safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f 
 end
 
@@ -644,14 +644,31 @@ end
 
 
 ######### SINGLE ELECTRON SPECTRUM
+begin
 analysisDictSingle = Dict(
     :Bfield => "Boff", # magnetic field on/off
     :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
     :mode => "singleE", 
     :trackAlgo => "TIT",
     :signal => "bb0nu",
-    :neutron_config => "full_shielding"
+    :neutron_config => "iron_shielding"
 )
+
+labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons (5-sided)"]
+
+if(analysisDictSingle[:neutron_config] == "full_shielding")
+    labels[end] = "neutrons (6-sided)"
+elseif (analysisDictSingle[:neutron_config] == "iron_shielding")
+    labels[end] = "neutrons (0-sided)"
+elseif (analysisDictSingle[:neutron_config] == "no_french_wall_shielding")
+    labels[end] = "neutrons (5-sided)"
+elseif (analysisDictSingle[:neutron_config] == "italian_shielding")
+    labels[end] = "neutrons (5-sided)"
+elseif (analysisDictSingle[:neutron_config] == "current_shielding")
+    labels[end] = "neutrons (4-sided)"
+else
+    labels[end] = "neutrons"
+end
 
 files_directory = "fal5_$(analysisDictSingle[:Eres])_$(analysisDictSingle[:Bfield])_$(analysisDictSingle[:trackAlgo])_twoDistinct_edepbcu"
 
@@ -663,16 +680,17 @@ data_processes = load_data_processes(
     analysisDictSingle[:mode]
 )
 
-# hist_processes = load_hist_processes(
-#     files_directory,  
-#     analysisDictSingle[:mode]
-# )
-fN = ROOTFile("data/sims/neutron_spectra/100kevbin_roi_neutron_background_spectra_single_electron_energies.root")
-h1 = UnROOT.parseTH(fN["full_shielding"], raw= false)    
+hist_processes = load_hist_processes(
+    files_directory,  
+    analysisDictSingle[:mode]
+)
+
+fN = ROOTFile("data/sims/neutron_spectra/Mar3100kevbin_roi_neutron_background_spectra_single_electron_energies.root")
+h1 = UnROOT.parseTH(fN[analysisDictSingle[:neutron_config]], raw= false)    
 
 hist_processesSingle = HistProcess(
     h1,
-    "full_shielding",
+    analysisDictSingle[:neutron_config],
     sumEParams[:neutron_external]
 )
 
@@ -689,10 +707,9 @@ backgroundSingle = [
     get_process("Tl208_foil_bulk", data_processes),
     get_process("K40_foil_bulk", data_processes),
     get_process("Pa234m_foil_bulk", data_processes),
-    get_process("neutron_external", hist_processes, analysisDictSingle[:neutron_config])
+    hist_processesSingle
+    # get_process("neutron_external", hist_processesSingle, analysisDictSingle[:neutron_config])
 ]
-
-labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons"]
 
 
 # set 2nubb to backgroundSingle process (initially it's signal for exotic 2nubb analyses)
@@ -720,9 +737,9 @@ with_theme(theme_latexfonts()) do
         # xlabel = analysisDictSingle[:mode], 
         xlabel = L"$E_i$ (keV)", 
         ylabel = L"counts / $17.5$kg.yr exposure / $100$ keV", 
-        # yscale = log10, 
-        # limits = (0, 3500, 1e-5, 1e6),
-        limits = (100, 3500, 0, 3.35e4),
+        yscale = log10, 
+        limits = (0, 3500, 1e-5, 1e6),
+        # limits = (100, 3500, 0, 3.35e4),
         title = "Total background model\nsingle-electron energy"
     )
     
@@ -735,7 +752,7 @@ with_theme(theme_latexfonts()) do
 	end
     # lines!(ax, midpoints(binedges(sig_hist)), bincounts(sig_hist), label = signal.isotopeName, color = :red, linestyle = :dash, linewidth = 2.5)
     
-    # ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
+    ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
     ax.xticks = 0:500:3500
     Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 2)
     saveName = savename("background_model", analysisDictSingle, "png")
@@ -743,16 +760,6 @@ with_theme(theme_latexfonts()) do
     f
 end
 
+save_background_table(signal, backgroundSingle, "LSM_report/backgroundTables/SingleE/0_1000keV_ROI"; analysisDict = analysisDictSingle, ROI = (0, 1000))
 
-
-signals = [
-    get_process("bb0nu_foil_bulk", data_processes),
-    get_process("bb0nuM1_foil_bulk", data_processes),
-    get_process("bb0nuM2_foil_bulk", data_processes)
-]
-
-set_nTotalSim!.( signals[2:end], 1e8 )
-
-for s in signals
-    save_background_table(s, backgroundSingle, "LSM_report/backgroundTables/SingleE/0_1000keV_ROI"; analysisDict = analysisDictSingle, ROI = (0, 1000))
 end
