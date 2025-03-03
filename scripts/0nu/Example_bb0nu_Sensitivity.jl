@@ -62,6 +62,8 @@ elseif (analysisDict[:neutron_config] == "iron_shielding")
     labels[end] = "neutrons (0-sided)"
 elseif (analysisDict[:neutron_config] == "no_french_wall_shielding")
     labels[end] = "neutrons (5-sided)"
+elseif (analysisDict[:neutron_config] == "italian_shielding")
+    labels[end] = "neutrons (5-sided)"
 elseif (analysisDict[:neutron_config] == "current_shielding")
     labels[end] = "neutrons (4-sided)"
 else
@@ -107,7 +109,7 @@ expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 # To get the signal efficiency at the ROI, use: `lookup(signal, best_t12ESum)`
 effbb = lookup(signal, best_t12ESum)
 
-neutron = restrict(get_bkg_counts_1D(background[end]), 1200, 2900) |> integral
+neutron = restrict(get_bkg_counts_1D(background[end]), 2750, 2950) |> integral
 other = expBkgESum - neutron
 # Plotting:
 
@@ -355,10 +357,10 @@ let
     a = Axis(
         f[1,1], 
         xlabel = "running time (yr)", 
-        ylabel = "log sensitivity (yr)", 
-        limits= (0,5, 1e22, 1e24),
+        ylabel = "sensitivity (yr)", 
+        limits= (0,5, nothing, nothing),
         title = L"Sensitivity for $0\nu\beta\beta\chi^0$ at 90% CL",
-        yscale = log10
+        # yscale = log10
         )
     p = lines!(a, t, t_full_nu0M1, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
     lines!(a, t, t_italian_nu0M1, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
@@ -366,7 +368,7 @@ let
     lines!(a, t, t_iron_nu0M1, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
     hlines!(a, [1.2e23], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
     axislegend(a, position = :rb, patchsize = (25, 10), patchlabelgap = 10) 
-    a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
+    # a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
     saveName = savename("sensitivity_in_time_nu0M1", analysisDict, "png")
     safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f 
@@ -421,9 +423,9 @@ let
     a = Axis(
         f[1,1], 
         xlabel = "running time (yr)", 
-        ylabel = "log sensitivity (yr)", 
-        limits= (0,5, 1e22, 1e24),
-        yscale= log10,
+        ylabel = "sensitivity (yr)", 
+        limits= (0,5, nothing,nothing),
+        # yscale= log10,
         title = L"Sensitivity for $0\nu\beta\beta\chi^0\chi^0$ at 90% CL"
         )
     p = lines!(a, t, t_full_nu0M2, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
@@ -431,8 +433,8 @@ let
     lines!(a, t, t_current_nu0M2, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
     lines!(a, t, t_iron_nu0M2, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
     hlines!(a, [1.4e22], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
-    axislegend(a, position = :rc, patchsize = (25, 10), patchlabelgap = 10)
-    a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
+    axislegend(a, position = :rb, patchsize = (25, 10), patchlabelgap = 10)
+    # a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
     saveName = savename("sensitivity_in_time_nu0M2", analysisDict, "png")
     safesave(plotsdir("LSM_report","sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
     f 
@@ -648,7 +650,7 @@ analysisDictSingle = Dict(
     :mode => "singleE", 
     :trackAlgo => "TIT",
     :signal => "bb0nu",
-    :neutron_config => "iron_shielding"
+    :neutron_config => "full_shielding"
 )
 
 files_directory = "fal5_$(analysisDictSingle[:Eres])_$(analysisDictSingle[:Bfield])_$(analysisDictSingle[:trackAlgo])_twoDistinct_edepbcu"
@@ -661,11 +663,18 @@ data_processes = load_data_processes(
     analysisDictSingle[:mode]
 )
 
-hist_processes = load_hist_processes(
-    files_directory,  
-    analysisDictSingle[:mode]
-)
+# hist_processes = load_hist_processes(
+#     files_directory,  
+#     analysisDictSingle[:mode]
+# )
+fN = ROOTFile("data/sims/neutron_spectra/100kevbin_roi_neutron_background_spectra_single_electron_energies.root")
+h1 = UnROOT.parseTH(fN["full_shielding"], raw= false)    
 
+hist_processesSingle = HistProcess(
+    h1,
+    "full_shielding",
+    sumEParams[:neutron_external]
+)
 
 # declare which process is signal
 signal = get_process("bb0nu_foil_bulk", data_processes)
@@ -680,10 +689,10 @@ backgroundSingle = [
     get_process("Tl208_foil_bulk", data_processes),
     get_process("K40_foil_bulk", data_processes),
     get_process("Pa234m_foil_bulk", data_processes),
-    # get_process("neutron_external", hist_processes, analysisDictSingle[:neutron_config])
+    get_process("neutron_external", hist_processes, analysisDictSingle[:neutron_config])
 ]
 
-labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa"]#, "neutrons"]
+labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons"]
 
 
 # set 2nubb to backgroundSingle process (initially it's signal for exotic 2nubb analyses)

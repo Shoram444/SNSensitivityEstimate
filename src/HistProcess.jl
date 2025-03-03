@@ -71,13 +71,11 @@ end
 
 """
 function get_nPassed(process::HistProcess)
-    @show "bb"
     return get_nPassed(process.hist)
 end
 
 
 function get_nPassed(hist::Hist1D)
-    @show "aa"
     bins = binedges(hist)
     h2d = Hist2D(; counttype=Float64, binedges=(bins, bins))#prepare empty 2d Histogram
 

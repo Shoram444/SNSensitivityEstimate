@@ -163,11 +163,13 @@ function FHist.lookup(process::AbstractProcess, best_ROI::Dict)
     binStepHalf = step(process.bins) / 2              # get the binning step and divide by half
     minBinCenter = best_ROI[:minBinEdge] + binStepHalf       # get the center of the minimal bin in ROI
     maxBinCenter = best_ROI[:maxBinEdge] - binStepHalf       # get the center of the maximal bin in ROI
-    
+    if typeof(process) == HistProcess
+        return lookup(process.counts, minBinCenter, maxBinCenter)
+    end
     return lookup(process.efficiency, minBinCenter, maxBinCenter)
 end
 
-FHist.lookup(process::AbstractProcess, x::Real, y::Real) = lookup(process.efficiency, x, y)
+FHist.lookup(process::AbstractProcess, x::Real, y::Real) = typeof(process) == HistProcess ? lookup(process.counts, x, y) : lookup(process.efficiency, x, y)
 DrWatson.default_allowed(::AbstractProcess) = (Real, String, Bool, AbstractRange)
 DrWatson.allaccess(::AbstractProcess) = (:isotopeName, :signal, :bins, :activity, :nTotalSim, :amount)
 
