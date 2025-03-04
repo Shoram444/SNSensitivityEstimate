@@ -1,6 +1,11 @@
 # include(scriptsdir("Params.jl"))
+using Distributions
 
 ffrf(file) = fill_from_root_file(file, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])
+function smear_energy(E::Real, fwhm::Real) 
+    sigma = fwhm/2.355 * E * sqrt(1000/E)
+    return rand(Normal(E, sigma))
+end
 
 function load_files(dir::String)
     filesDict = Dict()
@@ -21,7 +26,7 @@ function load_files(dir::String)
     return filesDict
 end
 
-function load_data_processes(dir::String, mode::String)
+function load_data_processes(dir::String, mode::String; fwhm = 0.08)
     include(scriptsdir("Params.jl"))
     full_dir = datadir("sims", dir)
     processes = DataProcess[]
@@ -45,18 +50,20 @@ function load_data_processes(dir::String, mode::String)
         fileName = split(file, ".")[1]  |> split |> first 
         
         if mode == "sumE"
+            e = df.reconstructedEnergy1 .+ df.reconstructedEnergy2
             push!(
                 processes,
                 DataProcess(
-                    df.reconstructedEnergy1 .+ df.reconstructedEnergy2,
+                    ifelse.(fwhm > 0, smear_energy.(e, fwhm), e) ,
                     sumEParams[Symbol(fileName)]
                 )
             )
         elseif mode == "singleE"
+            e = vcat(df.reconstructedEnergy1, df.reconstructedEnergy2)
             push!(
                 processes,
                 DataProcess(
-                    vcat(df.reconstructedEnergy1, df.reconstructedEnergy2),
+                    ifelse.(fwhm > 0, smear_energy.(e, fwhm), e) ,
                     singleEParams[Symbol(fileName)]
                 )
             )
