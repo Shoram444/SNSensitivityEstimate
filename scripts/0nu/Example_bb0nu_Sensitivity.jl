@@ -7,6 +7,7 @@ using LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta
 using Revise
 Revise.track(SensitivityModule)
 
+
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
 # dictionaries into this script, which uses their values. 
@@ -19,7 +20,7 @@ begin
         :mode => "sumE", 
         :trackAlgo => "TIT",
         :signal => "bb0nu",
-        :neutron_config => "no_french_wall_shielding"
+        :neutron_config => "full_shielding"
     )
 
     files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edepbcu"
@@ -192,7 +193,7 @@ begin
         ax.xticks = 0:500:3500
         Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 2)
         saveName = savename("background_model", analysisDict, "png")
-        safesave(plotsdir("LSM_report", "background_model", analysisDict[:mode], saveName), f, px_per_unit = 6)
+        wsave(plotsdir("LSM_report", "background_model", analysisDict[:mode], saveName), f, px_per_unit = 6)
         f
     end
 
@@ -231,7 +232,7 @@ begin
 
     set_nTotalSim!.( signals[2:end], 1e8 )
 
-    save_sensitivity_table(signals, background, "LSM_report/sensitivityTables/ESum")
+    save_sensitivity_table(signals, background, "LSM_report/sensitivityTables/sumE")
 
 
     #save background tables for each signals ROI
@@ -276,9 +277,9 @@ begin
     end
 
     for s in signals
-        save_background_table(s, background, "LSM_report/backgroundTables/ESum")
+        save_background_table(s, background, "LSM_report/backgroundTables/sumE")
     end
-end
+end;
 
 begin
     function get_sensitivities_vs_time(
@@ -652,7 +653,7 @@ begin
         :mode => "singleE", 
         :trackAlgo => "TIT",
         :signal => "bb0nu",
-        :neutron_config => "iron_shielding"
+        :neutron_config => "no_french_wall_shielding"
     )
 
     labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons (5-sided)"]
@@ -681,12 +682,12 @@ begin
         analysisDictSingle[:mode]
     )
 
-    hist_processes = load_hist_processes(
-        files_directory,  
-        analysisDictSingle[:mode]
-    )
+    # hist_processes = load_hist_processes(
+    #     files_directory,  
+    #     analysisDictSingle[:mode]
+    # )
 
-    fN = ROOTFile("data/sims/neutron_spectra/Mar3100kevbin_roi_neutron_background_spectra_single_electron_energies.root")
+    fN = ROOTFile("data/sims/neutron_spectra/neutron_external_single.root")
     h1 = UnROOT.parseTH(fN[analysisDictSingle[:neutron_config]], raw= false)    
 
     hist_processesSingle = HistProcess(
@@ -761,6 +762,6 @@ begin
         f
     end
 
-    save_background_table(signal, backgroundSingle, "LSM_report/backgroundTables/SingleE/0_1000keV_ROI"; analysisDict = analysisDictSingle, ROI = (0, 1000))
+    save_background_table(signal, backgroundSingle, "LSM_report/backgroundTables/singleE/0_1000keV_ROI"; analysisDict = analysisDictSingle, ROI = (0, 1000))
 
 end
