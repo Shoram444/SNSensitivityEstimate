@@ -7,46 +7,91 @@ using LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta
 using Revise
 Revise.track(SensitivityModule)
 
+#save background tables for each signals ROI
+function save_background_table(
+    signal, 
+    background,
+    outDir;
+    analysisDict = analysisDict,
+    α = α,
+    SNparams = SNparams,
+    ROI = nothing
+)
+    t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
+    best_t12ESum = get_max_bin(t12MapESum)
+
+    if( ROI == nothing)
+        ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
+    else
+        ROI_a, ROI_b = ROI
+    end
+
+
+    bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
+
+    analysisDict[:signal] = signal.isotopeName
+
+    saveName = savename("background_counts", analysisDict, "md")
+    open(plotsdir(outDir, saveName), "w") do f
+        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
+        # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "total"]
+        header = ["process", "bkg counts in ROI"]
+        pretty_table(f,
+            DataFrame(
+                process = process,
+                counts = vcat(bkgs, sum(bkgs)),
+            ),
+            header = header,
+            alignment = [:l, :l],
+            backend = Val(:markdown),
+        )
+    end
+end
+
+# rsync -r mpetro@cca.in2p3.fr:/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/data/sims/fal5_8perc_Boff_TIT_twoDistinct_edep_bcu/* data/fal5_8perc_Boff_TIT_twoDistinct_edep_bcu
+# rsync -r mpetro@cca.in2p3.fr:/pbs/home/m/mpetro/scratch/spratt/files_for_maros/* data/sims/neutrons_/
+
+
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
 # dictionaries into this script, which uses their values. 
 include(scriptsdir("Params.jl"))
-begin
-    # Dictionary with the analysis parameters. (Nice for when you want to save stuff and make sure you know what params you used in this analysis.)
-    analysisDict = Dict(
-        :Bfield => "Boff", # magnetic field on/off
-        :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
-        :mode => "sumE", 
-        :trackAlgo => "TIT",
-        :signal => "bb0nu",
-        :neutron_config => "full_shielding"
-    )
 
-    files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edepbcu"
+# Dictionary with the analysis parameters. (Nice for when you want to save stuff and make sure you know what params you used in this analysis.)
+analysisDict = Dict(
+    :Bfield => "Boff", # magnetic field on/off
+    :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
+    :mode => "sumE", 
+    :trackAlgo => "TIT",
+    :signal => "bb0nu",
+    :neutron_config => "full_shielding"
+)
 
-    # Load all the processes in the directory. Function `load_processes` takes two arguments:
-    #  1. dir::String -> the name of the directory where the root files are stored
-    #  2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
-    data_processes = load_data_processes(
-        files_directory, 
-        analysisDict[:mode]
-    )
+files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
 
-    hist_processes = load_hist_processes(
-        files_directory,  
-        analysisDict[:mode]
-    )
+# Load all the processes in the directory. Function `load_processes` takes two arguments:
+#  1. dir::String -> the name of the directory where the root files are stored
+#  2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
+data_processes = load_data_processes(
+    files_directory, 
+    analysisDict[:mode]
+)
 
+hist_processes = load_hist_processes(
+    files_directory,  
+    analysisDict[:mode]
+)
 
-
+for c in ["full_shielding","iron_shielding","no_french_wall_shielding","current_shielding"]
+    analysisDict[:neutron_config] = c
     # declare which process is signal
-    signal = get_process("bb0nu_foil_bulk", data_processes)
+    global signal = get_process("bb0nu_foil_bulk", data_processes)
     # signal = get_process("bb0nuM1_foil_bulk", data_processes)
     # signal = get_process("bb0nuM2_foil_bulk", data_processes)
 
     # declare background processes
-    background = [
+    global background = [
         get_process("bb_foil_bulk", data_processes),
         get_process("Bi214_foil_bulk", data_processes),
         get_process("Bi214_wire_surface", data_processes),
@@ -88,9 +133,9 @@ begin
     println("Processes initialized.")
 
     # For now I only implemented 90% CL estimation, maybe someday I'll get to more...
-    α = 1.64485362695147
+    global α = 1.64485362695147
 
-    t = range(0, 5, 100)
+    global t = range(0, 5, 100)
 
 
     # The base structure of the `SensitivityModule` is the `Process`. For details, take a look into `src/Process.jl`, or hit `? Process` in REPL.
@@ -235,46 +280,7 @@ begin
     save_sensitivity_table(signals, background, "LSM_report/sensitivityTables/sumE")
 
 
-    #save background tables for each signals ROI
-    function save_background_table(
-            signal, 
-            background,
-            outDir;
-            analysisDict = analysisDict,
-            α = α,
-            SNparams = SNparams,
-            ROI = nothing
-        )
-        t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
-        best_t12ESum = get_max_bin(t12MapESum)
-
-        if( ROI == nothing)
-            ROI_a, ROI_b = best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]
-        else
-            ROI_a, ROI_b = ROI
-        end
-        
-
-        bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
-
-        analysisDict[:signal] = signal.isotopeName
-
-        saveName = savename("background_counts", analysisDict, "md")
-        open(plotsdir(outDir, saveName), "w") do f
-            process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
-            # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "total"]
-            header = ["process", "bkg counts in ROI"]
-            pretty_table(f,
-                DataFrame(
-                    process = process,
-                    counts = vcat(bkgs, sum(bkgs)),
-                ),
-                header = header,
-                alignment = [:l, :l],
-                backend = Val(:markdown),
-            )
-        end
-    end
+    
 
     for s in signals
         save_background_table(s, background, "LSM_report/backgroundTables/sumE")
@@ -282,6 +288,9 @@ begin
 end;
 
 begin
+    global α = 1.64485362695147
+    global t = range(0, 5, 100)
+
     function get_sensitivities_vs_time(
             signal,
             background,
@@ -644,19 +653,26 @@ begin
 end
 
 
+analysisDictSingle = Dict(
+    :Bfield => "Boff", # magnetic field on/off
+    :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
+    :mode => "singleE", 
+    :trackAlgo => "TIT",
+    :signal => "bb0nu",
+    :neutron_config => "no_french_wall_shielding"
+)
+
+data_processes = load_data_processes(
+    files_directory, 
+    analysisDictSingle[:mode]
+)
+
 
 ######### SINGLE ELECTRON SPECTRUM
-begin
-    analysisDictSingle = Dict(
-        :Bfield => "Boff", # magnetic field on/off
-        :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
-        :mode => "singleE", 
-        :trackAlgo => "TIT",
-        :signal => "bb0nu",
-        :neutron_config => "no_french_wall_shielding"
-    )
+for c in ["full_shielding","iron_shielding","no_french_wall_shielding","current_shielding"]
+    analysisDictSingle[:neutron_config] = c
 
-    labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons (5-sided)"]
+    labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons__"]
 
     if(analysisDictSingle[:neutron_config] == "full_shielding")
         labels[end] = "neutrons (6-sided)"
@@ -672,22 +688,13 @@ begin
         labels[end] = "neutrons"
     end
 
-    files_directory = "fal5_$(analysisDictSingle[:Eres])_$(analysisDictSingle[:Bfield])_$(analysisDictSingle[:trackAlgo])_twoDistinct_edepbcu"
+    files_directory = "fal5_$(analysisDictSingle[:Eres])_$(analysisDictSingle[:Bfield])_$(analysisDictSingle[:trackAlgo])_twoDistinct_edep_bcu"
 
     # Load all the processes in the directory. Function `load_processes` takes two arguments:
     #  1. dir::String -> the name of the directory where the root files are stored
     #  2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
-    data_processes = load_data_processes(
-        files_directory, 
-        analysisDictSingle[:mode]
-    )
 
-    # hist_processes = load_hist_processes(
-    #     files_directory,  
-    #     analysisDictSingle[:mode]
-    # )
-
-    fN = ROOTFile("data/sims/neutron_spectra/neutron_external_single.root")
+    fN = ROOTFile("data/sims/neutrons_/neutron_external_single.root")
     h1 = UnROOT.parseTH(fN[analysisDictSingle[:neutron_config]], raw= false)    
 
     hist_processesSingle = HistProcess(
