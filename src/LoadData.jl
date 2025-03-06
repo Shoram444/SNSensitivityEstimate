@@ -150,7 +150,7 @@ end
 
 
 
-function load_ndim_processes(dir::String, binsAngle, binsESingle, binsESum)
+function load_ndim_processes(dir::String, binsAngle, binsESingle, binsESum; fwhm = 0.08)
     include(scriptsdir("Params.jl"))
     full_dir = datadir("sims", dir)
     processes = DataProcess3D[]
@@ -178,10 +178,12 @@ function load_ndim_processes(dir::String, binsAngle, binsESingle, binsESum)
 
         Threads.@threads for (i,event) in enumerate(data)
             i%1_000_000 == 0 && println("$i/$(length(data))  events processed!")
+            Ei_ = maximum([event.reconstructedEnergy1, event.reconstructedEnergy2])
+            Es_ = sum([event.reconstructedEnergy1, event.reconstructedEnergy2])
 
-            Ei[i] = maximum([event.reconstructedEnergy1, event.reconstructedEnergy2])
+            Ei[i] = smear_energy(Ei_, fwhm)
             phi[i] = event.phi
-            Es[i] = sum([event.reconstructedEnergy1, event.reconstructedEnergy2])
+            Es[i] = smear_energy(Es_, fwhm)
         end
 
         fileName = split(file, ".")[1]  |> split |> first 

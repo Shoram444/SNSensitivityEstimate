@@ -10,10 +10,10 @@ include(scriptsdir("Params.jl"))
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 # 1. dir::String -> the name of the directory where the root files are stored
 # 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
-all_processes = load_processes("fal5_12perc_Boff", "sumE")
+all_processes = load_data_processes("fal5_8perc_Boff_TIT_twoDistinct_edep_bcu", "singleE")
 
 # declare which process is signal
-signal = get_process("bb0nu_foil_bulk", all_processes)
+signal = get_process("bb0nuM2_foil_bulk", all_processes)
 
 # declare background processes
 background = [
@@ -21,17 +21,24 @@ background = [
     get_process("Bi214_foil_bulk", all_processes),
     get_process("Bi214_wire_surface", all_processes),
     get_process("Tl208_foil_bulk", all_processes),
+    # get_process("K40_foil_bulk", all_processes),
+    # get_process("Pa234m_foil_bulk", all_processes),
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
+# set_nTotalSim!( signal, 0.98e8 )
+set_nTotalSim!( signal, 1e8 )
+
 set_signal!(background[1], false)
 
-# set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 1e8 )
-set_nTotalSim!( background[2], 1e8 )
+# set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( background[1], 0.99e8 )
+set_nTotalSim!( background[2], 0.96e8 )
 set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 1e8 )
+set_nTotalSim!( background[4], 0.76e8 )
+set_nTotalSim!( background[5], 1e8 )
+set_nTotalSim!( background[6], 1e8 )
+
 
 println("Processes initialized.")
 
@@ -40,7 +47,7 @@ Q_keV = SNparams["Q"]
 α = 1.64485362695147
 
 
-t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
+t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
 best_t12ESum = get_max_bin(t12MapESum)
 expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 effbb = lookup(signal, best_t12ESum)
@@ -97,7 +104,7 @@ pretty_table(
     backend = Val(:markdown),
 )
 
-a_, b_ = 0, 3500
+a_, b_ = 0, 1000
 
 bkgs = [sum(bincounts(restrict(b, a_, b_)))  for b in get_bkg_counts_1D.(background)]
 
@@ -110,7 +117,7 @@ pretty_table(
     backend = Val(:markdown),
 )
 
-a_, b_ = 2300, 3200
+a_, b_ = 0, 1000
 
 bkgs = [sum(bincounts(restrict(b, a_, b_)))  for b in get_bkg_counts_1D.(background)]
 

@@ -18,7 +18,7 @@ analysisDict = Dict(
     :neutron_config => "full_shielding"
 )
 
-files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edepbcu"
+files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
 
 binsAngle = 0:5:180
 binsESingle = 0:100:3500
@@ -54,14 +54,9 @@ set_nTotalSim!(background[4], 0.76e8)
 set_nTotalSim!(background[5], 1e8)
 set_nTotalSim!(background[6], 1e8)
 
-set_activity!(background[2], 10 / 1_000_000)
-set_activity!(background[4], 2 / 1_000_000)
-
 set_signal!(background[1], false)
 
-
 α = 1.64485362695147
-
 
 f(x) = -get_s_to_b(SNparams, α, vcat(signal, background), x)
 
