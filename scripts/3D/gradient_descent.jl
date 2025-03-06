@@ -58,7 +58,9 @@ set_signal!(background[1], false)
 
 α = 1.64485362695147
 
-f(x) = -get_s_to_b(SNparams, α, vcat(signal, background), x)
+passes_roi(signal.data, signal.bins, signal.bins)
+
+f3d(x) = -get_s_to_b(SNparams, α, vcat(signal, background), x)
 
 function make_stepRange(process)
     a = (process.binsAngle[1], process.binsAngle[end])
@@ -69,11 +71,11 @@ end
 searchRange = make_stepRange(signal)
 
 res = bboptimize(
-    f; 
+    f3d; 
     SearchRange = searchRange, 
     NumDimensions = 6,
     Method=:adaptive_de_rand_1_bin, 
-    MaxTime = 3*60,
+    MaxTime = 1*60,
     InitialPopulation = [[0, 180, 400, 3000, 2700, 3200]]
 )
 
@@ -88,7 +90,7 @@ function get_best_ROI3D(res)
 end
 
 best_roi = get_best_ROI3D(res)
-best_sens= get_sensitivity3D(
+@profview best_sens= get_sensitivity3D(
     SNparams, 
     α, 
     vcat(signal, background), 
