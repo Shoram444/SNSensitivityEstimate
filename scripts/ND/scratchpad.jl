@@ -14,11 +14,10 @@ Revise.track(SensitivityModule)
 include(scriptsdir("Params.jl"))
 
 
-vars = ["phi", "reconstructedEnergy1"]
+vars = ["phi"]
 
 bins = (
     phi = (0,180),
-    reconstructedEnergy1 = (0,1000),
 )
 
 function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{String})

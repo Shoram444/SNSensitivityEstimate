@@ -10,10 +10,10 @@ include(scriptsdir("Params.jl"))
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 # 1. dir::String -> the name of the directory where the root files are stored
 # 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
-all_processes = load_data_processes("fal5_8perc_Boff_TIT_twoDistinct_edep_bcu", "singleE")
+all_processes = load_data_processes("fal5_8perc_Boff_TIT_twoDistinct_edep_bcu", "phi")
 
 # declare which process is signal
-signal = get_process("bb0nuM2_foil_bulk", all_processes)
+signal = get_process("bb0nu_foil_bulk", all_processes)
 
 # declare background processes
 background = [
@@ -21,13 +21,13 @@ background = [
     get_process("Bi214_foil_bulk", all_processes),
     get_process("Bi214_wire_surface", all_processes),
     get_process("Tl208_foil_bulk", all_processes),
-    # get_process("K40_foil_bulk", all_processes),
-    # get_process("Pa234m_foil_bulk", all_processes),
+    get_process("K40_foil_bulk", all_processes),
+    get_process("Pa234m_foil_bulk", all_processes),
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
-# set_nTotalSim!( signal, 0.98e8 )
-set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( signal, 0.98e8 )
+# set_nTotalSim!( signal, 1e8 )
 
 set_signal!(background[1], false)
 
