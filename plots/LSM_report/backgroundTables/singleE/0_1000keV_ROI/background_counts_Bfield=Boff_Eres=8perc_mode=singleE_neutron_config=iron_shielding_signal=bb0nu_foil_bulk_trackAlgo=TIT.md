@@ -1,10 +1,10 @@
 | **process**                        | **bkg counts in ROI** |
 |:-----------------------------------|:----------------------|
-| bb\_foil\_bulk                     | 1.39287e5             |
-| Bi214\_foil\_bulk                  | 11.2313               |
-| Bi214\_radon                       | 19.3356               |
-| Tl208\_foil\_bulk                  | 1.67425               |
-| K40\_foil\_bulk                    | 20839.5               |
-| Pa234m\_foil\_bulk                 | 25837.0               |
-| neutron\_external\niron\_shielding | 11.6209               |
-| total                              | 1.86008e5             |
+| bb\_foil\_bulk                     | 139290.0±37.0         |
+| Bi214\_foil\_bulk                  | 11.24±0.026           |
+| Bi214\_radon                       | 19.31±0.2             |
+| Tl208\_foil\_bulk                  | 1.6739±0.005          |
+| K40\_foil\_bulk                    | 20841.0±83.0          |
+| Pa234m\_foil\_bulk                 | 25843.0±50.0          |
+| neutron\_external\niron\_shielding | 11.62±0.45            |
+| total                              | 186020.0±100.0        |

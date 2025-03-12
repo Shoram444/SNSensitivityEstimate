@@ -26,8 +26,8 @@ function save_background_table(
         ROI_a, ROI_b = ROI
     end
 
-
-    bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b)))  for b in get_bkg_counts_1D.(background)]
+    
+    bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b))) ± sqrt(sum(sumw2(restrict(b, ROI_a, ROI_b)))) for b in get_bkg_counts_1D.(background)]
 
     analysisDict[:signal] = signal.isotopeName
 
@@ -229,11 +229,16 @@ for c in ["full_shielding","iron_shielding","no_french_wall_shielding","current_
         # labels = [b.isotopeName for b in background]
         # labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
         st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
+        errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
+        
         for i=2:length(bkg_hists)
             hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
+            errorbars!(ax, sum(bkg_hists[i:end]), color = :black, whiskerwidth = 7)
+            
         end
         # lines!(ax, midpoints(binedges(sig_hist)), bincounts(sig_hist), label = signal.isotopeName, color = :red, linestyle = :dash, linewidth = 2.5)
-        
+        # errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
+
         ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
         ax.xticks = 0:500:3500
         Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 2)
@@ -256,9 +261,12 @@ for c in ["full_shielding","iron_shielding","no_french_wall_shielding","current_
         for s in signals
             t12MapESum = get_tHalf_map(SNparams, α, s, background...; approximate ="table")
             best_t12ESum = get_max_bin(t12MapESum)
-            @show expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+            bkg_hists = get_bkg_counts_1D.(background)
+            b = integral(restrict(sum(bkg_hists), best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]))
+            Δb = sqrt(sum(sumw2(restrict(sum(bkg_hists), best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]))))
+            expBkgESum = b ± Δb
             effbb = lookup(s, best_t12ESum)
-            ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), digits=2)
+            ThalfbbESum = round(get_tHalf(SNparams, effbb, Measurements.value(expBkgESum), α), digits=2)
             push!(df, (s.isotopeName, "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV", round(expBkgESum, digits = 2), round(effbb, digits = 2), round(ThalfbbESum, sigdigits=3)))
         end
 
@@ -278,9 +286,6 @@ for c in ["full_shielding","iron_shielding","no_french_wall_shielding","current_
     set_nTotalSim!.( signals[2:end], 1e8 )
 
     save_sensitivity_table(signals, background, "LSM_report/sensitivityTables/sumE")
-
-
-    
 
     for s in signals
         save_background_table(s, background, "LSM_report/backgroundTables/sumE")
@@ -760,6 +765,7 @@ for c in ["full_shielding","iron_shielding","no_french_wall_shielding","current_
             hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
         end
         # lines!(ax, midpoints(binedges(sig_hist)), bincounts(sig_hist), label = signal.isotopeName, color = :red, linestyle = :dash, linewidth = 2.5)
+        errorbars!(ax,  sum(bkg_hists), color = :black, whiskerwidth = 7)
         
         ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
         ax.xticks = 0:500:3500

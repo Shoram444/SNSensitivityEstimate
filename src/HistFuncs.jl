@@ -29,9 +29,9 @@ function /(h::Hist2D, x::Real)
 end
 
 
-function *(x::Real, h::Hist2D)
-    return *(h, x)
-end
+# function *(x::Real, h::Hist2D)
+#     return *(h, x)
+# end
 
 function sqrt(h::Hist2D) 
     mat = zeros(size(bincounts(h)))
