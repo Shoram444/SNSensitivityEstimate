@@ -150,7 +150,65 @@ end
 
 
 
-function load_ndim_processes(dir::String, binsAngle, binsESingle, binsESum; fwhm = 0.08)
+function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{String}; fwhm = 0.08)
+    include(scriptsdir("Params.jl"))
+    full_dir = datadir("sims", dir)
+    processes = DataProcess3D[]
+
+    println("Loading files from: $full_dir ...")
+    println("mode: NDim ")
+
+    nFiles = 0
+    for file in readdir(full_dir)
+        nFiles += 1
+        if( split(file, ".")[end] != "root" )
+            continue
+        end
+        
+        f = ROOTFile(joinpath(full_dir, file)) 
+        if(!haskey(f, "tree"))
+            continue
+        end
+
+        data = LazyTree(f, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])
+
+        Ei = Vector{Float64}(undef, length(data)) # Float32[] # individual energies
+        Es = Vector{Float64}(undef, length(data)) #Float32[] # sum of energies
+        phi = Vector{Float64}(undef, length(data)) # Float32[] # phi angle
+
+        Threads.@threads for (i,event) in enumerate(data)
+            i%1_000_000 == 0 && println("$i/$(length(data))  events processed!")
+            Ei_ = maximum([event.reconstructedEnergy1, event.reconstructedEnergy2])
+            Es_ = sum([event.reconstructedEnergy1, event.reconstructedEnergy2])
+
+            Ei[i] = smear_energy(Ei_, fwhm)
+            phi[i] = event.phi
+            Es[i] = smear_energy(Es_, fwhm)
+        end
+
+        fileName = split(file, ".")[1]  |> split |> first 
+        
+        push!(
+                processes,
+                DataProcess3D(
+                    phi,
+                    Ei,
+                    Es,
+                    binsAngle,
+                    binsESingle,
+                    binsESum,
+                    singleEParams[Symbol(fileName)]
+                )
+            )
+        println("$fileName loaded")
+
+    end
+    println("Loaded $nFiles files.")
+
+    return processes
+end
+
+function load_3D_processes(dir::String, binsAngle, binsESingle, binsESum; fwhm = 0.08)
     include(scriptsdir("Params.jl"))
     full_dir = datadir("sims", dir)
     processes = DataProcess3D[]

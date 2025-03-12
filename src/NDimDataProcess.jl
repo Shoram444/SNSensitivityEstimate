@@ -20,23 +20,22 @@ end
     Holds information about ROI efficiency
 """
 mutable struct ROIEfficiencyND
-    roi::NamedTuple
+    roi::Vector{<:Real}
     eff
 end
 
-
 *(x::Float64, e::ROIEfficiencyND) = x * e.eff
 
-mutable struct DataProcessND <: AbstractProcess
+mutable struct DataProcessND <: AbstractProcess 
     data::LazyTree
     isotopeName::String
     signal::Bool
-    activity::Real
+    activity::Union{Real, Measurement}
     timeMeas::Real
     nTotalSim::Real
     bins::NamedTuple
     amount::Real
-    varNames::Tuple
+    varNames::Vector{String}
 end
 
 
@@ -50,8 +49,34 @@ function get_roi_effciencyND(
 
     count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
 
-    Threads.@thread for i in eachindex(data)
+    Threads.@threads for i in eachindex(data)
         if passes_roi( data[i], roi, roiKeys)
+            Threads.atomic_add!(count, 1)  # Thread-safe increment
+        end
+    end
+
+    ROI = Float64[]
+    for k in keys(roi)
+        push!(ROI, roi[k][1])
+        push!(ROI, roi[k][2])
+    end
+
+    return ROIEfficiencyND(
+        ROI,  
+        count[] / nTotalSim  # Extract final atomic count
+    )
+end
+
+function get_roi_effciencyND(
+    data::LazyTree, 
+    roi::Vector{<:Real}, 
+    nTotalSim::Real
+)
+
+    count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
+
+    Threads.@threads for i in eachindex(data)
+        if passes_roi( data[i], roi)
             Threads.atomic_add!(count, 1)  # Thread-safe increment
         end
     end
@@ -66,7 +91,7 @@ function get_roi_effciencyND(
     process::DataProcessND,
     roi::NamedTuple
 )
-    return get_effciencyND(
+    return get_roi_effciencyND(
         process.data,
         roi,
         process.nTotalSim,
@@ -74,10 +99,21 @@ function get_roi_effciencyND(
     )
 end
 
+function get_roi_effciencyND(
+    process::DataProcessND,
+    roi::Vector{<:Real}
+)
+    return get_roi_effciencyND(
+        process.data,
+        roi,
+        process.nTotalSim
+    )
+end
+
 @inline function passes_roi(
     data::UnROOT.LazyEvent,  
     roi::NamedTuple,
-    varNames
+    varNames::Vector{Symbol}
 )
     @inbounds for n in varNames
         range = roi[n] 
@@ -88,9 +124,38 @@ end
     return true
 end
 
+@inline function passes_roi(
+    data::UnROOT.LazyEvent,  
+    roi::Vector{<:Real}
+)
+    @inbounds for (i,d) in zip(1:2:length(roi), data)
+        if !(roi[i] ≤ d < roi[i+1])
+            return false
+        end
+    end
+    return true
+end
+
+
+@inline function passes_roi(
+    data::UnROOT.LazyEvent,  
+    roi::NamedTuple,
+    varNames::Vector{String}
+)
+    @inbounds for n in varNames
+        range = roi[Symbol(n)]
+        d = data[Symbol(n)] 
+        if !(range[1] ≤ d < range[2])
+            return false
+        end
+    end
+    return true
+end
+
 function DataProcessND(
     data::LazyTree,
-    bins::NamedTuple,
+    binsTuple::NamedTuple,
+    varNames::Vector{String},
     processDict::Dict
 )
     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
@@ -103,9 +168,9 @@ function DataProcessND(
         activity,
         timeMeas,
         nTotalSim,
-        bins,
+        binsTuple,
         amount,
-        keys(bins) # varNames
+        varNames 
     )
 end
 
@@ -113,37 +178,47 @@ function get_roi_bkg_counts(
     processes::Vector{DataProcessND}, 
     roi::NamedTuple,
 )
-    bkg = 0.0
+    bkg = zero(Float64)
+    ε = zero(Float64)
 
     for p in processes
         p.signal && continue
-        eff = get_roi_effciencyND(p, roi).eff
-        bkg += p.amount * eff * p.activity * p.timeMeas
+        ε = get_roi_effciencyND(p, roi).eff
+        bkg += p.amount * ε * p.activity * p.timeMeas
     end
     return bkg
 end
 
-function get_s_to_b(SNparams, 
-    α, 
+function get_roi_bkg_counts(
     processes::Vector{DataProcessND}, 
-    ROIs::Vector{<:Real};
+    roi::Vector{<:Real},
+)
+    bkg = zero(Float64)
+    ε = zero(Float64)
+
+    for p in processes
+        p.signal && continue
+        ε = get_roi_effciencyND(p, roi).eff
+        bkg += p.amount * ε * p.activity * p.timeMeas
+    end
+    return bkg
+end
+
+function get_s_to_b(
+    SNparams::Dict, 
+    α::Float64, 
+    processes::Vector{DataProcessND}, 
+    roi::Vector{<:Real};
     approximate="table"
 )
-    # Construct ROI 
-    roi = NamedTuple(
-            k => (round(ROIs[i]), round(ROIs[i+1])) 
-            for (i, k) in zip(1:2:length(processes[1].varNames)*2-1, processes[1].varNames)
-        ) # creates a namedTuple in format (varName => (start, end), ...)
-
     signal_id = findfirst(p -> p.signal, processes)
     if signal_id === nothing
         @error "No signal process found!"
         return 0.0
     end
                     
-    signal_process = processes[signal_id]
-    ε = get_roi_effciencyND(signal_process, roi).eff
-    ε == 0 && return 0.0 # If efficiency is zero, return zero sensitivity
+    ε = get_roi_effciencyND(processes[signal_id], roi).eff
+    ε == 0.0 && return 0.0 # If efficiency is zero, return zero sensitivity
 
     b = get_roi_bkg_counts(processes, roi)
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
@@ -151,6 +226,36 @@ function get_s_to_b(SNparams,
 
     return ε / S_b
 end
+
+# function get_s_to_b(
+#     SNparams::Dict, 
+#     α::Float64, 
+#     processes::Vector{DataProcessND}, 
+#     ROIs::NamedTuple;
+#     approximate="table"
+# )
+#     # Construct ROI 
+#     roi = NamedTuple(
+#             Symbol(k) => (round(ROIs[k][i]), round(ROIs[k][i+1])) 
+#             for (i, k) in zip(1:2:length(processes[1].varNames)*2-1, processes[1].varNames)
+#         ) # creates a namedTuple in format (varName => (start, end), ...)
+
+#     signal_id = findfirst(p -> p.signal, processes)
+#     if signal_id === nothing
+#         @error "No signal process found!"
+#         return 0.0
+#     end
+                    
+#     # signal_process = processes[signal_id]
+#     @time ε = get_roi_effciencyND(processes[signal_id], roi).eff
+#     ε == 0.0 && return 0.0 # If efficiency is zero, return zero sensitivity
+
+#     @time b = get_roi_bkg_counts(processes, roi)
+#     @unpack W, foilMass, Nₐ, tYear, a = SNparams
+#     S_b = get_FC(b, α; approximate=approximate)
+
+#     return ε / S_b
+# end
 
 function get_sensitivityND(
     SNparams::Dict, 
@@ -162,17 +267,20 @@ function get_sensitivityND(
 
     #check that rois are within the range of the data
     for k in processes[1].varNames
-        if (roi[k][1] < processes[1].bins[k][1] || roi[k][2] > processes[1].bins[k][2])
+        if (roi[Symbol(k)][1] < processes[1].bins[Symbol(k)][1] || roi[Symbol(k)][2] > processes[1].bins[Symbol(k)][2])
             @error "ROI out of range for $k"
         end
     end
 
     signal_id = findall([p.signal for p in processes])
-    length(signal_id) > 1 && @error "Only one signal process allowed! Provided $(length(signal_id))"
+    if length(signal_id) > 1 
+        @error "Only one signal process allowed! Provided $(length(signal_id))" 
+        return SensitivityEstimateND(roi, 0.0, 0.0, 0.0)
+    end
 
     signal_process = processes[first(signal_id)]
     ε = get_roi_effciencyND(signal_process, roi).eff
-    ε == 0 && return 0.0 # If efficiency is zero, return zero sensitivity
+    ε == 0 && return SensitivityEstimateND(roi, 0.0, 0.0, 0.0) # If efficiency is zero, return zero sensitivity
 
     b = get_roi_bkg_counts(processes, roi)
 

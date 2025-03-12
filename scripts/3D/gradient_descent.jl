@@ -58,7 +58,7 @@ set_signal!(background[1], false)
 
 α = 1.64485362695147
 
-passes_roi(signal.data, signal.bins, signal.bins)
+SensitivityEstimateND.passes_roi(signal.dataAngle, signal.binsAngle, signal.binsAngle)
 
 f3d(x) = -get_s_to_b(SNparams, α, vcat(signal, background), x)
 
@@ -69,6 +69,8 @@ function make_stepRange(process)
     return [a, a, es, es, eS, eS]
 end
 searchRange = make_stepRange(signal)
+
+@time f3d([0,180,0,1000,0,1000])
 
 res = bboptimize(
     f3d; 
