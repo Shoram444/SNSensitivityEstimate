@@ -92,6 +92,16 @@ export
     get_sensitivity3D,
     get_s_to_b
 
+include("NDimDataProcess.jl")
+    export
+        SensitivityEstimateND,
+        ROIEfficiencyND,
+        DataProcessND,
+        get_roi_effciencyND,
+        get_roi_bkg_counts,
+        get_s_to_b,
+        get_sensitivityND
+
 include("PlotsRecipes.jl")
 
 include("Makie.jl")

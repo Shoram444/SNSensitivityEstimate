@@ -59,7 +59,7 @@ function get_roi_effciencyND(
 
     count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
 
-    @batch for i in eachindex(data)
+    Threads.@thread for i in eachindex(data)
         if passes_roi( data[i], roi, k_)
             Threads.atomic_add!(count, 1)  # Thread-safe increment
         end

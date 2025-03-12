@@ -1,7 +1,12 @@
 import Base: *, maximum
 
 """
-    aa
+    Holds information about sensitivity estimate
+    Fields:
+    - `roi`: NamedTuple of the ROI
+    - `tHalf`: sesnitivity estimate
+    - `signalEff`: Signal efficiency
+    - `bkgCounts`: Background counts
 """
 mutable struct SensitivityEstimateND
     roi::NamedTuple
@@ -23,7 +28,7 @@ end
 *(x::Float64, e::ROIEfficiencyND) = x * e.eff
 
 mutable struct DataProcessND <: AbstractProcess
-    data::NamedTuple
+    data::LazyTree
     isotopeName::String
     signal::Bool
     activity::Real
@@ -31,119 +36,88 @@ mutable struct DataProcessND <: AbstractProcess
     nTotalSim::Real
     bins::NamedTuple
     amount::Real
+    varNames::Tuple
 end
 
 
 
-function get_effciencyND(
-        data::NamedTuple, 
-        bins::NamedTuple, 
-        nTotalSim::Real
-    )
-    nthreads = Threads.nthreads()  # Get number of available threads
-    local_counts = fill(0, nthreads)  # Create thread-local counters
+function get_roi_effciencyND(
+    data::LazyTree, 
+    roi::NamedTuple, 
+    nTotalSim::Real,
+    roiKeys = keys(roi)
+)
 
-    Threads.@threads for tid in 1:nthreads
-        local_count = 0  # Local variable for counting
-        @inbounds for i in tid:nthreads:length(dataAngle)  # Chunking work by thread ID
-            if (
-                passes_roi(
-                    dataAngle[i], 
-                    dataESingle[i], 
-                    dataESum[i], 
-                    binsAngle, 
-                    binsESingle, 
-                    binsESum
-                )
-            )
-                local_count += 1  # Update local count
-            end
+    count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
+
+    Threads.@thread for i in eachindex(data)
+        if passes_roi( data[i], roi, roiKeys)
+            Threads.atomic_add!(count, 1)  # Thread-safe increment
         end
-        local_counts[tid] = local_count  # Store count from this thread
     end
-    
+
     return ROIEfficiencyND(
-        binsESingle,
-        binsESum,
-        binsAngle,
-        sum(local_counts) / nTotalSim
+        roi,  
+        count[] / nTotalSim  # Extract final atomic count
     )
 end
 
-function get_effciencyND(
+function get_roi_effciencyND(
     process::DataProcessND,
-    binsAngle::Vector{<:Real}, 
-    binsESingle::Vector{<:Real}, 
-    binsESum::Vector{<:Real}, 
+    roi::NamedTuple
 )
     return get_effciencyND(
-        process.dataAngle,
-        process.dataESingle,
-        process.dataESum,
-        binsAngle,
-        binsESingle,
-        binsESum,
-        process.nTotalSim
+        process.data,
+        roi,
+        process.nTotalSim,
+        process.varNames
     )
 end
 
-
-
 @inline function passes_roi(
-        angle_val::Real, 
-        esingle_val::Real, 
-        esum_val::Real, 
-        angle_roi::Vector{<:Real}, 
-        esingle_roi::Vector{<:Real}, 
-        esum_roi::Vector{<:Real}
-    )
-    return (
-        esum_roi[1] ≤ esum_val < esum_roi[2] &&
-        angle_roi[1] ≤ angle_val < angle_roi[2] &&
-        esingle_roi[1] ≤ esingle_val < esingle_roi[2]
-        
-    )
+    data::UnROOT.LazyEvent,  
+    roi::NamedTuple,
+    varNames
+)
+    @inbounds for n in varNames
+        range = roi[n] 
+        if !(range[1] ≤ data[n] < range[2])
+            return false
+        end
+    end
+    return true
 end
 
 function DataProcessND(
-        dataAngle::Vector{<:Real},
-        dataESingle::Vector{<:Real},
-        dataESum::Vector{<:Real},
-        binsAngle,
-        binsESingle,
-        binsESum,
-        processDict::Dict
-    )
+    data::LazyTree,
+    bins::NamedTuple,
+    processDict::Dict
+)
     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
     println("creating process: $isotopeName")
 
     return DataProcessND(
-        dataAngle,
-        dataESingle,
-        dataESum,
+        data,
         isotopeName,
         signal,
         activity,
         timeMeas,
         nTotalSim,
-        binsAngle,
-        binsESingle,
-        binsESum,
-        amount
+        bins,
+        amount,
+        keys(bins) # varNames
     )
 end
 
-function get_bkg_counts(
-        processes::Vector{DataProcessND}, 
-        binsAngle::Vector{<:Real}, 
-        binsESingle::Vector{<:Real}, 
-        binsESum::Vector{<:Real}
-    )
+function get_roi_bkg_counts(
+    processes::Vector{DataProcessND}, 
+    roi::NamedTuple,
+)
     bkg = 0.0
 
     for p in processes
         p.signal && continue
-        eff = get_effciencyND(p.dataAngle, p.dataESingle, p.dataESum, binsAngle, binsESingle, binsESum, p.nTotalSim).eff
+        eff = get_roi_effciencyND(p, roi).eff
         bkg += p.amount * eff * p.activity * p.timeMeas
     end
     return bkg
@@ -155,18 +129,23 @@ function get_s_to_b(SNparams,
     ROIs::Vector{<:Real};
     approximate="table"
 )
-    binsAngle = round.(ROIs[1:2], digits = -1)
-    binsESingle = round.(ROIs[3:4], digits = -2)
-    binsESum = round.(ROIs[5:6], digits = -2)
+    # Construct ROI 
+    roi = NamedTuple(
+            k => (round(ROIs[i]), round(ROIs[i+1])) 
+            for (i, k) in zip(1:2:length(processes[1].varNames)*2-1, processes[1].varNames)
+        ) # creates a namedTuple in format (varName => (start, end), ...)
 
-    signal_id = findall([p.signal for p in processes])
-    length(signal_id) > 1 && @error "Only one signal process allowed! Provided $(length(signal_id))"
-    
-    signal_process = processes[first(signal_id)]
-    ε = get_effciencyND(signal_process.dataAngle, signal_process.dataESingle, signal_process.dataESum, binsAngle, binsESingle, binsESum, signal_process.nTotalSim).eff
+    signal_id = findfirst(p -> p.signal, processes)
+    if signal_id === nothing
+        @error "No signal process found!"
+        return 0.0
+    end
+                    
+    signal_process = processes[signal_id]
+    ε = get_roi_effciencyND(signal_process, roi).eff
     ε == 0 && return 0.0 # If efficiency is zero, return zero sensitivity
 
-    b = get_bkg_counts(processes, binsAngle, binsESingle, binsESum)
+    b = get_roi_bkg_counts(processes, roi)
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     S_b = get_FC(b, α; approximate=approximate)
 
@@ -174,37 +153,28 @@ function get_s_to_b(SNparams,
 end
 
 function get_sensitivityND(
-        SNparams, 
-        α, 
-        processes::Vector{DataProcessND}, 
-        ROIs::Vector{<:Real};
-        approximate="table"
-    )
+    SNparams::Dict, 
+    α::Real, 
+    processes::Vector{DataProcessND}, 
+    roi::NamedTuple;
+    approximate="table"
+)
 
-    binsAngle = ROIs[1:2]
-    binsESingle = ROIs[3:4]
-    binsESum = ROIs[5:6]
-
-    #check that bins are within the range of the data
-    if( binsAngle[1] < processes[1].binsAngle[1] || binsAngle[2] > processes[1].binsAngle[end] )
-        return 0.0
+    #check that rois are within the range of the data
+    for k in processes[1].varNames
+        if (roi[k][1] < processes[1].bins[k][1] || roi[k][2] > processes[1].bins[k][2])
+            @error "ROI out of range for $k"
+        end
     end
-    if( binsESingle[1] < processes[1].binsESingle[1] || binsESingle[2] > processes[1].binsESingle[end] )
-        return 0.0
-    end
-    if( binsESum[1] < processes[1].binsESum[1] || binsESum[2] > processes[1].binsESum[end] )
-        return 0.0
-    end
-
 
     signal_id = findall([p.signal for p in processes])
     length(signal_id) > 1 && @error "Only one signal process allowed! Provided $(length(signal_id))"
-    
+
     signal_process = processes[first(signal_id)]
-    ε = get_effciencyND(signal_process.dataAngle, signal_process.dataESingle, signal_process.dataESum, binsAngle, binsESingle, binsESum, signal_process.nTotalSim).eff
+    ε = get_roi_effciencyND(signal_process, roi).eff
     ε == 0 && return 0.0 # If efficiency is zero, return zero sensitivity
 
-    b = get_bkg_counts(processes, binsAngle, binsESingle, binsESum)
+    b = get_roi_bkg_counts(processes, roi)
 
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
@@ -213,36 +183,7 @@ function get_sensitivityND(
     tHalf = constantTerm * ε / S_b
 
     # return tHalf
-    return SensitivityEstimateND(
-            binsAngle, 
-            binsESingle, 
-            binsESum, 
-            tHalf,
-            ε,
-            b
-        )
-    
-end
-
-function get_sensitivityND(
-    SNparams, 
-    α, 
-    processes::Vector{DataProcessND}, 
-    ROIs::Dict;
-    approximate="table"
-)
-
-    binsAngle = ROIs[:angle]
-    binsESingle = ROIs[:esingle]
-    binsESum = ROIs[:esum]
-
-    return get_sensitivityND(
-        SNparams, 
-        α, 
-        processes, 
-        [binsAngle[1], binsAngle[2], binsESingle[1], binsESingle[2], binsESum[1], binsESum[2]];
-        approximate=approximate
-    )
+    return SensitivityEstimateND(roi, tHalf, ε, b)
 end
 
 
@@ -260,7 +201,6 @@ function set_nTotalSim!(process::DataProcessND, nTotalSim::Real)
     process.nTotalSim = nTotalSim
     return process
 end
-
 
 
 function set_amount!(process::DataProcessND, amount::Real)
