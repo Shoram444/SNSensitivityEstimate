@@ -1,8 +1,10 @@
-import Pkg
-Pkg.activate(".")
+using DrWatson
+@quickactivate "SNSensitivityEstimate"
 
-using Random, LinearAlgebra, Statistics, Distributions, StatsBase, Plots, BAT, BinnedModels, StatsBase, DensityInterface, IntervalSets, FHist
-using SpecialFunctions
+push!(LOAD_PATH, srcdir())
+
+using SensitivityModule
+using Random, LinearAlgebra, Statistics, Distributions, Plots, BAT, BinnedModels, StatsBase, DensityInterface, IntervalSets, FHist, SpecialFunctions
 
 mu1 = 1000
 lambda = 0.001
@@ -17,6 +19,7 @@ d2 = rand(Uniform(0, 3000), n2) .+ ε
 data = vcat(
     d1, d2
 )
+
 
 h1 = normalize(Hist1D(d1; binedges = 0:100:3000), width = true)
 h2 = normalize(Hist1D(d2; binedges = 0:100:3000), width = true)
@@ -98,5 +101,121 @@ samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings()
 marginal_modes = bat_marginalmode(samples).result
 
 bat_report(samples)
-
+true_par_values
 plot(samples, :(a), nbins=50)
+
+###################################
+include(scriptsdir("Params.jl"))
+
+# Load all the processes in the directory. Function `load_processes` takes two arguments:
+# 1. dir::String -> the name of the directory where the root files are stored
+# 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
+all_processes = load_data_processes("fal5_8perc_Boff_TIT_twoDistinct_edep_bcu", "sumE")
+
+# declare which process is signal
+signal = get_process("bb0nu_foil_bulk", all_processes)
+
+# declare background processes
+background = [
+    get_process("bb_foil_bulk", all_processes),
+    get_process("Bi214_foil_bulk", all_processes),
+    get_process("Bi214_wire_surface", all_processes),
+    get_process("Tl208_foil_bulk", all_processes),
+    get_process("K40_foil_bulk", all_processes),
+    get_process("Pa234m_foil_bulk", all_processes),
+]
+
+# set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
+set_nTotalSim!( signal, 0.98e8 )
+# set_nTotalSim!( signal, 1e8 )
+
+set_signal!(background[1], false)
+
+# set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( background[1], 0.99e8 )
+set_nTotalSim!( background[2], 0.96e8 )
+set_nTotalSim!( background[3], 1e8 )
+set_nTotalSim!( background[4], 0.76e8 )
+set_nTotalSim!( background[5], 1e8 )
+set_nTotalSim!( background[6], 1e8 )
+
+
+println("Processes initialized.")
+
+#
+Q_keV = SNparams["Q"]
+α = 1.64485362695147
+
+
+t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
+best_t12ESum = get_max_bin(t12MapESum)
+expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+
+function get_sens_bayes(background, signal)
+    ROI_a, ROI_b = 2600, 3300
+
+    bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] |> sum
+    bkg_hist_normed = normalize(bkg_hist, width = true)
+    signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), ROI_a, ROI_b), width = true)
+
+    data_bkg = [first(FHist.sample(bkg_hist)) for i=1:rand(Poisson(round(Int, integral(bkg_hist))))] 
+    data_hist = Hist1D( data_bkg; binedges= binedges(bkg_hist_normed) )
+
+    function f1(par::NamedTuple{(:a, :ε)}, x::Real)
+        total_rate = sum(par.a)
+        a1 = par.a[1]
+        a2 = 1.0 - a1
+        th = normalize(a1*signal_hist_normed + a2*bkg_hist_normed , width = true)
+        return my_pdf(th, x) 
+    end
+
+    my_likelihood = make_hist_likelihood(data_hist, f1)
+
+    prior = distprod(
+        a = Uniform(1e-20, 1),
+        ε = 0.1
+    )
+
+    posterior = PosteriorMeasure(my_likelihood, prior)
+    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^5, nchains = 4))
+
+    marginal_modes = bat_marginalmode(samples).result
+
+    binned_unshaped_samples, f_flatten = bat_transform(Vector, samples)
+    nDataPoints = integral(data_hist)
+    muS = [a[1] * nDataPoints for a in binned_unshaped_samples.v]
+
+    """
+        Stupid integration for getting upper limit - requires monotonely decreasing samples in vector form!
+    """
+    function get_interval_upper(data, CL; nbins=100)
+        h = fit(Histogram, data; nbins = nbins)
+        cs = cumsum(h.weights) ./ sum(h.weights)
+
+        uppID = findfirst(x -> x >= CL, cs)
+        midpoints(h.edges[1])[Int(uppID)]
+    end
+
+    exp_mu_signal_90 = get_interval_upper(muS, 0.9)
+    Na = 6.02214e23
+    m = 6.067
+    t = 2.88
+    W = 0.08192
+    eff= lookup(signal, ROI_a, ROI_b)
+    Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
+end
+
+t = [get_sens_bayes(background, signal) for i=1:100]
+
+plot(t, st=:histogram, nbins = 15, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")
+vline!([median(t)], label = "Median = $(round(median(t), sigdigits = 3)) yr", color = :red, linewidth = 4)
+vline!( [mean(t)], label = "Mean = $(round(mean(t), sigdigits = 3)) yr", color = :green, linewidth = 4)
+
+plot(samples)
+# plot(signal_hist_normed)
+
+median(t)
+
+scatter(t)
+
+

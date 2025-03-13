@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "98aceaf180ee5c340d576cf237bc9264c4cc9bbe"
+project_hash = "035f8880c8dadb0f5fc085772a3b2fbb4267c7c8"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "e1ce448a0d7f88168ffe2eeac4549c32d45a42d1"
@@ -389,6 +389,12 @@ version = "0.15.4"
     ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
     Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
     Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
+
+[[deps.BinnedModels]]
+deps = ["ArgCheck", "DensityInterface", "Distributions", "DocStringExtensions", "IntervalSets", "LinearAlgebra", "Random", "Statistics", "StatsBase", "StructArrays"]
+git-tree-sha1 = "c9e338eeb53ea506089b042785ca07a182cc85b4"
+uuid = "fa1fc709-16e9-4084-816c-4cfb0f07afb9"
+version = "0.2.0"
 
 [[deps.BitFlags]]
 git-tree-sha1 = "0691e34b3bb8be9307330f88d1a3c3f25466c24d"
