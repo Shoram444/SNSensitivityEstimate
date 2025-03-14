@@ -36,6 +36,7 @@ mutable struct DataProcessND <: AbstractProcess
     bins::NamedTuple
     amount::Real
     varNames::Vector{String}
+    varIdxs::Vector{Int}
 end
 
 
@@ -69,14 +70,42 @@ end
 
 function get_roi_effciencyND(
     data::LazyTree, 
-    roi::Vector{<:Real}, 
-    nTotalSim::Real
+    roi::NamedTuple, 
+    nTotalSim::Real,
+    roiKeys::Vector{String}
 )
 
     count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
 
     Threads.@threads for i in eachindex(data)
-        if passes_roi( data[i], roi)
+        if passes_roi( data[i], roi, roiKeys)
+            Threads.atomic_add!(count, 1)  # Thread-safe increment
+        end
+    end
+
+    ROI = Float64[]
+    for k in keys(roi)
+        push!(ROI, roi[k][1])
+        push!(ROI, roi[k][2])
+    end
+
+    return ROIEfficiencyND(
+        ROI,  
+        count[] / nTotalSim  # Extract final atomic count
+    )
+end
+
+function get_roi_effciencyND(
+    data::LazyTree, 
+    roi::Vector{<:Real}, 
+    nTotalSim::Real,
+    varIdxs::Vector{Int}
+)
+
+    count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
+
+    Threads.@threads for i in eachindex(data)
+        if passes_roi( data[i], roi, varIdxs)
             Threads.atomic_add!(count, 1)  # Thread-safe increment
         end
     end
@@ -101,32 +130,35 @@ end
 
 function get_roi_effciencyND(
     process::DataProcessND,
-    roi::Vector{<:Real}
+    roi::Vector{<:Real},
 )
     return get_roi_effciencyND(
         process.data,
         roi,
-        process.nTotalSim
+        process.nTotalSim,
+        process.varIdxs
     )
 end
 
 @inline function passes_roi(
     data::UnROOT.LazyEvent,  
-    roi::NamedTuple,
-    varNames::Vector{Symbol}
+    roi::Vector{<:Real},
+    varIdxs::Vector{Int}
 )
-    @inbounds for n in varNames
-        range = roi[n] 
-        if !(range[1] ≤ data[n] < range[2])
+    @inbounds for (r,i) in zip(1:2:length(roi)*2-1, varIdxs)
+        if !(roi[r] ≤ data[i] < roi[r+1])
             return false
         end
     end
     return true
 end
 
+
+
 @inline function passes_roi(
     data::UnROOT.LazyEvent,  
-    roi::Vector{<:Real}
+    roi::Vector{<:Real},
+    varNames::Vector{Symbol}
 )
     @inbounds for (i,d) in zip(1:2:length(roi), data)
         if !(roi[i] ≤ d < roi[i+1])
@@ -170,7 +202,8 @@ function DataProcessND(
         nTotalSim,
         binsTuple,
         amount,
-        varNames 
+        varNames,
+        [findfirst(x -> x == n, names(data)) for n in varNames]
     )
 end
 

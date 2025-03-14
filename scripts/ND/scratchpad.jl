@@ -6,7 +6,7 @@ using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, 
 using Revise
 using BlackBoxOptim
 
-Revise.track(SensitivityModule)
+# Revise.track(SensitivityModule)
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -14,55 +14,30 @@ Revise.track(SensitivityModule)
 include(scriptsdir("Params.jl"))
 
 
-vars = ["phi"]
+vars = [
+    "phi", 
+    "sumE", 
+    "maxE", 
+    "minE", 
+    "r", 
+    "dy", 
+    "dz"
+    ]
 
 bins = (
     phi = (0,180),
+    sumE = (0, 3500),
+    maxE = (0, 3000),
+    minE = (0, 3500),
+    r = (0, 100),
+    dy = (-100, 100),
+    dz = (-100, 100)
 )
 
-function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{String})
-    include(scriptsdir("Params.jl"))
-    full_dir = datadir("sims", dir)
-    processes = DataProcessND[]
 
-    println("Loading files from: $full_dir ...")
-    println("mode: NDim ")
+processes = load_ndim_processes("fal5_8perc_Boff_TIT", bins, vars)
 
-    nFiles = 0
-    for file in readdir(full_dir)
-        nFiles += 1
-        if( split(file, ".")[end] != "root" )
-            continue
-        end
-        
-        f = ROOTFile(joinpath(full_dir, file)) 
-        if(!haskey(f, "tree"))
-            continue
-        end
-
-        data = LazyTree(f, "tree", varNames)
-
-        fileName = split(file, ".")[1]  |> split |> first 
-        push!(
-                processes,
-                DataProcessND(
-                    data,
-                    bins,
-                    vars,
-                    singleEParams[Symbol(fileName)]
-                )
-            )
-        println("$fileName loaded")
-
-    end
-    println("Loaded $nFiles files.")
-
-    return processes
-end
-
-processes = load_ndim_processes("fal5_8perc_Boff_TIT_twoDistinct_edep_bcu", bins, vars)
-
-signal = get_process("bb0nu_foil_bulk", processes)
+signal = get_process("bb0nuM1_foil_bulk", processes)
 # signal = get_process("bb0nuM1_foil_bulk", data_processes)
 # signal = get_process("bb0nuM2_foil_bulk", data_processes)
 
@@ -80,34 +55,20 @@ background = [
 set_signal!(background[1], false)
 
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-set_nTotalSim!( signal, 0.98e8 )
+set_nTotalSim!( signal, 1e8 )
 # set_nTotalSim!( signal, 1e8 )
 set_nTotalSim!( background[1], 0.99e8 )
-set_nTotalSim!( background[2], 0.96e8 )
+set_nTotalSim!( background[2], 1e8 )
 set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 0.76e8 )
+set_nTotalSim!( background[4], 1e8 )
 set_nTotalSim!( background[5], 1e8 )
 set_nTotalSim!( background[6], 1e8 )
 
-@time get_roi_effciencyND(processes[1], bins).eff
-
-@time get_roi_bkg_counts(
-    processes, 
-    bins
-)
-
-
 α= 1.64485362695147
 
-@time get_s_to_b(
-    SNparams, 
-    α, 
-    vcat(signal, background), 
-    [0,180,0,1000];
-    approximate="table"
-)
 
 prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x)
+
 
 function make_stepRange(process)
     stepRange = Tuple{Int64, Int64}[]
@@ -118,15 +79,14 @@ function make_stepRange(process)
     return stepRange
 end
 
-searchRange = make_stepRange(signal)
 
+searchRange = make_stepRange(signal)
 res = bboptimize(
     prob; 
     SearchRange = searchRange, 
     NumDimensions = length(searchRange),
-    Method=:adaptive_de_rand_1_bin, 
-    MaxTime = 5*60,
-    # InitialPopulation = [[0, 180, 400, 3000, 2700, 3200]]
+    Method=:adaptive_de_rand_1_bin_radiuslimited, 
+    MaxTime = 1*3600,
 )
 
 function get_best_ROI_ND(res, process)

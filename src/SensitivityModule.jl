@@ -118,8 +118,8 @@ export
     load_files,
     load_data_processes,
     load_hist_processes,
-    load_3D_processes#,
-    # load_ndim_processes
+    load_3D_processes,
+    load_ndim_processes
 
 include("Models.jl")
 export 

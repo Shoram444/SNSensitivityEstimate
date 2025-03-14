@@ -150,10 +150,10 @@ end
 
 
 
-function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{String}; fwhm = 0.08)
+function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{String})
     include(scriptsdir("Params.jl"))
-    full_dir = datadir("sims", dir)
-    processes = DataProcess3D[]
+    full_dir = datadir("mva", dir)
+    processes = DataProcessND[]
 
     println("Loading files from: $full_dir ...")
     println("mode: NDim ")
@@ -170,33 +170,15 @@ function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{Str
             continue
         end
 
-        data = LazyTree(f, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])
-
-        Ei = Vector{Float64}(undef, length(data)) # Float32[] # individual energies
-        Es = Vector{Float64}(undef, length(data)) #Float32[] # sum of energies
-        phi = Vector{Float64}(undef, length(data)) # Float32[] # phi angle
-
-        Threads.@threads for (i,event) in enumerate(data)
-            i%1_000_000 == 0 && println("$i/$(length(data))  events processed!")
-            Ei_ = maximum([event.reconstructedEnergy1, event.reconstructedEnergy2])
-            Es_ = sum([event.reconstructedEnergy1, event.reconstructedEnergy2])
-
-            Ei[i] = smear_energy(Ei_, fwhm)
-            phi[i] = event.phi
-            Es[i] = smear_energy(Es_, fwhm)
-        end
+        data = LazyTree(f, "tree", varNames)
 
         fileName = split(file, ".")[1]  |> split |> first 
-        
         push!(
                 processes,
-                DataProcess3D(
-                    phi,
-                    Ei,
-                    Es,
-                    binsAngle,
-                    binsESingle,
-                    binsESum,
+                DataProcessND(
+                    data,
+                    bins,
+                    varNames,
                     singleEParams[Symbol(fileName)]
                 )
             )
