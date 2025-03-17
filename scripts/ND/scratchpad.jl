@@ -73,7 +73,7 @@ println("loaded files")
 
 
 prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x;
-    approximate="formula")
+    approximate="table")
 
 
 function make_stepRange(process)
@@ -88,17 +88,20 @@ end
 
 searchRange = make_stepRange(signal)
 x0 = [10.0, 180.0, 2700.0, 3100.0, 1200.0, 3000.0, 1000.0, 3000.0, 0.0, 100.0, -50.0, 50.0, -50.0, 50.0]
-res = bboptimize(
-    prob,
-    x0; 
-    SearchRange = searchRange, 
-    NumDimensions = length(searchRange),
-    Method=:adaptive_de_rand_1_bin_radiuslimited, 
-    MaxTime = 40*3600,
-)
+# res = bboptimize(
+#     prob,
+#     x0; 
+#     SearchRange = searchRange, 
+#     NumDimensions = length(searchRange),
+#     Method=:adaptive_de_rand_1_bin_radiuslimited, 
+#     MaxTime = 40*3600,
+# )
+
+best_res = [8.17838, 180.0, 2702.3, 3104.02, 1352.34, 2974.99, 28.5889, 2218.03, 0.00107271, 82.4988, -81.4286, 97.2736, -96.9858, 68.2162]
 
 function get_best_ROI_ND(res, process)
-    best = best_candidate(res)
+    # best = best_candidate(res)
+    best = res
     best_roi = NamedTuple(
         k => (round(best[i]), round(best[i+1])) 
         for (i,k) in zip(1:2:length(process.bins)*2-1, keys(process.bins))
@@ -106,7 +109,7 @@ function get_best_ROI_ND(res, process)
     return best_roi
 end
 
-best_roi = get_best_ROI_ND(res, signal)
+best_roi =  get_best_ROI_ND(best_res, signal)
 
 best_sens = get_sensitivityND(
     SNparams, 
