@@ -1,4 +1,4 @@
-import Base: *, maximum
+import Base: *, maximum, println
 
 """
     Holds information about sensitivity estimate
@@ -15,6 +15,14 @@ mutable struct SensitivityEstimateND
     bkgCounts
 end
 
+Base.println(s::SensitivityEstimateND) = println(
+    "Sensitivity estimate:
+     ROI:   $(s.roi)
+     T12 ≥ $(s.tHalf) yr
+     ε = $(s.signalEff)
+     b = $(s.bkgCounts)
+    "
+)
 
 """
     Holds information about ROI efficiency

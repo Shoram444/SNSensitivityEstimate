@@ -1,6 +1,0 @@
-current_M1 = (roi = (2500, 2900), bkg = 17.53, neutron = 0.52, total = 18.05)
-full_M1 = (roi = (2500, 3000), bkg = 17.96, neutron = 0.02, total = 17.98)
-
-
-current_M2 = (roi = (1000, 2900), bkg = 52423.00, neutron = 2.98, total = 52425.98)
-full_M2 = (roi = (1000, 2900), bkg = 52423.00, neutron = 0.52, total = 52423.52)

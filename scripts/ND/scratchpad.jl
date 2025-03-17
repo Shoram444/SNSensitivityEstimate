@@ -1,6 +1,8 @@
 using DrWatson
 @quickactivate "SNSensitivityEstimate"
 
+println("loading pkgs")
+
 push!(LOAD_PATH, srcdir())
 using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta, Combinatorics, LinearAlgebra
 using Revise
@@ -11,6 +13,7 @@ using BlackBoxOptim
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
 # dictionaries into this script, which uses their values. 
+println("loaded pkgs")
 include(scriptsdir("Params.jl"))
 
 
@@ -37,7 +40,7 @@ bins = (
 
 processes = load_ndim_processes("fal5_8perc_Boff_TIT", bins, vars)
 
-signal = get_process("bb0nuM1_foil_bulk", processes)
+signal = get_process("bb0nu_foil_bulk", processes)
 # signal = get_process("bb0nuM1_foil_bulk", data_processes)
 # signal = get_process("bb0nuM2_foil_bulk", data_processes)
 
@@ -66,8 +69,11 @@ set_nTotalSim!( background[6], 1e8 )
 
 α= 1.64485362695147
 
+println("loaded files")
 
-prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x)
+
+prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x;
+    approximate="formula")
 
 
 function make_stepRange(process)
@@ -81,12 +87,14 @@ end
 
 
 searchRange = make_stepRange(signal)
+x0 = [10.0, 180.0, 2700.0, 3100.0, 1200.0, 3000.0, 1000.0, 3000.0, 0.0, 100.0, -50.0, 50.0, -50.0, 50.0]
 res = bboptimize(
-    prob; 
+    prob,
+    x0; 
     SearchRange = searchRange, 
     NumDimensions = length(searchRange),
     Method=:adaptive_de_rand_1_bin_radiuslimited, 
-    MaxTime = 1*3600,
+    MaxTime = 40*3600,
 )
 
 function get_best_ROI_ND(res, process)
@@ -100,9 +108,12 @@ end
 
 best_roi = get_best_ROI_ND(res, signal)
 
-get_sensitivityND(
+best_sens = get_sensitivityND(
     SNparams, 
     α, 
     vcat(signal, background), 
     best_roi
 )
+
+println(best_sens)
+
