@@ -139,7 +139,7 @@ set_nTotalSim!( background[4], 0.76e8 )
 set_nTotalSim!( background[5], 1e8 )
 set_nTotalSim!( background[6], 1e8 )
 
-@info "Info: process initialized"
+@info "process initialized"
 println("Processes initialized.")
 
 # #
@@ -151,12 +151,14 @@ println("Processes initialized.")
 # best_t12ESum = get_max_bin(t12MapESum)
 # expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 
-set_bins!.(background, 0:10:3500)
+for b in background
+    set_bins!(b, 0:10:3500)
+end
 set_bins!(signal, 0:10:3500)
 
-bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] |> sum
+bkg_hist = [b for b in get_bkg_counts_1D.(background)] |> sum
 bkg_hist_normed = normalize(bkg_hist, width = true)
-signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), ROI_a, ROI_b), width = true)
+signal_hist_normed = normalize(get_bkg_counts_1D(signal), width = true)
 
 function f1(par::NamedTuple{(:a, :ε)}, x::Real)
     total_rate = sum(par.a)
@@ -166,8 +168,10 @@ function f1(par::NamedTuple{(:a, :ε)}, x::Real)
     return my_pdf(th, x) 
 end
 
-set_bins!.(background, 0:100:3500)
-set_bins!(signal, 0:100:3500)
+for b in background
+    set_bins!(b, 0:50:3500)
+end
+set_bins!(signal, 0:50:3500)
 
 
 function get_sens_bayes(background, signal)
@@ -188,7 +192,7 @@ function get_sens_bayes(background, signal)
     )
 
     posterior = PosteriorMeasure(my_likelihood, prior)
-    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^3, nchains = 1))
+    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^3, nchains = 4))
 
     marginal_modes = bat_marginalmode(samples).result
 
@@ -196,18 +200,7 @@ function get_sens_bayes(background, signal)
     nDataPoints = integral(data_hist)
     muS = [a[1] * nDataPoints for a in binned_unshaped_samples.v]
 
-    # """
-    #     Stupid integration for getting upper limit - requires monotonely decreasing samples in vector form!
-    # """
-    # function get_interval_upper(data, CL; nbins=100)
-    #     h = fit(Histogram, data; nbins = nbins)
-    #     cs = cumsum(h.weights) ./ sum(h.weights)
-
-    #     uppID = findfirst(x -> x >= CL, cs)
-    #     midpoints(h.edges[1])[Int(uppID)]
-    # end
-
-    exp_mu_signal_90 = quantile( muS,0.9) #get_interval_upper(muS, 0.9)
+    exp_mu_signal_90 = quantile( muS,0.9) 
     Na = 6.02214e23
     m = 6.067
     t = 2.88
@@ -217,18 +210,19 @@ function get_sens_bayes(background, signal)
 end
 
 t = Float64[]
-# while(time() - t0 < 3600*8) # do this for 46hrs
-#     GC.gc()
-#     println("elapsed time = $(time() - t0) s")
-#     @info "elapsed time = $(time() - t0) s"
+# while(time() - t0 < 3600*8) # do this for n hours
+for _ in 1:100 # do this for n hours
+    GC.gc()
+    println("elapsed time = $(time() - t0) s")
 
     sens = get_sens_bayes(background, signal)
     println(sens)
     push!(t, sens)
-# end
+end
 
 using DataFramesMeta, CSV
-CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DateFrame(thalf= t))
+# CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DateFrame(thalf= t))
+CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")
 # vline!([median(t)], label = "Median = $(round(median(t), sigdigits = 3)) yr", color = :red, linewidth = 4)
