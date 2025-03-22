@@ -39,10 +39,14 @@ bins = (
 
 
 processes = load_ndim_processes("fal5_8perc_Boff_TIT", bins, vars)
+hist_processes = load_hist_processes(
+    "fal5_8perc_Boff_TIT",  
+    sumE
+)
 
-signal = get_process("bb0nu_foil_bulk", processes)
-# signal = get_process("bb0nuM1_foil_bulk", data_processes)
-# signal = get_process("bb0nuM2_foil_bulk", data_processes)
+# signal = get_process("bb0nu_foil_bulk", processes)
+# signal = get_process("bb0nuM1_foil_bulk", processes)
+signal = get_process("bb0nuM2_foil_bulk", processes)
 
 # declare background processes
 background = [
@@ -69,7 +73,7 @@ set_nTotalSim!( background[6], 1e8 )
 
 α= 1.64485362695147
 
-println("loaded files")
+println("loaded files, signal = $(signal.isotopeName)")
 
 
 prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x;

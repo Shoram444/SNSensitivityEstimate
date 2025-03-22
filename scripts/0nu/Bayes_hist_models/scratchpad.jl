@@ -192,7 +192,7 @@ function get_sens_bayes(background, signal)
     )
 
     posterior = PosteriorMeasure(my_likelihood, prior)
-    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^3, nchains = 4))
+    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^4, nchains = 4))
 
     marginal_modes = bat_marginalmode(samples).result
 
@@ -210,8 +210,8 @@ function get_sens_bayes(background, signal)
 end
 
 t = Float64[]
-# while(time() - t0 < 3600*8) # do this for n hours
-for _ in 1:100 # do this for n hours
+while(time() - t0 < 3600*36) # do this for n hours
+# for _ in 1:100 # do this for n hours
     GC.gc()
     println("elapsed time = $(time() - t0) s")
 
@@ -221,8 +221,8 @@ for _ in 1:100 # do this for n hours
 end
 
 using DataFramesMeta, CSV
-# CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DateFrame(thalf= t))
-CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
+CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
+# CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")
 # vline!([median(t)], label = "Median = $(round(median(t), sigdigits = 3)) yr", color = :red, linewidth = 4)
