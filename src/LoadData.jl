@@ -3,6 +3,9 @@ using Distributions
 
 ffrf(file) = fill_from_root_file(file, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])
 function smear_energy(E::Real, fwhm::Real) 
+    if(fwhm == 0)
+        return E
+    end
     sigma = fwhm/2.355 * E * sqrt(1000/E)
     return rand(Normal(E, sigma))
 end
@@ -36,6 +39,7 @@ function load_data_processes(dir::String, mode::String; fwhm = 0.08)
 
     nFiles = 0
     for file in readdir(full_dir)
+        println("file: $file")
         nFiles += 1
         if( split(file, ".")[end] != "root" )
             continue
