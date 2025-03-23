@@ -117,7 +117,7 @@ function get_roi_effciencyND(
     count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
 
     Threads.@threads for i in eachindex(data)
-        if passes_roi( data[i], roi, varIdxs)
+        if passes_roi(data[i], roi, varIdxs)
             Threads.atomic_add!(count, 1)  # Thread-safe increment
         end
     end
@@ -316,7 +316,7 @@ function get_s_to_b(
     ε = get_roi_effciencyND(signal, roi).eff
     ε == 0.0 && return 0.0 # If efficiency is zero, return zero sensitivity
 
-    b = get_roi_bkg_counts(processes, roi)
+    @time b = get_roi_bkg_counts(processes, roi)
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     S_b = get_FC(b, α; approximate=approximate)
 

@@ -9,6 +9,7 @@ using Revise
 using BlackBoxOptim
 
 Revise.track(SensitivityModule)
+Revise.track(SensitivityModule)
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -30,22 +31,24 @@ include(scriptsdir("Params.jl"))
 
 vars = [
     "phi", 
+    "phi", 
     "sumE", 
-    # "maxE", 
-    # "minE", 
-    # "r", 
-    # "dy", 
-    # "dz"
+    "maxE", 
+    "minE", 
+    "r", 
+    "dy", 
+    "dz"
     ]
 
 bins = (
     phi = (0,180),
+    phi = (0,180),
     sumE = (0, 3500),
-    # maxE = (0, 3000),
-    # minE = (0, 3500),
-    # r = (0, 100),
-    # dy = (-100, 100),
-    # dz = (-100, 100)
+    maxE = (0, 3000),
+    minE = (0, 3500),
+    r = (0, 100),
+    dy = (-100, 100),
+    dz = (-100, 100)
 )
 
 
@@ -100,12 +103,13 @@ end
 searchRange = make_stepRange(signal)
 x0 = [
     rand(range(bins.phi[1], bins.phi[2], 100)), rand(range(bins.phi[1], bins.phi[2], 100)), 
+    rand(range(bins.phi[1], bins.phi[2], 100)), rand(range(bins.phi[1], bins.phi[2], 100)), 
     rand(range(bins.sumE[1], bins.sumE[2], 100)), rand(range(bins.sumE[1], bins.sumE[2], 100)), 
-    # rand(range(bins.maxE[1], bins.maxE[2], 100)), rand(range(bins.maxE[1], bins.maxE[2], 100)), 
-    # rand(range(bins.minE[1], bins.minE[2], 100)), rand(range(bins.minE[1], bins.minE[2], 100)), 
-    # rand(range(bins.r[1], bins.r[2], 100)), rand(range(bins.r[1], bins.r[2], 100)), 
-    # rand(range(bins.dy[1], bins.dy[2], 100)), rand(range(bins.dy[1], bins.dy[2], 100)), 
-    # rand(range(bins.dz[1], bins.dz[2], 100)), rand(range(bins.dz[1], bins.dz[2], 100)), 
+    rand(range(bins.maxE[1], bins.maxE[2], 100)), rand(range(bins.maxE[1], bins.maxE[2], 100)), 
+    rand(range(bins.minE[1], bins.minE[2], 100)), rand(range(bins.minE[1], bins.minE[2], 100)), 
+    rand(range(bins.r[1], bins.r[2], 100)), rand(range(bins.r[1], bins.r[2], 100)), 
+    rand(range(bins.dy[1], bins.dy[2], 100)), rand(range(bins.dy[1], bins.dy[2], 100)), 
+    rand(range(bins.dz[1], bins.dz[2], 100)), rand(range(bins.dz[1], bins.dz[2], 100)), 
     ]
 
 @time prob(x0)
