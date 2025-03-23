@@ -8,11 +8,11 @@ import Base: *, maximum, println
     - `signalEff`: Signal efficiency
     - `bkgCounts`: Background counts
 """
-struct SensitivityEstimateND{R, T}
+struct SensitivityEstimateND{T, R, M}
     roi::R
     tHalf::T
     signalEff::T
-    bkgCounts::T
+    bkgCounts::M
 end
 
 Base.println(s::SensitivityEstimateND) = println(
@@ -27,9 +27,9 @@ Base.println(s::SensitivityEstimateND) = println(
 """
     Holds information about ROI efficiency
 """
-mutable struct ROIEfficiencyND{T}
+mutable struct ROIEfficiencyND{T, M}
     roi::Vector{T}
-    eff::T
+    eff::M
 end
 
 *(x::Float64, e::ROIEfficiencyND) = x * e.eff

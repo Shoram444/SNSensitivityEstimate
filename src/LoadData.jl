@@ -176,14 +176,6 @@ function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{Str
 
         data = LazyTree(f, "tree", varNames) 
 
-        # dataM = zeros(Float64, length(varNames), length(data))
-        # Threads.@threads for (i,event) in enumerate(data)
-        #     i%1_000_000 == 0 && println("$i/$(length(data))  events processed!")
-        #     for (j,var) in enumerate(varNames)
-        #         dataM[j,i] = getproperty(event, Symbol(var))
-        #     end
-        # end
-
         fileName = split(file, ".")[1]  |> split |> first 
         push!(
                 processes,
