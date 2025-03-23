@@ -8,11 +8,11 @@ import Base: *, maximum, println
     - `signalEff`: Signal efficiency
     - `bkgCounts`: Background counts
 """
-struct SensitivityEstimateND
-    roi
-    tHalf
-    signalEff
-    bkgCounts
+struct SensitivityEstimateND{R, T}
+    roi::R
+    tHalf::T
+    signalEff::T
+    bkgCounts::T
 end
 
 Base.println(s::SensitivityEstimateND) = println(
@@ -36,8 +36,7 @@ end
 
 mutable struct DataProcessND{T, B, NT, S, I} <: AbstractProcess 
     # data::LazyTree
-    # data::Vector{UnROOT.LazyEvent}
-    data::Matrix{T}  
+    data::Vector{UnROOT.LazyEvent}
     isotopeName::S
     signal::B
     activity::Union{T, Measurement}
@@ -53,11 +52,11 @@ end
 
 function get_roi_effciencyND(
     # data::LazyTree, 
-    data::Matrix{T}, 
+    data::Vector{UnROOT.LazyEvent}, 
     roi::NamedTuple, 
     nTotalSim::Real,
     roiKeys = keys(roi)
-) where T
+)
     count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
 
     Threads.@threads for i in eachindex(data)
@@ -80,19 +79,18 @@ function get_roi_effciencyND(
 end
 
 function get_roi_effciencyND(
-    data::Matrix{T}, 
+    data::Vector{UnROOT.LazyEvent}, 
     # data::LazyTree, 
     roi::NamedTuple, 
     nTotalSim::Real,
     roiKeys::Vector{String}
-) where T
+)
 
 
     count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
 
-    Threads.@threads for i in 1:size(data, 1)
-        row = data[:, i] 
-        if passes_roi(row, roi, varIdxs)
+    Threads.@threads for i in eachindex(data)
+        if passes_roi( data[i], roi, roiKeys)
             Threads.atomic_add!(count, 1)  # Thread-safe increment
         end
     end
@@ -109,19 +107,47 @@ function get_roi_effciencyND(
     )
 end
 
-function get_roi_effciencyND(data::Matrix{T}, roi::Vector{<:Real}, nTotalSim::Real, varIdxs::Vector{Int}) where T
-    count = Threads.Atomic{Int}(0)  # Use an integer counter
-    
-    Threads.@threads for i in 1:size(data, 1)
-        row = data[:, i] 
-        if passes_roi(row, roi, varIdxs)
-            Threads.atomic_add!(count, 1)  
+function get_roi_effciencyND(
+    data::Vector{UnROOT.LazyEvent}, 
+    # data::LazyTree, 
+    roi::Vector{<:Real}, 
+    nTotalSim::Real,
+    varIdxs::Vector{Int}
+)
+    count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
+
+    Threads.@threads for i in eachindex(data)
+        if passes_roi( data[i], roi, varIdxs)
+            Threads.atomic_add!(count, 1)  # Thread-safe increment
         end
     end
-    
-    return ROIEfficiencyND{T}(roi, count[] / nTotalSim)
+    eff = count[] / nTotalSim  # Extract final atomic count
+    return ROIEfficiencyND(
+        roi,  
+        eff  # Extract final atomic count
+    )
 end
 
+# function get_roi_effciencyND(
+#     data::Vector{UnROOT.LazyEvent}, 
+#     roi::Vector{<:Real}, 
+#     nTotalSim::Real,
+#     varIdxs::Vector{Int}
+# )
+
+#     count = Threads.Atomic{Int}(0)  # Atomic counter for thread-safe increment
+
+#     Threads.@threads for i in eachindex(data)
+#         if passes_roi( data[i], roi, varIdxs)
+#             Threads.atomic_add!(count, 1)  # Thread-safe increment
+#         end
+#     end
+
+#     return ROIEfficiencyND(
+#         roi,  
+#         count[] / nTotalSim  # Extract final atomic count
+#     )
+# end
 
 function get_roi_effciencyND(
     process::DataProcessND,
@@ -147,14 +173,19 @@ function get_roi_effciencyND(
     )
 end
 
-@inline function passes_roi(data::Vector{T}, roi::Vector{<:Real}, varIdxs::Vector{Int}) where T
+@inline function passes_roi(
+    data::UnROOT.LazyEvent,  
+    roi::Vector{<:Real},
+    varIdxs::Vector{Int}
+)
     @inbounds for (r, i) in zip(1:2:length(roi)*2-1, varIdxs)
-        if !(roi[r] ≤ data[i] < roi[r+1])  # Avoid additional allocations by working directly with the data
-            return false
+        if (roi[r] ≤ data[i] < roi[r+1])
+            return true
         end
     end
-    return true
+    return false
 end
+
 
 @inline function passes_roi(
     data::UnROOT.LazyEvent,  
@@ -171,18 +202,13 @@ end
 
 
 @inline function passes_roi(
-    data::Vector{T},  
+    data::UnROOT.LazyEvent,  
     roi::NamedTuple,
     varNames::Vector{String}
-) where T
-    roi_v = Tuple{T,T}[]
-    for n in varNames
-        push!(roi_v, roi[Symbol(n)])
-    end
-
-    @inbounds for (i,n) in enumerate(varNames)
-        range = roi_v[i]
-        d = data[i] 
+)
+    @inbounds for n in varNames
+        range = roi[Symbol(n)]
+        d = data[Symbol(n)] 
         if !(range[1] ≤ d < range[2])
             return false
         end
@@ -191,19 +217,18 @@ end
 end
 
 function DataProcessND(
-    # data::LazyTree,
-    data::Matrix{T},
+    data::LazyTree,
     binsTuple::NamedTuple,
     varNames::Vector{String},
     processDict::Dict
-) where T
+)
     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
     println("creating process: $isotopeName")
 
     collected_data = collect(data)
-    varIdxs = collect(1:length(varNames))#[findfirst(x -> x == n, names(data)) for n in varNames]
+    varIdxs = [findfirst(x -> x == n, names(data)) for n in varNames]
 
-    # T = promote_type(T1, typeof(activity), typeof(timeMeas), typeof(nTotalSim), typeof(amount))
+    T = promote_type(typeof(activity), typeof(timeMeas), typeof(nTotalSim), typeof(amount))
     I = promote_type(Int64, typeof(varIdxs[1]))
 
     return DataProcessND{T, Bool, typeof(binsTuple), String, I}(
@@ -220,6 +245,30 @@ function DataProcessND(
     )
 end
 
+# function DataProcessND(
+#     data::LazyTree,
+#     # data::Vector{UnROOT.LazyEvent},
+#     binsTuple::NamedTuple,
+#     varNames::Vector{String},
+#     processDict::Dict
+# )
+#     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
+#     println("creating process: $isotopeName")
+
+#     println(typeof(collect(data)))
+#     return DataProcessND(
+#         collect(data),
+#         isotopeName,
+#         signal,
+#         activity,
+#         timeMeas,
+#         nTotalSim,
+#         binsTuple,
+#         amount,
+#         varNames,
+#         [findfirst(x -> x == n, names(data)) for n in varNames]
+#     )
+# end
 
 function get_roi_bkg_counts(
     processes::Vector{<:DataProcessND}, 
@@ -262,8 +311,8 @@ function get_s_to_b(
         return 0.0
     end
                     
+    ε = zero(Float64)
     signal = processes[signal_id]
-
     ε = get_roi_effciencyND(signal, roi).eff
     ε == 0.0 && return 0.0 # If efficiency is zero, return zero sensitivity
 
@@ -280,12 +329,8 @@ function get_sensitivityND(
     processes::Vector{<:DataProcessND}, 
     roi::NamedTuple;
     approximate="table"
-)   
-    roi_v = Float64[]
-    for n in keys(roi)
-        push!(roi_v, roi[Symbol(n)][1])
-        push!(roi_v, roi[Symbol(n)][2])
-    end
+)
+
     #check that rois are within the range of the data
     for k in processes[1].varNames
         if (roi[Symbol(k)][1] < processes[1].bins[Symbol(k)][1] || roi[Symbol(k)][2] > processes[1].bins[Symbol(k)][2])
@@ -299,12 +344,11 @@ function get_sensitivityND(
         return SensitivityEstimateND(roi, 0.0, 0.0, 0.0)
     end
 
-
     signal_process = processes[first(signal_id)]
-    ε = get_roi_effciencyND(signal_process, roi_v).eff
+    ε = get_roi_effciencyND(signal_process, roi).eff
     ε == 0 && return SensitivityEstimateND(roi, 0.0, 0.0, 0.0) # If efficiency is zero, return zero sensitivity
 
-    b = get_roi_bkg_counts(processes, roi_v)
+    b = get_roi_bkg_counts(processes, roi)
 
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
