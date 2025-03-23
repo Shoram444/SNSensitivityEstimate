@@ -63,13 +63,13 @@ analysisDict = Dict(
     :Bfield => "Boff", # magnetic field on/off
     :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
     :mode => "sumE", 
-    :trackAlgo => "TKrec",
+    :trackAlgo => "TIT",
     :signal => "bb0nu",
     :neutron_config => "no_neutron"
 )
 
-# files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
-files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
+files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
+# files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 #  1. dir::String -> the name of the directory where the root files are stored
@@ -77,7 +77,7 @@ files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
 data_processes = load_data_processes(
     files_directory, 
     analysisDict[:mode],
-    fwhm = 0.0
+    fwhm = 0.085
 )
 
 # hist_processes = load_hist_processes(
@@ -125,12 +125,19 @@ begin
     set_signal!(background[1], false)
 
     # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-    set_nTotalSim!( signal, 0.1e8 )
+    set_nTotalSim!( signal, 0.98e8 )
     # set_nTotalSim!( signal, 1e8 )
-    set_nTotalSim!( background[1], 1e8 )
-    set_nTotalSim!( background[2], 1e8 )
+    # set_nTotalSim!( signal, 1e8 )
+    set_nTotalSim!( background[1], 0.99e8 )
+    set_nTotalSim!( background[2], 0.96e8 )
     set_nTotalSim!( background[3], 1e8 )
-    set_nTotalSim!( background[4], 1e8 )
+    set_nTotalSim!( background[4], 0.76e8 )
+
+
+    # set_nTotalSim!( background[1], 1e8 )
+    # set_nTotalSim!( background[2], 1e8 )
+    # set_nTotalSim!( background[3], 1e8 )
+    # set_nTotalSim!( background[4], 1e8 )
     # set_nTotalSim!( background[5], 1e8 )
     # set_nTotalSim!( background[6], 1e8 )
 
@@ -152,20 +159,20 @@ begin
     # Having the map (which is essentially a 2D histogram), we pick the highest value (and the bin edges) with `get_max_bin`.
     # That's basically it, if you're only interested in sensitvity.
     t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
-    best_t12ESum = get_max_bin(t12MapESum)
+    @show best_t12ESum = get_max_bin(t12MapESum)
 
     # If you want additional info, like background counts in the ROI, use: `get_bkg_counts_ROI`.
-    expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+    @show expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 
     # To get the signal efficiency at the ROI, use: `lookup(signal, best_t12ESum)`
-    effbb = lookup(signal, best_t12ESum)
+    @show effbb = lookup(signal, best_t12ESum)
 
     neutron = restrict(get_bkg_counts_1D(background[end]), 2750, 2950) |> integral
     other = expBkgESum - neutron
     # Plotting:
 
     # 2D tHalf map:
-    ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
+    @show ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
 
     set_activity!(signal, halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], ThalfbbESum * 365 * 24 * 3600))
 
@@ -287,7 +294,7 @@ begin
         # get_process("bb0nuM2_foil_bulk", data_processes)
     ]
 
-    set_nTotalSim!.( signals[2:end], 1e8 )
+    # set_nTotalSim!.( signals[2:end], 1e8 )
 
     save_sensitivity_table(signals, background, "LSM_report/sensitivityTables/sumE")
 
