@@ -13,8 +13,7 @@ using
     Turing,
     CairoMakie,
     BAT,
-    DensityInterface,
-    Combinatorics
+    DensityInterface
 
 # Define main module abstract type
 

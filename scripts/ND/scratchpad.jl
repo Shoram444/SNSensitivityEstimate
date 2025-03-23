@@ -4,11 +4,11 @@ using DrWatson
 println("loading pkgs")
 
 push!(LOAD_PATH, srcdir())
-using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta, Combinatorics, LinearAlgebra
+using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta, LinearAlgebra
 using Revise
 using BlackBoxOptim
 
-# Revise.track(SensitivityModule)
+Revise.track(SensitivityModule)
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -16,25 +16,36 @@ using BlackBoxOptim
 println("loaded pkgs")
 include(scriptsdir("Params.jl"))
 
+# tt = collect(t)
+# DataProcessND( tt,bins,vars,singleEParams[:bb_foil_bulk])
+
+# mutable struct tester1
+#     data::Vector{UnROOT.LazyEvent}
+#     bins::NamedTuple
+#     varNames::Vector{String}
+#     singleEParams::Dict
+# end
+
+# tester1(tt,bins,vars,singleEParams[:bb_foil_bulk])
 
 vars = [
-    # "phi", 
+    "phi", 
     "sumE", 
     # "maxE", 
     # "minE", 
     # "r", 
-    "dy", 
-    "dz"
+    # "dy", 
+    # "dz"
     ]
 
 bins = (
-    # phi = (0,180),
+    phi = (0,180),
     sumE = (0, 3500),
     # maxE = (0, 3000),
     # minE = (0, 3500),
     # r = (0, 100),
-    dy = (-100, 100),
-    dz = (-100, 100)
+    # dy = (-100, 100),
+    # dz = (-100, 100)
 )
 
 
@@ -88,14 +99,18 @@ end
 
 searchRange = make_stepRange(signal)
 x0 = [
-    # rand(range(bins.phi[1], bins.phi[2], 100)), rand(range(bins.phi[1], bins.phi[2], 100)), 
+    rand(range(bins.phi[1], bins.phi[2], 100)), rand(range(bins.phi[1], bins.phi[2], 100)), 
     rand(range(bins.sumE[1], bins.sumE[2], 100)), rand(range(bins.sumE[1], bins.sumE[2], 100)), 
     # rand(range(bins.maxE[1], bins.maxE[2], 100)), rand(range(bins.maxE[1], bins.maxE[2], 100)), 
     # rand(range(bins.minE[1], bins.minE[2], 100)), rand(range(bins.minE[1], bins.minE[2], 100)), 
     # rand(range(bins.r[1], bins.r[2], 100)), rand(range(bins.r[1], bins.r[2], 100)), 
-    rand(range(bins.dy[1], bins.dy[2], 100)), rand(range(bins.dy[1], bins.dy[2], 100)), 
-    rand(range(bins.dz[1], bins.dz[2], 100)), rand(range(bins.dz[1], bins.dz[2], 100)), 
+    # rand(range(bins.dy[1], bins.dy[2], 100)), rand(range(bins.dy[1], bins.dy[2], 100)), 
+    # rand(range(bins.dz[1], bins.dz[2], 100)), rand(range(bins.dz[1], bins.dz[2], 100)), 
     ]
+
+@time prob(x0)
+
+
 res = bboptimize(
     prob,
     x0; 
@@ -105,11 +120,6 @@ res = bboptimize(
     MaxTime = 60,#6*3600,
     TraceMode = :compact
 )
-
-# best_res = [8.17838, 180.0, 2702.3, 3104.02, 1352.34, 2974.99, 28.5889, 2218.03, 0.00107271, 82.4988, -81.4286, 97.2736, -96.9858, 68.2162]
-
-# optim_res = Optim.optimize(prob, x0, NelderMead(), autodiff=:forward)
-# optim_res.minimizer
 
 function get_best_ROI_ND(res, process)
     best = best_candidate(res)
