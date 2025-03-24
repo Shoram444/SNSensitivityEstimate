@@ -5,7 +5,7 @@ push!(LOAD_PATH, srcdir())
 using ColorSchemes, SensitivityModule, CairoMakie, UnROOT, StatsBase
 using LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta
 using Revise
-# Revise.track(SensitivityModule)
+Revise.track(SensitivityModule)
 
 #save background tables for each signals ROI
 function save_background_table(
@@ -33,8 +33,8 @@ function save_background_table(
 
     saveName = savename("background_counts", analysisDict, "md")
     open(plotsdir(outDir, saveName), "w") do f
-        # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
-        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "total"]
+        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
+        # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "total"]
         header = ["process", "bkg counts in ROI"]
         pretty_table(f,
             DataFrame(
@@ -65,7 +65,7 @@ analysisDict = Dict(
     :mode => "sumE", 
     :trackAlgo => "TIT",
     :signal => "bb0nu",
-    :neutron_config => "no_neutron"
+    :neutron_config => "full_shielding"
 )
 
 files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
@@ -77,17 +77,17 @@ files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analys
 data_processes = load_data_processes(
     files_directory, 
     analysisDict[:mode],
-    fwhm = 0.085
+    fwhm = 0.08
 )
 
-# hist_processes = load_hist_processes(
-#     files_directory,  
-#     analysisDict[:mode]
-# )
+hist_processes = load_hist_processes(
+    files_directory,  
+    analysisDict[:mode]
+)
 
-# for c in ["full_shielding","iron_shielding","no_french_wall_shielding","current_shielding"]
-begin
-    # analysisDict[:neutron_config] = c
+for c in ["full_shielding","current_shielding"]
+# begin
+    analysisDict[:neutron_config] = c
     # declare which process is signal
     global signal = get_process("bb0nu_foil_bulk", data_processes)
     # signal = get_process("bb0nuM1_foil_bulk", data_processes)
@@ -99,27 +99,27 @@ begin
         get_process("Bi214_foil_bulk", data_processes),
         get_process("Bi214_wire_surface", data_processes),
         get_process("Tl208_foil_bulk", data_processes),
-        # # get_process("K40_foil_bulk", data_processes),
-        # get_process("Pa234m_foil_bulk", data_processes),
-        # get_process("neutron_external", hist_processes, analysisDict[:neutron_config])
+        get_process("K40_foil_bulk", data_processes),
+        get_process("Pa234m_foil_bulk", data_processes),
+        get_process("neutron_external", hist_processes, analysisDict[:neutron_config])
     ]
 
-    # labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons (5-sided)"]
-    labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl"]
+    labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons (5-sided)"]
+    # labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl"]
 
-    # if(analysisDict[:neutron_config] == "full_shielding")
-    #     labels[end] = "neutrons (6-sided)"
-    # elseif (analysisDict[:neutron_config] == "iron_shielding")
-    #     labels[end] = "neutrons (0-sided)"
-    # elseif (analysisDict[:neutron_config] == "no_french_wall_shielding")
-    #     labels[end] = "neutrons (5-sided)"
-    # elseif (analysisDict[:neutron_config] == "italian_shielding")
-    #     labels[end] = "neutrons (5-sided)"
-    # elseif (analysisDict[:neutron_config] == "current_shielding")
-    #     labels[end] = "neutrons (4-sided)"
-    # else
-    #     labels[end] = "neutrons"
-    # end
+    if(analysisDict[:neutron_config] == "full_shielding")
+        labels[end] = "neutrons (6-sided)"
+    elseif (analysisDict[:neutron_config] == "iron_shielding")
+        labels[end] = "neutrons (0-sided)"
+    elseif (analysisDict[:neutron_config] == "no_french_wall_shielding")
+        labels[end] = "neutrons (5-sided)"
+    elseif (analysisDict[:neutron_config] == "italian_shielding")
+        labels[end] = "neutrons (5-sided)"
+    elseif (analysisDict[:neutron_config] == "current_shielding")
+        labels[end] = "neutrons (4-sided)"
+    else
+        labels[end] = "neutrons"
+    end
 
     # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
     set_signal!(background[1], false)
@@ -132,7 +132,8 @@ begin
     set_nTotalSim!( background[2], 0.96e8 )
     set_nTotalSim!( background[3], 1e8 )
     set_nTotalSim!( background[4], 0.76e8 )
-
+    set_nTotalSim!( background[5], 1e8 )
+    set_nTotalSim!( background[6], 1e8 )
 
     # set_nTotalSim!( background[1], 1e8 )
     # set_nTotalSim!( background[2], 1e8 )
@@ -337,17 +338,19 @@ begin
     end
 
 
-    #### bb0nuM1_foil_bul
-    # signal = get_process("bb0nuM1_foil_bulk", data_processes)
-    # set_nTotalSim!( signal, 1e8 )
+    ### bb0nuM1_foil_bul
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface])
 
-    # background[end] =  get_process("neutron_external", hist_processes, "current_shielding")
+    signal = get_process("bb0nuM1_foil_bulk", data_processes)
+    set_nTotalSim!( signal, 1e8 )
 
-    # t_current_nu0M1 = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams
-    # )
+    background[end] =  get_process("neutron_external", hist_processes, "current_shielding")
+
+    t_current_nu0M1 = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
 
     # #################
     # background[end] = get_process("neutron_external", hist_processes, "iron_shielding")
@@ -369,62 +372,104 @@ begin
 
     # #################
 
-    # background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
-    # t_full_nu0M1 = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams
-    # )
+    t_full_nu0M1 = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
 
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface]*100)
 
+    signal = get_process("bb0nuM1_foil_bulk", data_processes)
+    set_nTotalSim!( signal, 1e8 )
 
-    # let
-    #     f = Figure(size=(600, 400))
-    #     a = Axis(
-    #         f[1,1], 
-    #         xlabel = "running time (yr)", 
-    #         ylabel = "sensitivity (yr)", 
-    #         limits= (0,5, nothing, nothing),
-    #         title = L"Sensitivity for $0\nu\beta\beta\chi^0$ at 90% CL",
-    #         # yscale = log10
-    #         )
-    #     p = lines!(a, t, t_full_nu0M1, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
-    #     lines!(a, t, t_italian_nu0M1, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
-    #     lines!(a, t, t_current_nu0M1, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
-    #     lines!(a, t, t_iron_nu0M1, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
-    #     hlines!(a, [1.2e23], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
-    #     axislegend(a, position = :rb, patchsize = (25, 10), patchlabelgap = 10) 
-    #     # a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
-    #     saveName = savename("sensitivity_in_time_nu0M1", analysisDict, "png")
-    #     safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
-    #     f 
-    # end
+    background[end] =  get_process("neutron_external", hist_processes, "current_shielding")
+
+    t_current_nu0M1_wo = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
+
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+
+    t_full_nu0M1_wo = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
+
+    let
+        f = Figure(size=(600, 400))
+        a = Axis(
+            f[1,1], 
+            xlabel = "running time (yr)", 
+            ylabel = "sensitivity (yr)", 
+            limits= (0,5, nothing, nothing),
+            title = L"Sensitivity for $0\nu\beta\beta\chi^0$ at 90% CL",
+            # yscale = log10
+            )
+        p1 = lines!(a, t, t_full_nu0M1, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
+        # lines!(a, t, t_italian_nu0M1, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
+        p2 = lines!(a, t, t_current_nu0M1, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
+        # lines!(a, t, t_iron_nu0M1, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
+        p3 = lines!(a, t, t_full_nu0M1_wo, label = "6-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[1])
+        p4 =lines!(a, t, t_current_nu0M1_wo, label = "4-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[2])
+        h= hlines!(a, [1.2e23], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
+        axislegend(a, position = :rb, patchsize = (20, 7), patchlabelgap = 6, nbanks = 2)
+            # a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
+        saveName = savename("sensitivity_in_time_nu0M1", analysisDict, "png")
+        safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
+        f 
+    end
 
 
     # #### M2
-    # signal = get_process("bb0nuM2_foil_bulk", data_processes)
-    # background[end] = get_process("neutron_external", hist_processes, "current_shielding")
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface])
+    signal = get_process("bb0nuM2_foil_bulk", data_processes)
+    background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
-    # # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-    # set_nTotalSim!(signal, 1e8 )
+    # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
+    set_nTotalSim!(signal, 1e8 )
 
-    # t_current_nu0M2 = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams
-    # )
-
-
+    t_current_nu0M2 = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
 
     # #################
-    # background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
-    # t_full_nu0M2 = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams
-    # )
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+
+    t_full_nu0M2 = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
+
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface]*100.0)
+
+    signal = get_process("bb0nuM2_foil_bulk", data_processes)
+    set_nTotalSim!( signal, 1e8 )
+
+    background[end] =  get_process("neutron_external", hist_processes, "current_shielding")
+
+    t_current_nu0M2_wo = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
+
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+
+    t_full_nu0M2_wo = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
 
     # #################
     # background[end] = get_process("neutron_external", hist_processes, "no_french_wall_shielding")
@@ -445,42 +490,46 @@ begin
     #     SNparams
     # )
 
-    # let
-    #     f = Figure(size=(600, 400))
-    #     a = Axis(
-    #         f[1,1], 
-    #         xlabel = "running time (yr)", 
-    #         ylabel = "sensitivity (yr)", 
-    #         limits= (0,5, nothing,nothing),
-    #         # yscale= log10,
-    #         title = L"Sensitivity for $0\nu\beta\beta\chi^0\chi^0$ at 90% CL"
-    #         )
-    #     p = lines!(a, t, t_full_nu0M2, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
-    #     lines!(a, t, t_italian_nu0M2, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
-    #     lines!(a, t, t_current_nu0M2, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
-    #     lines!(a, t, t_iron_nu0M2, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
-    #     hlines!(a, [1.4e22], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
-    #     axislegend(a, position = :rb, patchsize = (25, 10), patchlabelgap = 10)
-    #     # a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
-    #     saveName = savename("sensitivity_in_time_nu0M2", analysisDict, "png")
-    #     safesave(plotsdir("LSM_report","sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
-    #     f 
-    # end
+    let
+        f = Figure(size=(600, 400))
+        a = Axis(
+            f[1,1], 
+            xlabel = "running time (yr)", 
+            ylabel = "sensitivity (yr)", 
+            limits= (0,5, nothing,nothing),
+            # yscale= log10,
+            title = L"Sensitivity for $0\nu\beta\beta\chi^0\chi^0$ at 90% CL"
+            )
+        p1 = lines!(a, t, t_full_nu0M2, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
+        # lines!(a, t, t_italian_nu0M2, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
+        p2 = lines!(a, t, t_current_nu0M2, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
+        # lines!(a, t, t_iron_nu0M2, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
+        p3 = lines!(a, t, t_full_nu0M2_wo, label = "6-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[1])
+        p4 =lines!(a, t, t_current_nu0M2_wo, label = "4-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[2])
+        hlines!(a, [1.4e22], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
+        axislegend(a, position = :rb, patchsize = (20, 7), patchlabelgap = 6, nbanks = 2)
+        # a.yticks = ([1e22, 1e23, 1e24], [L"10^{22}", L"10^{23}", L"10^{24}"])
+        saveName = savename("sensitivity_in_time_nu0M2", analysisDict, "png")
+        safesave(plotsdir("LSM_report","sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
+        f 
+    end
 
 
     #### 0nu
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface])
+
     signal = get_process("bb0nu_foil_bulk", data_processes)
-    set_nTotalSim!( signal, 1e8 )
-    # set_nTotalSim!( signal, 0.98e8 )
+    # set_nTotalSim!( signal, 1e8 )
+    set_nTotalSim!( signal, 0.98e8 )
 
 
-    # background[end] = get_process("neutron_external", hist_processes, "current_shielding")
+    background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
-    # t_current_nu0 = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams
-    # )
+    t_current_nu0 = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
 
     # background[end] = get_process("neutron_external", hist_processes, "iron_shielding")
 
@@ -499,9 +548,27 @@ begin
     # )
 
     # #################
-    # background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
     t_full_nu0 = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
+
+    ### Adjust radon activity
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface]*100.0)
+    background[end] = get_process("neutron_external", hist_processes, "current_shielding")
+
+    t_current_nu0_wo = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
+
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+
+    t_full_nu0_wo = get_sensitivities_vs_time(
         signal,
         background,
         SNparams
@@ -523,7 +590,7 @@ begin
     # )
 
     let
-        f = Figure(size=(600, 400))
+        f = Figure(size=(700, 500), fontsize = 16)
         a = Axis(
             f[1,1], 
             xlabel = "running time (yr)", 
@@ -531,12 +598,29 @@ begin
             limits= (0,5, nothing, nothing),
             title = L"Sensitivity for $0\nu\beta\beta$ at 90% CL"
             )
-        p = lines!(a, t, t_full_nu0, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
+        p1 = lines!(a, t, t_full_nu0, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
         # lines!(a, t, t_italian_nu0, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
-        # lines!(a, t, t_current_nu0, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
+        p2 = lines!(a, t, t_current_nu0, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
         # lines!(a, t, t_iron_nu0, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
-        hlines!(a, [4.6e24], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
-        axislegend(a, position = :lt, patchsize = (25, 10), patchlabelgap = 10)
+        p3 = lines!(a, t, t_full_nu0_wo, label = "6-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[1])
+        p4 =lines!(a, t, t_current_nu0_wo, label = "4-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[2])
+        h= hlines!(a, [4.6e24], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
+        axislegend(a, position = :rb, patchsize = (20, 7), patchlabelgap = 6, nbanks = 2)
+        # Legend(
+        #     f[1,1], [h], ["CUPID-0 90% CL"], fontsize=12, 
+        #     orientation=:horizontal, tellheight = false, tellwidth = false,
+        #     margin = (-150, 0, -350, 10),
+        # )
+        # Legend(
+        #     f[1,1], [p1, p2], ["6-sided", "4-sided"], "With Anti-Rn", fontsize=12, 
+        #     tellheight = false, tellwidth = false,
+        #     margin = (150, 0, -300, 10),
+        # )
+        # Legend(
+        #     f[1,1], [p3, p4], ["6-sided", "4-sided"], "Without Anti-Rn", fontsize=12, 
+        #     tellheight = false, tellwidth = false,
+        #     margin = (420, 0, -300, 10),
+        # )
         saveName = savename("sensitivity_in_time_nu0", analysisDict, "png")
         safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
         f 
@@ -544,26 +628,50 @@ begin
 
 
     ## RH L
-    # signal = get_process("bb0nu_foil_bulk", data_processes)
-    # set_nTotalSim!( signal, 0.98e8 )
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface])
 
-    # background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+    signal = get_process("bb0nu_foil_bulk", data_processes)
+    set_nTotalSim!( signal, 0.98e8 )
 
-    # t_full_RH_L = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams;
-    #     effFactor = 0.489
-    # )
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
-    # background[end] = get_process("neutron_external", hist_processes, "current_shielding")
+    t_full_RH_L = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.489
+    )
 
-    # t_current_RH_L = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams;
-    #     effFactor = 0.489
-    # )
+    background[end] = get_process("neutron_external", hist_processes, "current_shielding")
+
+    t_current_RH_L = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.489
+    )
+
+    ### Adjust radon activity
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface]*100.0)
+    background[end] = get_process("neutron_external", hist_processes, "current_shielding")
+
+    t_current_RH_L_wo = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.489
+
+    )
+
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+
+    t_full_RH_L_wo = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.489
+
+    )
 
     # background[end] = get_process("neutron_external", hist_processes, "iron_shielding")
 
@@ -583,51 +691,73 @@ begin
     #     effFactor = 0.489
     # )
 
-    # let
-    #     f = Figure(size=(600, 400))
-    #     a = Axis(
-    #         f[1,1], 
-    #         xlabel = "running time (yr)", 
-    #         ylabel = "sensitivity (yr)", 
-    #         limits= (0,5, nothing, nothing),
-    #         title = L"Sensitivity for $0\nu\beta\beta$ $\lambda$ (V+A) at 90% CL"
-    #         )
-    #     p = lines!(a, t, t_full_RH_L, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
-    #     lines!(a, t, t_italian_RH_L, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
-    #     lines!(a, t, t_current_RH_L, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
-    #     lines!(a, t, t_iron_RH_L, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
-    #     hlines!(a, [1.6e23], color = :black, linestyle = :solid, label = L"best $^{82}$Se: $\langle \lambda \rangle$", linewidth = 2)
-    #     band!([0,5], [4.58e23], [13.35e23], color = (:red, 0.4), label = L"best world: $\langle \lambda \rangle$")
+    let
+        f = Figure(size=(600, 400))
+        a = Axis(
+            f[1,1], 
+            xlabel = "running time (yr)", 
+            ylabel = "sensitivity (yr)", 
+            limits= (0,5, nothing, 4e24),
+            title = L"Sensitivity for $0\nu\beta\beta$ $\lambda$ (V+A) at 90% CL"
+            )
+        p1 = lines!(a, t, t_full_RH_L, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
+        # lines!(a, t, t_italian_RH_L, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
+        p2 = lines!(a, t, t_current_RH_L, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
+        # lines!(a, t, t_iron_RH_L, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
+        p3 = lines!(a, t, t_full_RH_L_wo, label = "6-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[1])
+        p4 =lines!(a, t, t_current_RH_L_wo, label = "4-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[2])
+        hlines!(a, [1.6e23], color = :black, linestyle = :solid, label = L"best $^{82}$Se: $\langle \lambda \rangle$", linewidth = 2)
+        band!([0,5], [4.58e23], [13.35e23], color = (:red, 0.4), label = L"best world: $\langle \lambda \rangle$")
         
-    #     # hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
-    #     axislegend(a, position = :lt, patchsize = (25, 10), patchlabelgap = 10)
-    #     saveName = savename("sensitivity_in_time_nu0_V+A_L", analysisDict, "png")
-    #     safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
-    #     f 
-    # end
+        # hlines!(a, [2.2e23], color = :red, linestyle = :dash, label = L"$\lambda$: NEMO3", linewidth = 2)
+        axislegend(a, position = :lt, patchsize = (20, 7), patchlabelgap = 6, nbanks = 2)
+        saveName = savename("sensitivity_in_time_nu0_V+A_L", analysisDict, "png")
+        safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
+        f 
+    end
 
     # ## RH E
 
-    # signal = get_process("bb0nu_foil_bulk", data_processes)
-    # set_nTotalSim!( signal, 0.98e8 )
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface])
+    signal = get_process("bb0nu_foil_bulk", data_processes)
+    set_nTotalSim!( signal, 0.98e8 )
 
-    # background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
-    # t_full_RH_e = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams;
-    #     effFactor = 0.888
-    # )
+    t_full_RH_e = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.888
+    )
 
-    # background[end] = get_process("neutron_external", hist_processes, "current_shielding")
+    background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
-    # t_current_RH_e = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams;
-    #     effFactor = 0.888
-    # )
+    t_current_RH_e = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.888
+    )
+
+    set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface]*100.0)
+    background[end] = get_process("neutron_external", hist_processes, "full_shielding")
+
+    t_full_RH_e_wo = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.888
+    )
+
+    background[end] = get_process("neutron_external", hist_processes, "current_shielding")
+
+    t_current_RH_e_wo = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.888
+    )
 
     # background[end] = get_process("neutron_external", hist_processes, "iron_shielding")
 
@@ -647,26 +777,28 @@ begin
     #     effFactor = 0.888
     # )
 
-    # let
-    #     f = Figure(size=(600, 400))
-    #     a = Axis(
-    #         f[1,1], 
-    #         xlabel = "running time (yr)", 
-    #         ylabel = "sensitivity (yr)", 
-    #         limits= (0,5, nothing, nothing),
-    #         title = L"Sensitivity for $0\nu\beta\beta$ $\eta$ (V+A) at 90% CL"
-    #         )
-    #     p = lines!(a, t, t_full_RH_e, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
-    #     lines!(a, t, t_italian_RH_e, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
-    #     lines!(a, t, t_current_RH_e, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
-    #     lines!(a, t, t_iron_RH_e, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
-    #     hlines!(a, [2.2e23], color = :black, linestyle = :solid, label = L"best $^{82}$Se: $\langle \eta \rangle$", linewidth = 2)
-    #     band!([0,5], [9.93e23], [38.81e23], color = (:red, 0.4), label = L"best world: $\langle \eta \rangle$")
-    #     axislegend(a, position = :lt, patchsize = (25, 10), patchlabelgap = 10)
-    #     saveName = savename("sensitivity_in_time_nu0_V+A_e", analysisDict, "png")
-    #     safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
-    #     f 
-    # end
+    let
+        f = Figure(size=(600, 400))
+        a = Axis(
+            f[1,1], 
+            xlabel = "running time (yr)", 
+            ylabel = "sensitivity (yr)", 
+            limits= (0,5, nothing, nothing),
+            title = L"Sensitivity for $0\nu\beta\beta$ $\eta$ (V+A) at 90% CL"
+            )
+        p1 = lines!(a, t, t_full_RH_e, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
+        # lines!(a, t, t_italian_RH_e, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
+        p2 = lines!(a, t, t_current_RH_e, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
+        # lines!(a, t, t_iron_RH_e, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
+        p3 = lines!(a, t, t_full_RH_e_wo, label = "6-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[1])
+        p4 =lines!(a, t, t_current_RH_e_wo, label = "4-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[2])
+        hlines!(a, [2.2e23], color = :black, linestyle = :solid, label = L"best $^{82}$Se: $\langle \eta \rangle$", linewidth = 2)
+        band!([0,5], [9.93e23], [38.81e23], color = (:red, 0.4), label = L"best world: $\langle \eta \rangle$")
+        axislegend(a, position = :lt, patchsize = (25, 10), patchlabelgap = 10)
+        saveName = savename("sensitivity_in_time_nu0_V+A_e", analysisDict, "png")
+        safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
+        f 
+    end
 end
 
 
