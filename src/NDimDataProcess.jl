@@ -322,7 +322,7 @@ function get_s_to_b(
     ε = get_roi_effciencyND(signal, roi).eff
     ε == 0.0 && return -1e6 # If efficiency is zero, penalize optimization  
 
-    @time b = get_roi_bkg_counts(processes, roi)
+    b = get_roi_bkg_counts(processes, roi)
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     S_b = get_FC(b, α; approximate=approximate)
 

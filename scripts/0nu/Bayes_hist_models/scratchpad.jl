@@ -4,7 +4,7 @@ using DrWatson
 push!(LOAD_PATH, srcdir())
 
 using SensitivityModule
-using Random, LinearAlgebra, Statistics, Distributions, Plots, BAT, BinnedModels, StatsBase, DensityInterface, IntervalSets, FHist, SpecialFunctions
+using Random, LinearAlgebra, Statistics, Distributions, Plots, BAT, BinnedModels, StatsBase, DensityInterface, IntervalSets, FHist, SpecialFunctions, ValueShapes
 global t0 = time()
 
 
@@ -43,7 +43,7 @@ function make_hist_likelihood(h::Hist1D, f::Function)
             observed_counts = counts[i]
 
             # Simple mid-point rule integration of fit function `f` over bin:
-            expected_counts = bin_width * f(p, bin_center) * n
+            expected_counts = bin_width * f(Vector(p.w), bin_center) * n
             expected_counts == 0.0 && continue
 
             log_pdf_poisson(expected_counts, observed_counts) == -Inf && continue
@@ -70,11 +70,11 @@ signal = get_process("bb0nu_foil_bulk", all_processes)
 # declare background processes
 background = [
     get_process("bb_foil_bulk", all_processes),
-    get_process("Bi214_foil_bulk", all_processes),
-    get_process("Bi214_wire_surface", all_processes),
-    get_process("Tl208_foil_bulk", all_processes),
-    get_process("K40_foil_bulk", all_processes),
-    get_process("Pa234m_foil_bulk", all_processes),
+    # get_process("Bi214_foil_bulk", all_processes),
+    # get_process("Bi214_wire_surface", all_processes),
+    # get_process("Tl208_foil_bulk", all_processes),
+    # get_process("K40_foil_bulk", all_processes),
+    # get_process("Pa234m_foil_bulk", all_processes),
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -85,11 +85,11 @@ set_signal!(background[1], false)
 
 # set_nTotalSim!( signal, 1e8 )
 set_nTotalSim!( background[1], 0.99e8 )
-set_nTotalSim!( background[2], 0.96e8 )
-set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 0.76e8 )
-set_nTotalSim!( background[5], 1e8 )
-set_nTotalSim!( background[6], 1e8 )
+# set_nTotalSim!( background[2], 0.96e8 )
+# set_nTotalSim!( background[3], 1e8 )
+# set_nTotalSim!( background[4], 0.76e8 )
+# set_nTotalSim!( background[5], 1e8 )
+# set_nTotalSim!( background[6], 1e8 )
 
 @info "process initialized"
 println("Processes initialized.")
@@ -103,22 +103,18 @@ bkg_hist = [b for b in get_bkg_counts_1D.(background)]
 bkg_hist_normed = normalize.(bkg_hist, width = true)
 signal_hist_normed = normalize(get_bkg_counts_1D(signal), width = true)
 
-function f(par::NamedTuple{(:s, :b1, :b2, :b3, :b4, :b5)}, x::Real)
-    total_rate = sum(par)
-    s, b1, b2, b3, b4, b5 = par
-    b6 = total_rate - s - b1 - b2 - b3 - b4 - b5
+function f(pars::Vector{Float64}, x::Real, s_hist::Hist1D, b_hists::Vector{<:Hist1D})
+    sig = pars[1]*s_hist
+    hists = [ pars[i]*b_hists[i-1] for i in 2:length(pars)]
     th = normalize(
-        s*signal_hist_normed + 
-        b1*bkg_hist_normed[1] + 
-        b2*bkg_hist_normed[2] + 
-        b3*bkg_hist_normed[3] + 
-        b4*bkg_hist_normed[4] + 
-        b5*bkg_hist_normed[5] + 
-        b6*bkg_hist_normed[6], 
+        sum(vcat(sig, hists)), 
         width = true
     )
+    
     return my_pdf(th, x) 
 end
+f1(pars::Vector{Float64}, x::Real) = f(pars, x, signal_hist_normed, bkg_hist_normed)
+
 
 for b in background
     set_bins!(b, 0:50:3500)
@@ -131,7 +127,7 @@ function sample_histogram(h::Hist1D)
 end
 
 function get_sens_bayes(background, signal)
-    ROI_a, ROI_b = 0, 3400
+    ROI_a, ROI_b = 2000, 3400
 
     bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] 
     bkg_hist_normed = normalize.(bkg_hist, width = true)
@@ -139,19 +135,18 @@ function get_sens_bayes(background, signal)
     
     data_hist = [sample_histogram(b) for b in bkg_hist] |> sum 
 
-    my_likelihood = make_hist_likelihood(data_hist, f)
+    my_likelihood = make_hist_likelihood(data_hist, f1)
 
-    prior = distprod(
-        s = Uniform(1e-20, 1.0),
-        b1 = Uniform(s, 1.0),
-        b2 = Uniform(s+b1, 1.0),
-        b3 = Uniform(s+b1+b2, 1.0),
-        b4 = Uniform(s+b1+b2+b3, 1.0),
-        b5 = Uniform(s+b1+b2+b3+b4, 1.0),
-    )
+    # Define the concentration parameters (prior belief)
+    α = ones(length(bkg_hist)+1)  # Prior for each activity
 
+    # Create the Dirichlet distribution
+    prior = NamedTupleDist(w = Dirichlet(α))
+    
+    # Apply the TransformedMeasure to wrap the Dirichlet distribution
+    
     posterior = PosteriorMeasure(my_likelihood, prior)
-    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^4, nchains = 4))
+    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^5, nchains = 2))
 
     marginal_modes = bat_marginalmode(samples).result
 

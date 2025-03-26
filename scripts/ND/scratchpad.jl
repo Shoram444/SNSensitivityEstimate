@@ -8,8 +8,6 @@ using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, 
 using Revise
 using BlackBoxOptim
 
-Revise.track(SensitivityModule)
-Revise.track(SensitivityModule)
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -31,7 +29,6 @@ include(scriptsdir("Params.jl"))
 
 vars = [
     "phi", 
-    "phi", 
     "sumE", 
     "maxE", 
     "minE", 
@@ -42,7 +39,6 @@ vars = [
 
 bins = (
     phi = (0,180),
-    phi = (0,180),
     sumE = (0, 3500),
     maxE = (0, 3000),
     minE = (0, 3500),
@@ -52,7 +48,7 @@ bins = (
 )
 
 
-processes = load_ndim_processes("fal5_8perc_Boff_TIT", bins, vars)
+processes = load_ndim_processes("fal5_TKrec", bins, vars)
 
 signal = get_process("bb0nu_foil_bulk", processes)
 # signal = get_process("bb0nuM1_foil_bulk", processes)
@@ -64,8 +60,8 @@ background = [
     get_process("Bi214_foil_bulk", processes),
     get_process("Bi214_wire_surface", processes),
     get_process("Tl208_foil_bulk", processes),
-    # get_process("K40_foil_bulk", processes),
-    # get_process("Pa234m_foil_bulk", processes),
+    get_process("K40_foil_bulk", processes),
+    get_process("Pa234m_foil_bulk", processes),
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -78,8 +74,8 @@ set_nTotalSim!( background[1], 0.99e8 )
 set_nTotalSim!( background[2], 1e8 )
 set_nTotalSim!( background[3], 1e8 )
 set_nTotalSim!( background[4], 1e8 )
-# set_nTotalSim!( background[5], 1e8 )
-# set_nTotalSim!( background[6], 1e8 )
+set_nTotalSim!( background[5], 1e8 )
+set_nTotalSim!( background[6], 1e8 )
 
 α= 1.64485362695147
 
@@ -87,7 +83,7 @@ println("loaded files, signal = $(signal.isotopeName)")
 
 
 prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x;
-    approximate="table")
+    approximate="formula")
 
 
 function make_stepRange(process)
@@ -102,7 +98,6 @@ end
 
 searchRange = make_stepRange(signal)
 x0 = [
-    rand(range(bins.phi[1], bins.phi[2], 100)), rand(range(bins.phi[1], bins.phi[2], 100)), 
     rand(range(bins.phi[1], bins.phi[2], 100)), rand(range(bins.phi[1], bins.phi[2], 100)), 
     rand(range(bins.sumE[1], bins.sumE[2], 100)), rand(range(bins.sumE[1], bins.sumE[2], 100)), 
     rand(range(bins.maxE[1], bins.maxE[2], 100)), rand(range(bins.maxE[1], bins.maxE[2], 100)), 
@@ -121,8 +116,8 @@ res = bboptimize(
     SearchRange = searchRange, 
     NumDimensions = length(searchRange),
     Method=:adaptive_de_rand_1_bin, 
-    MaxTime = 60,#6*3600,
-    TraceMode = :compact
+    MaxTime = 10*3600,
+    TraceMode = :silent
 )
 
 function get_best_ROI_ND(res, process)

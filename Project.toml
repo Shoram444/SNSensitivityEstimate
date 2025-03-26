@@ -40,6 +40,7 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 UnROOT = "3cd96dde-e98d-4713-81e9-a4a1b0235ce9"
+ValueShapes = "136a8f8c-c49b-4edb-8b98-f3d64d48be8f"
 
 [compat]
 DrWatson = "2.13.0"
