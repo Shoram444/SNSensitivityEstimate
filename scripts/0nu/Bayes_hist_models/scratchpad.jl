@@ -70,11 +70,11 @@ signal = get_process("bb0nu_foil_bulk", all_processes)
 # declare background processes
 background = [
     get_process("bb_foil_bulk", all_processes),
-    # get_process("Bi214_foil_bulk", all_processes),
-    # get_process("Bi214_wire_surface", all_processes),
-    # get_process("Tl208_foil_bulk", all_processes),
-    # get_process("K40_foil_bulk", all_processes),
-    # get_process("Pa234m_foil_bulk", all_processes),
+    get_process("Bi214_foil_bulk", all_processes),
+    get_process("Bi214_wire_surface", all_processes),
+    get_process("Tl208_foil_bulk", all_processes),
+    get_process("K40_foil_bulk", all_processes),
+    get_process("Pa234m_foil_bulk", all_processes),
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -85,11 +85,11 @@ set_signal!(background[1], false)
 
 # set_nTotalSim!( signal, 1e8 )
 set_nTotalSim!( background[1], 0.99e8 )
-# set_nTotalSim!( background[2], 0.96e8 )
-# set_nTotalSim!( background[3], 1e8 )
-# set_nTotalSim!( background[4], 0.76e8 )
-# set_nTotalSim!( background[5], 1e8 )
-# set_nTotalSim!( background[6], 1e8 )
+set_nTotalSim!( background[2], 0.96e8 )
+set_nTotalSim!( background[3], 1e8 )
+set_nTotalSim!( background[4], 0.76e8 )
+set_nTotalSim!( background[5], 1e8 )
+set_nTotalSim!( background[6], 1e8 )
 
 @info "process initialized"
 println("Processes initialized.")
@@ -127,7 +127,7 @@ function sample_histogram(h::Hist1D)
 end
 
 function get_sens_bayes(background, signal)
-    ROI_a, ROI_b = 2000, 3400
+    ROI_a, ROI_b = 0, 3400
 
     bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] 
     bkg_hist_normed = normalize.(bkg_hist, width = true)
@@ -138,7 +138,8 @@ function get_sens_bayes(background, signal)
     my_likelihood = make_hist_likelihood(data_hist, f1)
 
     # Define the concentration parameters (prior belief)
-    α = ones(length(bkg_hist)+1)  # Prior for each activity
+    proportions = integral.(bkg_hist) ./ sum(integral.(bkg_hist))
+    α = [1e-20, proportions...]  # Prior for each activity
 
     # Create the Dirichlet distribution
     prior = NamedTupleDist(w = Dirichlet(α))
@@ -193,59 +194,57 @@ end
 
 
 
-# ROI_a, ROI_b = 0, 3400
+ROI_a, ROI_b = 0, 3400
 
-# bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] |> sum
-# bkg_hist_normed = normalize(bkg_hist, width = true)
-# signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), ROI_a, ROI_b), width = true)
+bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] 
+bkg_hist_normed = normalize.(bkg_hist, width = true)
+signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), ROI_a, ROI_b), width = true)
 
-# data_bkg = [first(FHist.sample(bkg_hist)) for i=1:rand(Poisson(round(Int, integral(bkg_hist))))] 
-# data_hist = Hist1D( data_bkg; binedges= binedges(bkg_hist_normed) )
+data_hist = [sample_histogram(b) for b in bkg_hist] |> sum 
 
-# function f1(par::NamedTuple{(:a, :ε)}, x::Real)
-#     total_rate = sum(par.a)
-#     a1 = par.a[1]
-#     a2 = 1.0 - a1
-#     th = normalize(a1*signal_hist_normed + a2*bkg_hist_normed , width = true)
-#     return my_pdf(th, x) 
-# end
+my_likelihood = make_hist_likelihood(data_hist, f1)
 
-# my_likelihood = make_hist_likelihood(data_hist, f1)
+# Define the concentration parameters (prior belief)
+α = ones(length(bkg_hist)+1)  # Prior for each activity
 
-# prior = distprod(
-#     a = Uniform(1e-20, 1),
-#     ε = 0.1
-# )
+# Create the Dirichlet distribution
+prior = NamedTupleDist(w = Dirichlet(α))
 
-# posterior = PosteriorMeasure(my_likelihood, prior)
-# samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^4, nchains = 4))
+# Apply the TransformedMeasure to wrap the Dirichlet distribution
 
-# marginal_modes = bat_marginalmode(samples).result
+posterior = PosteriorMeasure(my_likelihood, prior)
+samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 5*10^4, nchains = 2, strict = false))
 
-# binned_unshaped_samples, f_flatten = bat_transform(Vector, samples)
-# nDataPoints = integral(data_hist)
-# muS = [a[1] * nDataPoints for a in binned_unshaped_samples.v]
+marginal_modes = bat_marginalmode(samples).result
 
-# """
-#     Stupid integration for getting upper limit - requires monotonely decreasing samples in vector form!
-# """
-# function get_interval_upper(data, CL; nbins=100)
-#     h = fit(Histogram, data; nbins = nbins)
-#     cs = cumsum(h.weights) ./ sum(h.weights)
+plot(samples)
+bat_eff_sample_size(unshaped.(samples))[1]
 
-#     uppID = findfirst(x -> x >= CL, cs)
-#     midpoints(h.edges[1])[Int(uppID)]
-# end
 
-# exp_mu_signal_90 = get_interval_upper(muS, 0.9)
+binned_unshaped_samples, f_flatten = bat_transform(Vector, samples)
+nDataPoints = integral(data_hist)
+muS = [par[1] * nDataPoints for par in binned_unshaped_samples.v]
+bkg_par = [par[2] for par in binned_unshaped_samples.v]
 
-# xs = 50:100:3350
-# ys = [f1((a = exp_mu_signal_90 / integral(data_hist), ε = 0.1), x) for x in xs]
-# plot(data_hist, label = "data",fillrange = 1e-5, fillcolor = :match)
-# plot!(xs, ys .* integral(data_hist) .* 100, linewidth = 4, ylims = (0, 1e4), label = "fit")
-# # plot!(xlims = (2000, 3200), ylims = (1e-5, 100))
+exp_a_bkg_90 = quantile( bkg_par,0.9)
+exp_mu_signal_90 = quantile( muS,0.9) 
+Na = 6.02214e23
+m = 6.067
+t = 2.88
+W = 0.08192
+eff= lookup(signal, ROI_a, ROI_b)
+Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
 
-# ys_signal = bincounts(signal_hist_normed) .* 100 .* exp_mu_signal_90
-# plot!(xs, ys_signal, linewidth = 4, label = "signal")
-# plot!(yscale = :log10, ylims = (1.7e-1, 1e4))
-# savefig("scripts/0nu/Bayes_hist_models/fit.svg")
+bw = 50
+xs = 0:bw:3350
+b_amps = [x for x in mean(samples).w][2:end]
+ys = [f1((vcat(exp_mu_signal_90/nDataPoints, b_amps)), x) for x in xs]
+plot(data_hist, label = "data",fillrange = 1e-5, fillcolor = :match)
+plot!(xs, ys .* integral(data_hist) .* bw, linewidth = 4, ylims = (0, 1e4), label = "fit")
+plot!(xlims = (2000, 3200), ylims = (1e-5, 100))
+
+
+ys_signal = bincounts(signal_hist_normed) .* bw .* exp_mu_signal_90
+plot!(xs, ys_signal, linewidth = 4, label = "signal")
+plot!(yscale = :log10, ylims = (1.7e-1, 1e4))
+savefig("scripts/0nu/Bayes_hist_models/fit.svg")
