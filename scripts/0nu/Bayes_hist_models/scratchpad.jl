@@ -6,47 +6,10 @@ push!(LOAD_PATH, srcdir())
 using SensitivityModule
 using Random, LinearAlgebra, Statistics, Distributions, Plots, BAT, BinnedModels, StatsBase, DensityInterface, IntervalSets, FHist, SpecialFunctions
 global t0 = time()
-# mu1 = 1000
-# lambda = 0.001
-# sigma1 = sqrt(mu1)
-# n1 = 1
-# n2 = 1000
-# n = n1 + n2
-# ε = 0.1
-# d1 = rand(Normal( mu1, sigma1), n1) .+ ε
-# d2 = rand(Uniform(0, 3000), n2) .+ ε
 
-# data = vcat(
-#     d1, d2
-# )
-
-
-# h1 = normalize(Hist1D(d1; binedges = 0:100:3000), width = true)
-# h2 = normalize(Hist1D(d2; binedges = 0:100:3000), width = true)
-
-
-
-# data_hist = Hist1D(data; binedges = 0:100:3000)
-
-# true_par_values = (a = n1/sum(bincounts(data_hist)), ε = 0.1)
-
-# plot(data_hist)
 
 my_pdf(h::Hist1D, x::Real) = ismissing(lookup(h, x)) ? 0.0 : lookup(h, x)
 
-# function f(par::NamedTuple{(:a, :ε)}, x::Real)
-#     total_rate = sum(par.a)
-#     a1 = par.a[1]
-#     a2 = 1.0 - a1
-#     th = normalize(a1*h1 + a2*h2 , width = true)
-#     return my_pdf(th, x) 
-# end
-
-
-# prior = distprod(
-#     a = Uniform(0, 1),
-#     ε = 0.1
-# )
 
 function log_pdf_poisson(λ::T, k::U) where {T<:Real,U<:Real}
     R = float(promote_type(T,U))
@@ -93,17 +56,6 @@ function make_hist_likelihood(h::Hist1D, f::Function)
     end )
 end
 
-# my_likelihood = make_hist_likelihood(data_hist, f)
-
-# posterior = PosteriorMeasure(my_likelihood, prior)
-# samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^5, nchains = 4))
-
-# marginal_modes = bat_marginalmode(samples).result
-
-# bat_report(samples)
-# true_par_values
-# plot(samples, :(a), nbins=50)
-
 ###################################
 include(scriptsdir("Params.jl"))
 
@@ -142,29 +94,29 @@ set_nTotalSim!( background[6], 1e8 )
 @info "process initialized"
 println("Processes initialized.")
 
-# #
-# Q_keV = SNparams["Q"]
-# α = 1.64485362695147
-
-
-# t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
-# best_t12ESum = get_max_bin(t12MapESum)
-# expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
-
 for b in background
     set_bins!(b, 0:10:3500)
 end
 set_bins!(signal, 0:10:3500)
 
-bkg_hist = [b for b in get_bkg_counts_1D.(background)] |> sum
-bkg_hist_normed = normalize(bkg_hist, width = true)
+bkg_hist = [b for b in get_bkg_counts_1D.(background)] 
+bkg_hist_normed = normalize.(bkg_hist, width = true)
 signal_hist_normed = normalize(get_bkg_counts_1D(signal), width = true)
 
-function f1(par::NamedTuple{(:a, :ε)}, x::Real)
-    total_rate = sum(par.a)
-    a1 = par.a[1]
-    a2 = 1.0 - a1
-    th = normalize(a1*signal_hist_normed + a2*bkg_hist_normed , width = true)
+function f(par::NamedTuple{(:s, :b1, :b2, :b3, :b4, :b5)}, x::Real)
+    total_rate = sum(par)
+    s, b1, b2, b3, b4, b5 = par
+    b6 = total_rate - s - b1 - b2 - b3 - b4 - b5
+    th = normalize(
+        s*signal_hist_normed + 
+        b1*bkg_hist_normed[1] + 
+        b2*bkg_hist_normed[2] + 
+        b3*bkg_hist_normed[3] + 
+        b4*bkg_hist_normed[4] + 
+        b5*bkg_hist_normed[5] + 
+        b6*bkg_hist_normed[6], 
+        width = true
+    )
     return my_pdf(th, x) 
 end
 
@@ -173,22 +125,29 @@ for b in background
 end
 set_bins!(signal, 0:50:3500)
 
+function sample_histogram(h::Hist1D)
+    data_bkg = [first(FHist.sample(h)) for i=1:rand(Poisson(round(Int, integral(h))))] 
+    Hist1D( data_bkg; binedges= binedges(h) )
+end
 
 function get_sens_bayes(background, signal)
     ROI_a, ROI_b = 0, 3400
 
-    bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] |> sum
-    bkg_hist_normed = normalize(bkg_hist, width = true)
+    bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] 
+    bkg_hist_normed = normalize.(bkg_hist, width = true)
     signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), ROI_a, ROI_b), width = true)
     
-    data_bkg = [first(FHist.sample(bkg_hist)) for i=1:rand(Poisson(round(Int, integral(bkg_hist))))] 
-    data_hist = Hist1D( data_bkg; binedges= binedges(bkg_hist_normed) )
+    data_hist = [sample_histogram(b) for b in bkg_hist] |> sum 
 
-    my_likelihood = make_hist_likelihood(data_hist, f1)
+    my_likelihood = make_hist_likelihood(data_hist, f)
 
     prior = distprod(
-        a = Uniform(1e-20, 1),
-        ε = 0.1
+        s = Uniform(1e-20, 1.0),
+        b1 = Uniform(s, 1.0),
+        b2 = Uniform(s+b1, 1.0),
+        b3 = Uniform(s+b1+b2, 1.0),
+        b4 = Uniform(s+b1+b2+b3, 1.0),
+        b5 = Uniform(s+b1+b2+b3+b4, 1.0),
     )
 
     posterior = PosteriorMeasure(my_likelihood, prior)
@@ -198,7 +157,7 @@ function get_sens_bayes(background, signal)
 
     binned_unshaped_samples, f_flatten = bat_transform(Vector, samples)
     nDataPoints = integral(data_hist)
-    muS = [a[1] * nDataPoints for a in binned_unshaped_samples.v]
+    muS = [par[1] * nDataPoints for par in binned_unshaped_samples.v]
 
     exp_mu_signal_90 = quantile( muS,0.9) 
     Na = 6.02214e23
@@ -210,8 +169,8 @@ function get_sens_bayes(background, signal)
 end
 
 t = Float64[]
-while(time() - t0 < 3600*36) # do this for n hours
-# for _ in 1:100 # do this for n hours
+# while(time() - t0 < 3600*36) # do this for n hours
+for _ in 1:1 # do this for n hours
     GC.gc()
     println("elapsed time = $(time() - t0) s")
 
@@ -220,8 +179,8 @@ while(time() - t0 < 3600*36) # do this for n hours
     push!(t, sens)
 end
 
-using DataFramesMeta, CSV
-CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
+# using DataFramesMeta, CSV
+# CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 # CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")

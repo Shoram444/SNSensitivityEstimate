@@ -305,16 +305,22 @@ function get_s_to_b(
     roi::Vector{Float64};
     approximate="table"
 )
+    for i in 1:2:length(roi)-1
+        if roi[i] >= roi[i+1]
+            return -1e6  # penalty for invalid ROI
+        end
+    end
+
     signal_id = findfirst(p -> p.signal, processes)
     if signal_id === nothing
         @error "No signal process found!"
-        return 0.0
+        return -1e6 # penalty for no signal process
     end
                     
     ε = zero(Float64)
     signal = processes[signal_id]
     ε = get_roi_effciencyND(signal, roi).eff
-    ε == 0.0 && return 0.0 # If efficiency is zero, return zero sensitivity
+    ε == 0.0 && return -1e6 # If efficiency is zero, penalize optimization  
 
     @time b = get_roi_bkg_counts(processes, roi)
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
