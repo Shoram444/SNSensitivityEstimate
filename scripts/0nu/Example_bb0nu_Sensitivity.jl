@@ -12,10 +12,11 @@ function save_background_table(
     signal, 
     background,
     outDir;
+    labels = labels,
     analysisDict = analysisDict,
     α = α,
     SNparams = SNparams,
-    ROI = nothing
+    ROI = nothing,
 )
     t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
     best_t12ESum = get_max_bin(t12MapESum)
@@ -33,12 +34,10 @@ function save_background_table(
 
     saveName = savename("background_counts", analysisDict, "md")
     open(plotsdir(outDir, saveName), "w") do f
-        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "neutron_external\n$(analysisDict[:neutron_config])", "total"]
-        # process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "total"]
         header = ["process", "bkg counts in ROI"]
         pretty_table(f,
             DataFrame(
-                process = process,
+                process = vcat(labels, "total"),
                 counts = vcat(bkgs, sum(bkgs)),
             ),
             header = header,
@@ -63,13 +62,13 @@ analysisDict = Dict(
     :Bfield => "Boff", # magnetic field on/off
     :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
     :mode => "sumE", 
-    :trackAlgo => "TIT",
+    :trackAlgo => "TKrec",
     :signal => "bb0nu",
     :neutron_config => "full_shielding"
 )
 
-files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
-# files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
+# files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
+files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 #  1. dir::String -> the name of the directory where the root files are stored
@@ -77,17 +76,17 @@ files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analys
 data_processes = load_data_processes(
     files_directory, 
     analysisDict[:mode],
-    fwhm = 0.08
+    fwhm = 0.0
 )
 
-hist_processes = load_hist_processes(
-    files_directory,  
-    analysisDict[:mode]
-)
+# hist_processes = load_hist_processes(
+#     files_directory,  
+#     analysisDict[:mode]
+# )
 
-for c in ["full_shielding","current_shielding"]
-# begin
-    analysisDict[:neutron_config] = c
+# for c in ["full_shielding","current_shielding"]
+begin
+    # analysisDict[:neutron_config] = c
     # declare which process is signal
     global signal = get_process("bb0nu_foil_bulk", data_processes)
     # signal = get_process("bb0nuM1_foil_bulk", data_processes)
@@ -101,46 +100,47 @@ for c in ["full_shielding","current_shielding"]
         get_process("Tl208_foil_bulk", data_processes),
         get_process("K40_foil_bulk", data_processes),
         get_process("Pa234m_foil_bulk", data_processes),
-        get_process("neutron_external", hist_processes, analysisDict[:neutron_config])
+        # get_process("neutron_external", hist_processes, analysisDict[:neutron_config])
     ]
 
-    labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons (5-sided)"]
+    labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa"]
+    # labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons (5-sided)"]
     # labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl"]
 
-    if(analysisDict[:neutron_config] == "full_shielding")
-        labels[end] = "neutrons (6-sided)"
-    elseif (analysisDict[:neutron_config] == "iron_shielding")
-        labels[end] = "neutrons (0-sided)"
-    elseif (analysisDict[:neutron_config] == "no_french_wall_shielding")
-        labels[end] = "neutrons (5-sided)"
-    elseif (analysisDict[:neutron_config] == "italian_shielding")
-        labels[end] = "neutrons (5-sided)"
-    elseif (analysisDict[:neutron_config] == "current_shielding")
-        labels[end] = "neutrons (4-sided)"
-    else
-        labels[end] = "neutrons"
-    end
+    # if(analysisDict[:neutron_config] == "full_shielding")
+    #     labels[end] = "neutrons (6-sided)"
+    # elseif (analysisDict[:neutron_config] == "iron_shielding")
+    #     labels[end] = "neutrons (0-sided)"
+    # elseif (analysisDict[:neutron_config] == "no_french_wall_shielding")
+    #     labels[end] = "neutrons (5-sided)"
+    # elseif (analysisDict[:neutron_config] == "italian_shielding")
+    #     labels[end] = "neutrons (5-sided)"
+    # elseif (analysisDict[:neutron_config] == "current_shielding")
+    #     labels[end] = "neutrons (4-sided)"
+    # else
+    #     labels[end] = "neutrons"
+    # end
 
     # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
     set_signal!(background[1], false)
 
     # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-    set_nTotalSim!( signal, 0.98e8 )
+    # set_nTotalSim!( signal, 0.98e8 )
+    set_nTotalSim!( signal, 1e8 )
     # set_nTotalSim!( signal, 1e8 )
-    # set_nTotalSim!( signal, 1e8 )
-    set_nTotalSim!( background[1], 0.99e8 )
-    set_nTotalSim!( background[2], 0.96e8 )
-    set_nTotalSim!( background[3], 1e8 )
-    set_nTotalSim!( background[4], 0.76e8 )
-    set_nTotalSim!( background[5], 1e8 )
-    set_nTotalSim!( background[6], 1e8 )
-
-    # set_nTotalSim!( background[1], 1e8 )
-    # set_nTotalSim!( background[2], 1e8 )
+    # set_nTotalSim!( background[1], 0.99e8 )
+    # set_nTotalSim!( background[2], 0.96e8 )
     # set_nTotalSim!( background[3], 1e8 )
-    # set_nTotalSim!( background[4], 1e8 )
+    # set_nTotalSim!( background[4], 0.76e8 )
     # set_nTotalSim!( background[5], 1e8 )
     # set_nTotalSim!( background[6], 1e8 )
+
+    set_nTotalSim!( background[1], 1e8 )
+    set_nTotalSim!( background[2], 1e8 )
+    set_nTotalSim!( background[3], 1e8 )
+    set_nTotalSim!( background[4], 1e8 )
+    set_nTotalSim!( background[5], 1e8 )
+    set_nTotalSim!( background[6], 1e8 )
 
     println("Processes initialized.")
 
@@ -148,7 +148,6 @@ for c in ["full_shielding","current_shielding"]
     global α = 1.64485362695147
 
     global t = range(0, 5, 100)
-
 
     # The base structure of the `SensitivityModule` is the `Process`. For details, take a look into `src/Process.jl`, or hit `? Process` in REPL.
     # The way this works is that by loading a process, we create an efficiency map for each isotope (process). For description of what these maps represent
@@ -245,7 +244,7 @@ for c in ["full_shielding","current_shielding"]
         
         for i=2:length(bkg_hists)
             hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
-            errorbars!(ax, sum(bkg_hists[i:end]), color = :black, whiskerwidth = 7)
+            # errorbars!(ax, sum(bkg_hists[i:end]), color = :black, whiskerwidth = 7)
             
         end
         # lines!(ax, midpoints(binedges(sig_hist)), bincounts(sig_hist), label = signal.isotopeName, color = :red, linestyle = :dash, linewidth = 2.5)
@@ -260,34 +259,34 @@ for c in ["full_shielding","current_shielding"]
     end
 
 
-    # save signal tables
-    function save_sensitivity_table(
-        signals, 
-        background, 
-        outDir;
-        analysisDict = analysisDict,
-        α = α,
-        SNparams = SNparams,
-        )
-        df = DataFrame(signal = [], ROI = [], bkg_counts = [], eff = [], t12 = [])
-        for s in signals
-            t12MapESum = get_tHalf_map(SNparams, α, s, background...; approximate ="table")
-            best_t12ESum = get_max_bin(t12MapESum)
-            bkg_hists = get_bkg_counts_1D.(background)
-            b = integral(restrict(sum(bkg_hists), best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]))
-            Δb = sqrt(sum(sumw2(restrict(sum(bkg_hists), best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]))))
-            expBkgESum = b ± Δb
-            effbb = lookup(s, best_t12ESum)
-            ThalfbbESum = round(get_tHalf(SNparams, effbb, Measurements.value(expBkgESum), α), digits=2)
-            push!(df, (s.isotopeName, "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV", round(expBkgESum, digits = 2), round(effbb, digits = 2), round(ThalfbbESum, sigdigits=3)))
-        end
+    # # save signal tables
+    # function save_sensitivity_table(
+    #     signals, 
+    #     background, 
+    #     outDir;
+    #     analysisDict = analysisDict,
+    #     α = α,
+    #     SNparams = SNparams,
+    #     )
+    #     df = DataFrame(signal = [], ROI = [], bkg_counts = [], eff = [], t12 = [])
+    #     for s in signals
+    #         t12MapESum = get_tHalf_map(SNparams, α, s, background...; approximate ="table")
+    #         best_t12ESum = get_max_bin(t12MapESum)
+    #         bkg_hists = get_bkg_counts_1D.(background)
+    #         b = integral(restrict(sum(bkg_hists), best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]))
+    #         Δb = sqrt(sum(sumw2(restrict(sum(bkg_hists), best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]))))
+    #         expBkgESum = b ± Δb
+    #         effbb = lookup(s, best_t12ESum)
+    #         ThalfbbESum = round(get_tHalf(SNparams, effbb, Measurements.value(expBkgESum), α), digits=2)
+    #         push!(df, (s.isotopeName, "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV", round(expBkgESum, digits = 2), round(effbb, digits = 2), round(ThalfbbESum, sigdigits=3)))
+    #     end
 
-        saveName = savename("sensitivity_", analysisDict, "md")
-        open(plotsdir(outDir, saveName), "w") do f
-            header = ["signal", "ROI", "bkg counts in ROI", "efficiency", "t12"]
-            pretty_table(f, df, header = header, backend = Val(:markdown))
-        end
-    end
+    #     saveName = savename("sensitivity_", analysisDict, "md")
+    #     open(plotsdir(outDir, saveName), "w") do f
+    #         header = ["signal", "ROI", "bkg counts in ROI", "efficiency", "t12"]
+    #         pretty_table(f, df, header = header, backend = Val(:markdown))
+    #     end
+    # end
 
     signals = [
         get_process("bb0nu_foil_bulk", data_processes),
@@ -297,10 +296,10 @@ for c in ["full_shielding","current_shielding"]
 
     # set_nTotalSim!.( signals[2:end], 1e8 )
 
-    save_sensitivity_table(signals, background, "LSM_report/sensitivityTables/sumE")
+    # save_sensitivity_table(signals, background, "LSM_report/sensitivityTables/sumE")
 
     for s in signals
-        save_background_table(s, background, "LSM_report/backgroundTables/sumE")
+        save_background_table(s, background, "LSM_report/backgroundTables/sumE"; labels=labels, ROI = (0, 3500))
     end
 end;
 
