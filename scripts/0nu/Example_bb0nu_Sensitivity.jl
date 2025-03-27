@@ -172,21 +172,21 @@ begin
 
     set_activity!(signal, halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], ThalfbbESum * 365 * 24 * 3600))
 
-    # lbl = "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV 
-    #       b  = $(round(expBkgESum, digits = 2)) 
-    #       T12 ≥  $(round(ThalfbbESum, sigdigits=3)) yr 
-    #       ε = $(round(effbb, digits = 2)*100)%"
+    lbl = "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV 
+          b  = $(round(expBkgESum, digits = 2)) 
+          T12 ≥  $(round(ThalfbbESum, sigdigits=3)) yr 
+          ε = $(round(effbb, digits = 2)*100)%"
 
-    # let 
-    #     f = Figure(size=(600, 400))
-    #     a = Axis(f[1,1], xlabel = "min_ROI [keV]", ylabel = "max_ROI [keV]")
-    #     p = plot!(a, t12MapESum)
-    #     text!(a, 2000, 500, text=lbl)
-    #     Colorbar(f[1,2], p, label="sensitivity [yr]", scale=log10)
-    #     saveName = savename("tHalf_map", analysisDict, "png")
-    #     safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
-    #     f
-    # end
+    let 
+        f = Figure(size=(600, 400))
+        a = Axis(f[1,1], xlabel = "min_ROI [keV]", ylabel = "max_ROI [keV]")
+        p = plot!(a, t12MapESum)
+        text!(a, 2000, 500, text=lbl)
+        Colorbar(f[1,2], p, label="sensitivity [yr]", scale=log10)
+        saveName = savename("tHalf_map", analysisDict, "png")
+        safesave(plotsdir("example", analysisDict[:mode], saveName), f, px_per_unit = 6)
+        f
+    end
 
 
     # # Sensitivity as a function of detector life-time:
