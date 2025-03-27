@@ -47,10 +47,6 @@ function save_background_table(
     end
 end
 
-# rsync -r mpetro@cca.in2p3.fr:/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/data/sims/fal5_8perc_Boff_TIT_twoDistinct_edep_bcu/* data/fal5_8perc_Boff_TIT_twoDistinct_edep_bcu
-# rsync -r mpetro@cca.in2p3.fr:/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/data/sims/fal5_8perc_Boff_TIT_evis_bcu_J38/bb0nu_foil_bulk.root data/sims/fal5_8perc_Boff_TKrec_evis_bcu_J38
-
-
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -64,7 +60,7 @@ analysisDict = Dict(
     :mode => "sumE", 
     :trackAlgo => "TKrec",
     :signal => "bb0nu",
-    :neutron_config => "full_shielding"
+    :neutron_config => "no_neutron"
 )
 
 # files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"

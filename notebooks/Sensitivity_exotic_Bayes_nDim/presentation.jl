@@ -105,11 +105,25 @@ Simulated 100M events each:
 
 # ╔═╡ 83b19179-efaa-4b92-aa71-6cfcea2b26e9
 md"""
+## Full model
 ![background model](https://github.com/Shoram444/SNSensitivityEstimate/blob/main/plots/LSM_report/background_model/sumE/background_model_Bfield=Boff_Eres=8perc_mode=sumE_neutron_config=no_neutron_signal=bb0nu_trackAlgo=TKrec.png?raw=true)
 """
 
-# ╔═╡ 6de5d16b-0f38-47f1-95f9-2100e8e65a26
+# ╔═╡ 49ec8eb7-18ac-4d1e-9b45-401ee2563396
+md"""
+## Background by source 
 
+| **process**      | **bkg counts** |
+|:-----------------|:----------------------|
+| 2nubb | 78565.0±28.0          |
+| Bi214       | 7.822±0.021           |
+| Radon          | 12.91±0.16            |
+| Tl208       | 0.7057±0.0028         |
+| K40         | 10423.0±59.0          |
+| Pa234m      | 13627.0±36.0          |
+| total            | 102636.0±74.0         |
+
+"""
 
 # ╔═╡ Cell order:
 # ╟─5479bdcf-bb42-4910-b061-befdb1b86b37
@@ -123,4 +137,4 @@ md"""
 # ╟─37966182-3b19-4a91-816f-d576c85dd9ba
 # ╟─4e6e0813-f5b3-4138-948d-7997bb371cdc
 # ╟─83b19179-efaa-4b92-aa71-6cfcea2b26e9
-# ╠═6de5d16b-0f38-47f1-95f9-2100e8e65a26
+# ╟─49ec8eb7-18ac-4d1e-9b45-401ee2563396
