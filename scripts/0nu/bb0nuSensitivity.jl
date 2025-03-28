@@ -10,10 +10,10 @@ include(scriptsdir("Params.jl"))
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 # 1. dir::String -> the name of the directory where the root files are stored
 # 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
-all_processes = load_data_processes("fal5_8perc_Boff_TIT_twoDistinct_edep_bcu", "phi")
+all_processes = load_data_processes("fal5_8perc_Boff_TIT_evis_bcu_J38", "sumE", fwhm = 0.0)
 
 # declare which process is signal
-signal = get_process("bb0nu_foil_bulk", all_processes)
+signal = get_process("bb0nuM1_foil_bulk", all_processes)
 
 # declare background processes
 background = [
@@ -26,18 +26,18 @@ background = [
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
-set_nTotalSim!( signal, 0.98e8 )
-# set_nTotalSim!( signal, 1e8 )
+# set_nTotalSim!( signal, 0.98e8 )
+set_nTotalSim!( signal, 1e8 )
 
 set_signal!(background[1], false)
 
 # set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 0.99e8 )
-set_nTotalSim!( background[2], 0.96e8 )
-set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 0.76e8 )
-set_nTotalSim!( background[5], 1e8 )
-set_nTotalSim!( background[6], 1e8 )
+set_nTotalSim!( background[1], 0.99e8   )
+set_nTotalSim!( background[2], 1e8  )
+set_nTotalSim!( background[3], 1e8  )
+set_nTotalSim!( background[4], 1e8  )
+set_nTotalSim!( background[5], 1e8  )
+set_nTotalSim!( background[6], 1e8  )
 
 
 println("Processes initialized.")
@@ -51,7 +51,7 @@ t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="ta
 best_t12ESum = get_max_bin(t12MapESum)
 expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 effbb = lookup(signal, best_t12ESum)
-ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
+ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α; approximate="table"), sigdigits=3)
 
 lbl = "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV 
       b  = $(round(expBkgESum, sigdigits = 3)) 

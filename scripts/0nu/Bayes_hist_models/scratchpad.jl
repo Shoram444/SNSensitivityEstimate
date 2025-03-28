@@ -117,16 +117,16 @@ f1(pars::Vector{Float64}, x::Real) = f(pars, x, signal_hist_normed, bkg_hist_nor
 
 
 for b in background
-    set_bins!(b, 0:50:3500)
+    set_bins!(b, 0:100:3500)
 end
-set_bins!(signal, 0:50:3500)
+set_bins!(signal, 0:100:3500)
 
 function sample_histogram(h::Hist1D)
     data_bkg = [first(FHist.sample(h)) for i=1:rand(Poisson(round(Int, integral(h))))] 
     Hist1D( data_bkg; binedges= binedges(h) )
 end
 
-function get_sens_bayes(background, signal)
+function get_sens_bayes(background::Vector{<:DataProcess}, signal::DataProcess)
     ROI_a, ROI_b = 0, 3400
 
     bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] 
@@ -145,11 +145,18 @@ function get_sens_bayes(background, signal)
     prior = NamedTupleDist(w = Dirichlet(α))
     
     # Apply the TransformedMeasure to wrap the Dirichlet distribution
+
+
+    burnin = MCMCMultiCycleBurnin(nsteps_final=2000)
+    mcmcalgo = MetropolisHastings(
+        weighting = RepetitionWeighting(),
+        tuning = AdaptiveMHTuning()
+    )
+
     
     posterior = PosteriorMeasure(my_likelihood, prior)
-    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 5*10^4, nchains = 4))
+    samples, _ = bat_sample(posterior, MCMCSampling(mcalg = mcmcalgo, burnin = burnin, nsteps = 5*10^4, nchains = 4, strict = false))
 
-    marginal_modes = bat_marginalmode(samples).result
 
     binned_unshaped_samples, f_flatten = bat_transform(Vector, samples)
     nDataPoints = integral(data_hist)
@@ -161,12 +168,12 @@ function get_sens_bayes(background, signal)
     t = 2.88
     W = 0.08192
     eff= lookup(signal, ROI_a, ROI_b)
-    Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
+    return log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
 end
 
 t = Float64[]
-while(time() - t0 < 3600*10) # do this for n hours
-# for _ in 1:1 # do this for n hours
+# while(time() - t0 < 3600*10) # do this for n hours
+for _ in 1:1 # do this for n hours
     GC.gc()
     println("elapsed time = $(time() - t0) s")
 
@@ -176,7 +183,7 @@ while(time() - t0 < 3600*10) # do this for n hours
 end
 
 using DataFramesMeta, CSV
-CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
+CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/data_perBkg_10keV_binning/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 # CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")

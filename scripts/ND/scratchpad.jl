@@ -31,7 +31,7 @@ vars = [
     "phi", 
     "sumE", 
     "maxE", 
-    "minE", 
+    # "minE", 
     "r", 
     # "dy", 
     # "dz"
@@ -40,8 +40,8 @@ vars = [
 bins = (
     phi = (0,180),
     sumE = (0, 3500),
-    maxE = (0, 3000),
-    minE = (0, 3500),
+    maxE = (0, 3500),
+    # minE = (0, 3500),
     r = (0, 100),
     # dy = (-100, 100),
     # dz = (-100, 100)
@@ -50,8 +50,8 @@ bins = (
 
 processes = load_ndim_processes("fal5_TKrec", bins, vars)
 
-signal = get_process("bb0nu_foil_bulk", processes)
-# signal = get_process("bb0nuM1_foil_bulk", processes)
+# signal = get_process("bb0nu_foil_bulk", processes)
+signal = get_process("bb0nuM1_foil_bulk", processes)
 # signal = get_process("bb0nuM2_foil_bulk", processes)
 
 # declare background processes
@@ -82,8 +82,7 @@ set_nTotalSim!( background[6], 1e8 )
 println("loaded files, signal = $(signal.isotopeName)")
 
 
-prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x;
-    approximate="formula")
+prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x; approximate="formula")
 
 
 function make_stepRange(process)
@@ -101,13 +100,11 @@ x0 = [
     rand(range(bins.phi[1], bins.phi[2], 100)), rand(range(bins.phi[1], bins.phi[2], 100)), 
     rand(range(bins.sumE[1], bins.sumE[2], 100)), rand(range(bins.sumE[1], bins.sumE[2], 100)), 
     rand(range(bins.maxE[1], bins.maxE[2], 100)), rand(range(bins.maxE[1], bins.maxE[2], 100)), 
-    rand(range(bins.minE[1], bins.minE[2], 100)), rand(range(bins.minE[1], bins.minE[2], 100)), 
+    # rand(range(bins.minE[1], bins.minE[2], 100)), rand(range(bins.minE[1], bins.minE[2], 100)), 
     rand(range(bins.r[1], bins.r[2], 100)), rand(range(bins.r[1], bins.r[2], 100)), 
     # rand(range(bins.dy[1], 0.0, 100)), rand(range(0.0, bins.dy[2], 100)), 
     # rand(range(bins.dz[1], 0.0, 100)), rand(range(0.0, bins.dz[2], 100)), 
     ]
-
-@time prob(x0)
 
 
 res = bboptimize(
@@ -115,14 +112,22 @@ res = bboptimize(
     x0; 
     SearchRange = searchRange, 
     NumDimensions = length(searchRange),
-    Method=:adaptive_de_rand_1_bin, 
-    MaxTime = 4*3600,
-    TraceMode = :silent
+    Method=:adaptive_de_rand_1_bin_radiuslimited, 
+    MaxTime = 5*60,#24*3600,
+    # TraceMode = :silent
 )
 
 function get_best_ROI_ND(res, process)
     best = best_candidate(res)
-    # best = res
+    best_roi = NamedTuple(
+        k => (round(best[i]), round(best[i+1])) 
+        for (i,k) in zip(1:2:length(process.bins)*2-1, keys(process.bins))
+    )
+    return best_roi
+end
+
+function get_best_ROI_ND(res::Vector{<:Real}, process)
+    best = res
     best_roi = NamedTuple(
         k => (round(best[i]), round(best[i+1])) 
         for (i,k) in zip(1:2:length(process.bins)*2-1, keys(process.bins))
