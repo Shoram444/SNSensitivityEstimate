@@ -147,7 +147,7 @@ function get_sens_bayes(background, signal)
     # Apply the TransformedMeasure to wrap the Dirichlet distribution
     
     posterior = PosteriorMeasure(my_likelihood, prior)
-    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 10^5, nchains = 2))
+    samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 5*10^4, nchains = 4))
 
     marginal_modes = bat_marginalmode(samples).result
 
@@ -165,8 +165,8 @@ function get_sens_bayes(background, signal)
 end
 
 t = Float64[]
-# while(time() - t0 < 3600*36) # do this for n hours
-for _ in 1:1 # do this for n hours
+while(time() - t0 < 3600*10) # do this for n hours
+# for _ in 1:1 # do this for n hours
     GC.gc()
     println("elapsed time = $(time() - t0) s")
 
@@ -175,8 +175,8 @@ for _ in 1:1 # do this for n hours
     push!(t, sens)
 end
 
-# using DataFramesMeta, CSV
-# CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
+using DataFramesMeta, CSV
+CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 # CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")
@@ -194,57 +194,57 @@ end
 
 
 
-ROI_a, ROI_b = 0, 3400
+# ROI_a, ROI_b = 0, 3400
 
-bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] 
-bkg_hist_normed = normalize.(bkg_hist, width = true)
-signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), ROI_a, ROI_b), width = true)
+# bkg_hist = [(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)] 
+# bkg_hist_normed = normalize.(bkg_hist, width = true)
+# signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), ROI_a, ROI_b), width = true)
 
-data_hist = [sample_histogram(b) for b in bkg_hist] |> sum 
+# data_hist = [sample_histogram(b) for b in bkg_hist] |> sum 
 
-my_likelihood = make_hist_likelihood(data_hist, f1)
+# my_likelihood = make_hist_likelihood(data_hist, f1)
 
-# Define the concentration parameters (prior belief)
-α = ones(length(bkg_hist)+1)  # Prior for each activity
+# # Define the concentration parameters (prior belief)
+# α = ones(length(bkg_hist)+1)  # Prior for each activity
 
-# Create the Dirichlet distribution
-prior = NamedTupleDist(w = Dirichlet(α))
+# # Create the Dirichlet distribution
+# prior = NamedTupleDist(w = Dirichlet(α))
 
-# Apply the TransformedMeasure to wrap the Dirichlet distribution
+# # Apply the TransformedMeasure to wrap the Dirichlet distribution
 
-posterior = PosteriorMeasure(my_likelihood, prior)
-samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 5*10^4, nchains = 2, strict = false))
+# posterior = PosteriorMeasure(my_likelihood, prior)
+# samples, evals = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 5*10^4, nchains = 2, strict = false))
 
-marginal_modes = bat_marginalmode(samples).result
+# marginal_modes = bat_marginalmode(samples).result
 
-plot(samples)
-bat_eff_sample_size(unshaped.(samples))[1]
-
-
-binned_unshaped_samples, f_flatten = bat_transform(Vector, samples)
-nDataPoints = integral(data_hist)
-muS = [par[1] * nDataPoints for par in binned_unshaped_samples.v]
-bkg_par = [par[2] for par in binned_unshaped_samples.v]
-
-exp_a_bkg_90 = quantile( bkg_par,0.9)
-exp_mu_signal_90 = quantile( muS,0.9) 
-Na = 6.02214e23
-m = 6.067
-t = 2.88
-W = 0.08192
-eff= lookup(signal, ROI_a, ROI_b)
-Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
-
-bw = 50
-xs = 0:bw:3350
-b_amps = [x for x in mean(samples).w][2:end]
-ys = [f1((vcat(exp_mu_signal_90/nDataPoints, b_amps)), x) for x in xs]
-plot(data_hist, label = "data",fillrange = 1e-5, fillcolor = :match)
-plot!(xs, ys .* integral(data_hist) .* bw, linewidth = 4, ylims = (0, 1e4), label = "fit")
-plot!(xlims = (2000, 3200), ylims = (1e-5, 100))
+# plot(samples)
+# bat_eff_sample_size(unshaped.(samples))[1]
 
 
-ys_signal = bincounts(signal_hist_normed) .* bw .* exp_mu_signal_90
-plot!(xs, ys_signal, linewidth = 4, label = "signal")
-plot!(yscale = :log10, ylims = (1.7e-1, 1e4))
-savefig("scripts/0nu/Bayes_hist_models/fit.svg")
+# binned_unshaped_samples, f_flatten = bat_transform(Vector, samples)
+# nDataPoints = integral(data_hist)
+# muS = [par[1] * nDataPoints for par in binned_unshaped_samples.v]
+# bkg_par = [par[2] for par in binned_unshaped_samples.v]
+
+# exp_a_bkg_90 = quantile( bkg_par,0.9)
+# exp_mu_signal_90 = quantile( muS,0.9) 
+# Na = 6.02214e23
+# m = 6.067
+# t = 2.88
+# W = 0.08192
+# eff= lookup(signal, ROI_a, ROI_b)
+# Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
+
+# bw = 50
+# xs = 0:bw:3350
+# b_amps = [x for x in mean(samples).w][2:end]
+# ys = [f1((vcat(exp_mu_signal_90/nDataPoints, b_amps)), x) for x in xs]
+# plot(data_hist, label = "data",fillrange = 1e-5, fillcolor = :match)
+# plot!(xs, ys .* integral(data_hist) .* bw, linewidth = 4, ylims = (0, 1e4), label = "fit")
+# plot!(xlims = (2000, 3200), ylims = (1e-5, 100))
+
+
+# ys_signal = bincounts(signal_hist_normed) .* bw .* exp_mu_signal_90
+# plot!(xs, ys_signal, linewidth = 4, label = "signal")
+# plot!(yscale = :log10, ylims = (1.7e-1, 1e4))
+# savefig("scripts/0nu/Bayes_hist_models/fit.svg")

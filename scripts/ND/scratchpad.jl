@@ -33,8 +33,8 @@ vars = [
     "maxE", 
     "minE", 
     "r", 
-    "dy", 
-    "dz"
+    # "dy", 
+    # "dz"
     ]
 
 bins = (
@@ -43,8 +43,8 @@ bins = (
     maxE = (0, 3000),
     minE = (0, 3500),
     r = (0, 100),
-    dy = (-100, 100),
-    dz = (-100, 100)
+    # dy = (-100, 100),
+    # dz = (-100, 100)
 )
 
 
@@ -103,8 +103,8 @@ x0 = [
     rand(range(bins.maxE[1], bins.maxE[2], 100)), rand(range(bins.maxE[1], bins.maxE[2], 100)), 
     rand(range(bins.minE[1], bins.minE[2], 100)), rand(range(bins.minE[1], bins.minE[2], 100)), 
     rand(range(bins.r[1], bins.r[2], 100)), rand(range(bins.r[1], bins.r[2], 100)), 
-    rand(range(bins.dy[1], bins.dy[2], 100)), rand(range(bins.dy[1], bins.dy[2], 100)), 
-    rand(range(bins.dz[1], bins.dz[2], 100)), rand(range(bins.dz[1], bins.dz[2], 100)), 
+    # rand(range(bins.dy[1], 0.0, 100)), rand(range(0.0, bins.dy[2], 100)), 
+    # rand(range(bins.dz[1], 0.0, 100)), rand(range(0.0, bins.dz[2], 100)), 
     ]
 
 @time prob(x0)
@@ -116,7 +116,7 @@ res = bboptimize(
     SearchRange = searchRange, 
     NumDimensions = length(searchRange),
     Method=:adaptive_de_rand_1_bin, 
-    MaxTime = 10*3600,
+    MaxTime = 4*3600,
     TraceMode = :silent
 )
 
