@@ -8,6 +8,9 @@
 #SBATCH --mem=16G
 #SBATCH --cpus-per-task=4
 #SBATCH --output=/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/slurm_jobs/bayes_logs/bayes_%A_%a.log
+#SBATCH --mail-user=maros.petro@cvut.cz
+#SBATCH --mail-type=END
+
 
 JULIA=~/.julia/juliaup/julia-1.10.0+0.x64.linux.gnu/bin
 PROJECT=/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate
