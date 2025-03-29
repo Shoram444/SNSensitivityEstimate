@@ -49,8 +49,8 @@ bins = (
 
 processes = load_ndim_processes("fal5_TKrec", bins, vars)
 
-# signal = get_process("bb0nu_foil_bulk", processes)
-signal = get_process("bb0nuM1_foil_bulk", processes)
+signal = get_process("bb0nu_foil_bulk", processes)
+# signal = get_process("bb0nuM1_foil_bulk", processes)
 # signal = get_process("bb0nuM2_foil_bulk", processes)
 
 # declare background processes
@@ -110,17 +110,16 @@ prob(x0)
 prob(float.([0,10, 0,10, 0,10, 0,10]))
 @time prob(float.([0,180, 0,3100, 0,2500, 0,100]))
 
+
 res = bboptimize(
     prob,
     x0; 
     SearchRange = searchRange, 
     NumDimensions = length(searchRange),
     Method=:adaptive_de_rand_1_bin_radiuslimited, 
-    MaxTime = 5*60,#24*3600,
-    # TraceMode = :silent,
-    MutationRate = 0.8, # Increase mutation to escape plateaus
-    CrossoverRate = 0.9, # Allow more recombination of solutions
-    PopulationSize = 200  # Increase population size for more diversity
+    MaxTime = 24*3600,
+    TraceMode = :silent,
+    PopulationSize = 400  # Increase population size for more diversity
 )
 
 function get_best_ROI_ND(res, process)

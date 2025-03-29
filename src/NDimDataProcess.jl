@@ -195,11 +195,14 @@ end
     roi::Vector{<:Real},
     varNames::Vector{Symbol}
 )
+    i = 1
     @inbounds for (i,d) in zip(1:2:length(roi), data)
         if !(roi[i] ≤ d < roi[i+1])
             return false
         end
+        i += 1
     end
+    i == length(varNames) && return false
     return true
 end
 
@@ -209,13 +212,16 @@ end
     roi::NamedTuple,
     varNames::Vector{String}
 )
+    i = 1
     @inbounds for n in varNames
         range = roi[Symbol(n)]
         d = data[Symbol(n)] 
         if !(range[1] ≤ d < range[2])
             return false
         end
+        i += 1
     end
+    i == length(varNames) && return false
     return true
 end
 
