@@ -171,12 +171,24 @@ function get_s_to_b(SNparams,
     binsESingle = round.(ROIs[3:4], digits = -2)
     binsESum = round.(ROIs[5:6], digits = -2)
 
+    #check that bins are within the range of the data
+    if( binsAngle[1] < processes[1].binsAngle[1] || binsAngle[2] > processes[1].binsAngle[end] )
+        return -1e6
+    end
+    if( binsESingle[1] < processes[1].binsESingle[1] || binsESingle[2] > processes[1].binsESingle[end] )
+        return -1e6
+    end
+    if( binsESum[1] < processes[1].binsESum[1] || binsESum[2] > processes[1].binsESum[end] )
+        return -1e6
+    end
+
+
     signal_id = findall([p.signal for p in processes])
     length(signal_id) > 1 && @error "Only one signal process allowed! Provided $(length(signal_id))"
     
     signal_process = processes[first(signal_id)]
     ε = get_effciency3D(signal_process.dataAngle, signal_process.dataESingle, signal_process.dataESum, binsAngle, binsESingle, binsESum, signal_process.nTotalSim).eff
-    ε == 0 && return 0.0 # If efficiency is zero, return zero sensitivity
+    ε == 0 && return -1e6 # If efficiency is zero, penalize with a large number
 
     b = get_bkg_counts(processes, binsAngle, binsESingle, binsESum)
     @unpack W, foilMass, Nₐ, tYear, a = SNparams

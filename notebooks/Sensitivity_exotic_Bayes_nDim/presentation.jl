@@ -159,7 +159,7 @@ I already gave several talks on this: DocDB#5943 and DocDB#5833
 	2. Chose 1 variable which is tracked (i.e.$$E_{sum}$$, $$E_i$$, $$\phi$$..)
 	3. For each possible combination of ROI calculate signal $$\varepsilon$$ and $$\mathcal{S}(\bar{b})$$* as signal-to-background ratio $$r(ROI) = \frac{\varepsilon}{\mathcal{S}(\bar{b})}$$
 	4. Find which ROI maximizes $$r(ROI)$$ --> from the $$max(r)$$ calculate sensitvity (simulation)
-	5. Once you've measured data --> fit the in ROI to get $$\bar{b}$$ --> calculate sensitivity 
+	5. Once you've measured data --> fit in ROI to get $$\bar{b}$$ --> calculate sensitivity 
 	   * use $$\varepsilon$$ from simulation, $$\bar{b}$$ from data
 
 \* $$\mathcal{S}(\bar{b})$$ is a Fledman Cousins limit calculated at $$\alpha$$ CL for total expected number of background counts in ROI $$\bar{b}$$
@@ -174,6 +174,100 @@ md"""
 ```math
 T^{1/2}(ROI) = T^{1/2}(E_{sum}^l, E_{sum}^u) = const.\frac{\varepsilon(E_{sum}^l, E_{sum}^u)}{\mathcal{S}(\bar{b}(E_{sum}^l, E_{sum}^u))}
 ```
+- We calculate $$T^{1/2}$$ for each combination and create a 2D map:
+
+![0nu sensitivity](https://github.com/Shoram444/SNSensitivityEstimate/blob/main/plots/example/sumE/tHalf_map_Bfield=Boff_Eres=8perc_mode=sumE_neutron_config=no_neutron_signal=bb0nu_foil_bulk_trackAlgo=TKrec.png?raw=true)
+
+"""
+
+# ╔═╡ 9ec75f5e-bb51-40e5-b10b-f664aacc5aa9
+md"""
+# Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
+
+![0nu sensitivity](https://github.com/Shoram444/SNSensitivityEstimate/blob/main/plots/example/sumE/tHalf_map_Bfield=Boff_Eres=8perc_mode=sumE_neutron_config=no_neutron_signal=bb0nu_foil_bulk_trackAlgo=TKrec.png?raw=true)
+
+- best ROI is $$2700 - 3200$$ keV
+- with $$\bar{b}=1.03$$ and $$\varepsilon = 15%$$ we get sensitivity of $$T^{1/2}\geq 4.14\cdot 10^{24}$$ yr
+
+!!! danger "What if we look at another variable? Another signal process?"
+	- For different signal processes (signal shapes!) we can be more sensitive in different channels: i.e. $$\phi$$ **should** be a better channel for RH spectra (will get to this later)
+	- Do we really need to chose only one? What if we can maximize **all of them at once!**
+
+"""
+
+# ╔═╡ edb0c835-8495-4f77-8656-dfabc5687dfd
+md"""
+# 3D ROI Search: the next step!
+
+!!! note "The general idea"
+	1. Simulate relevant signal process (again...)
+	2. Chose 3 variables: $$E_{sum}$$, $$E_i$$, $$\phi$$
+	   - That means we have 6 parameters (2 for each ROI bound)
+	3. For each possible combination of ROI calculate signal $$\varepsilon$$ and $$\mathcal{S}(\bar{b})$$* as signal-to-background ratio $$r(ROI) = \frac{\varepsilon}{\mathcal{S}(\bar{b})}$$ 
+	   - 💀**This takes way too long and grows way too fast, when we add new dimensions** 💀
+	   - 🍰**We instead use gradient descent to find the maximum** (takes ~10 min)🍰
+	4. Find which ROI maximizes $$r(ROI)$$ --> from the $$max(r)$$ calculate sensitvity (simulation)
+	5. Once you've measured data --> fit in ROI to get $$\bar{b}$$ --> calculate sensitivity 
+	   * use $$\varepsilon$$ from simulation, $$\bar{b}$$ from data
+
+"""
+
+# ╔═╡ 137779df-f5fd-4033-92df-c608cf99aee8
+md"""
+# Example for $$0\nu\beta\beta$$ 3D:
+
+- ROI consists of 6 parameters: ($$E_{sum}^l, E_{sum}^u), (E_{max}^l, E_{max}^u$$)*, ($$\varphi^l, \varphi^u$$), where $$l, u$$ are the lower and upper boundaries of ROI
+   - let's collectively call them $$\Theta$$
+- Then sensitivity is a function of $$\Theta$$:
+```math
+T^{1/2}(\Theta) = const.\frac{\varepsilon(\Theta)}{\mathcal{S}(\bar{b}(\Theta))}
+```
+
+
+\* I used maximum energy instead of individual electron energies, because there are 2 electrons per each event and it complicates things a bit. I have a proposed solution for this, but it's not finished yet.
+"""
+
+# ╔═╡ 470ae3b5-9dd7-44a2-82b4-ac6101b2b67e
+md"""
+# Example for $$0\nu\beta\beta$$ 3D:
+
+!!! update "Basics of Gradient descent approach"
+	1. The algorithm starts with some (either random or specified by user) initial conditions for $$\Theta_i$$
+	2. Calculates the value of $$T(\Theta_i)$$
+	3. Computes the gradient of $$T(\Theta_i)$$ around the initial point
+	4. Based on the gradient, updates the value of $$\Theta$$ to "more optimized"
+	5. Repeat until convergence (or failure, stuck in local maximum, stuck in a loop etc.)
+	6. A very nice overview of how this works was presented by Filip: Docdb#5933
+"""
+
+# ╔═╡ de7782cb-7651-4bfc-afb2-e2ec511340d5
+
+
+# ╔═╡ dbb9afe4-d576-42a9-ae8f-1037ba2ac742
+
+
+# ╔═╡ e3cdd26c-c9f3-4320-84c1-a9603a84103a
+
+
+# ╔═╡ a01b5f37-a926-4650-b586-8d6438781c66
+
+
+# ╔═╡ e0fff83d-41af-4f73-a3bc-a95b83db712e
+
+
+# ╔═╡ 245e02ee-700d-4a3f-a03a-f2ecd9d0f307
+
+
+# ╔═╡ 79bb2a9a-8c08-4ba5-86c4-d68e913fa3e7
+md"""
+# 3D 
+
+RH037:
+[0.0, 180.0], [100.0, 2700.0], [300.0, 3000.0], 1.3005086893291692e22, 0.08141666, 114900.0 ± 1600.0
+
+0nu: 
+
+
 
 """
 
@@ -192,5 +286,16 @@ T^{1/2}(ROI) = T^{1/2}(E_{sum}^l, E_{sum}^u) = const.\frac{\varepsilon(E_{sum}^l
 # ╟─49ec8eb7-18ac-4d1e-9b45-401ee2563396
 # ╟─b95b52fe-f516-4a41-bdc1-d667ebfbf7bf
 # ╟─7b318089-8d66-46d9-a829-f74f27b9e565
-# ╟─48652f8f-274d-4899-b598-1c03b5927961
+# ╠═48652f8f-274d-4899-b598-1c03b5927961
 # ╠═f5479dd2-e121-4c11-8c63-e31aaeecffca
+# ╟─9ec75f5e-bb51-40e5-b10b-f664aacc5aa9
+# ╟─edb0c835-8495-4f77-8656-dfabc5687dfd
+# ╠═137779df-f5fd-4033-92df-c608cf99aee8
+# ╟─470ae3b5-9dd7-44a2-82b4-ac6101b2b67e
+# ╠═de7782cb-7651-4bfc-afb2-e2ec511340d5
+# ╠═dbb9afe4-d576-42a9-ae8f-1037ba2ac742
+# ╠═e3cdd26c-c9f3-4320-84c1-a9603a84103a
+# ╠═a01b5f37-a926-4650-b586-8d6438781c66
+# ╠═e0fff83d-41af-4f73-a3bc-a95b83db712e
+# ╠═245e02ee-700d-4a3f-a03a-f2ecd9d0f307
+# ╠═79bb2a9a-8c08-4ba5-86c4-d68e913fa3e7

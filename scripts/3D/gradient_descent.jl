@@ -13,12 +13,13 @@ analysisDict = Dict(
     :Bfield => "Boff", # magnetic field on/off
     :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
     :mode => "sumE", 
-    :trackAlgo => "TIT",
+    :trackAlgo => "TKrec",
     :signal => "bb0nu",
-    :neutron_config => "full_shielding"
+    :neutron_config => "no_neutron"
 )
 
-files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
+# files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
+files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
 
 binsAngle = 0:5:180
 binsESingle = 0:100:3500
@@ -26,13 +27,13 @@ binsESum = 0:100:3500
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 #  1. dir::String -> the name of the directory where the root files are stored
 #  2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
-data_processes = load_ndim_processes(
+data_processes = load_3D_processes(
     files_directory, binsAngle, binsESingle, binsESum
 )
 
 
 
-signal = get_process("bb0nuM2_foil_bulk", data_processes)
+signal = get_process("bb0nu_foil_bulk", data_processes)
 
 background = [
     get_process("bb_foil_bulk", data_processes),
@@ -47,10 +48,10 @@ background = [
 # set_nTotalSim!(signal, 0.98e8)
 set_nTotalSim!(signal, 1e8)
 
-set_nTotalSim!(background[1], 0.99e8)
-set_nTotalSim!(background[2], 0.96e8)
+set_nTotalSim!(background[1], 1e8)
+set_nTotalSim!(background[2], 1e8)
 set_nTotalSim!(background[3], 1e8)
-set_nTotalSim!(background[4], 0.76e8)
+set_nTotalSim!(background[4], 1e8)
 set_nTotalSim!(background[5], 1e8)
 set_nTotalSim!(background[6], 1e8)
 
@@ -58,7 +59,6 @@ set_signal!(background[1], false)
 
 α = 1.64485362695147
 
-SensitivityEstimateND.passes_roi(signal.dataAngle, signal.binsAngle, signal.binsAngle)
 
 f3d(x) = -get_s_to_b(SNparams, α, vcat(signal, background), x)
 
@@ -77,8 +77,8 @@ res = bboptimize(
     SearchRange = searchRange, 
     NumDimensions = 6,
     Method=:adaptive_de_rand_1_bin, 
-    MaxTime = 1*60,
-    InitialPopulation = [[0, 180, 400, 3000, 2700, 3200]]
+    MaxTime = 60*10,
+    # InitialPopulation = [[0, 60, 400, 3000, 0, 2700]]
 )
 
 function get_best_ROI3D(res)
@@ -91,8 +91,18 @@ function get_best_ROI3D(res)
     return best_roi
 end
 
+function get_best_ROI3D(best::Vector{<:Real})
+    # best = best_candidate(res)
+    best_roi = Dict(
+        :angle => round.(best[1:2], digits =-1),
+        :esingle => round.(best[3:4], digits =-2),
+        :esum => round.(best[5:6], digits =-2)
+    )
+    return best_roi
+end
+
 best_roi = get_best_ROI3D(res)
-@profview best_sens= get_sensitivity3D(
+best_sens= get_sensitivity3D(
     SNparams, 
     α, 
     vcat(signal, background), 
@@ -100,6 +110,14 @@ best_roi = get_best_ROI3D(res)
     approximate="table"
 )
 
+roi_1d = [0, 180, 0, 3500, 2700, 3200]
+get_sensitivity3D(
+    SNparams, 
+    α, 
+    vcat(signal, background), 
+    get_best_ROI3D(roi_1d);
+    approximate="table"
+)
 
 let
     f = Figure()
