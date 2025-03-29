@@ -5,7 +5,6 @@ println("loading pkgs")
 
 push!(LOAD_PATH, srcdir())
 using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta, LinearAlgebra
-using Revise
 using BlackBoxOptim
 
 
@@ -107,6 +106,10 @@ x0 = [
     ]
 
 
+prob(x0)
+prob(float.([0,10, 0,10, 0,10, 0,10]))
+@time prob(float.([0,180, 0,3100, 0,2500, 0,100]))
+
 res = bboptimize(
     prob,
     x0; 
@@ -114,7 +117,10 @@ res = bboptimize(
     NumDimensions = length(searchRange),
     Method=:adaptive_de_rand_1_bin_radiuslimited, 
     MaxTime = 5*60,#24*3600,
-    # TraceMode = :silent
+    # TraceMode = :silent,
+    MutationRate = 0.8, # Increase mutation to escape plateaus
+    CrossoverRate = 0.9, # Allow more recombination of solutions
+    PopulationSize = 200  # Increase population size for more diversity
 )
 
 function get_best_ROI_ND(res, process)

@@ -62,7 +62,7 @@ include(scriptsdir("Params.jl"))
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 # 1. dir::String -> the name of the directory where the root files are stored
 # 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
-all_processes = load_data_processes("fal5_8perc_Boff_TIT_twoDistinct_edep_bcu", "sumE")
+all_processes = load_data_processes("fal5_8perc_Boff_TIT_evis_bcu_J38", "sumE", fwhm=0.0)
 
 # declare which process is signal
 signal = get_process("bb0nu_foil_bulk", all_processes)
@@ -84,20 +84,20 @@ set_nTotalSim!( signal, 0.98e8 )
 set_signal!(background[1], false)
 
 # set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 0.99e8 )
-set_nTotalSim!( background[2], 0.96e8 )
-set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 0.76e8 )
-set_nTotalSim!( background[5], 1e8 )
-set_nTotalSim!( background[6], 1e8 )
+set_nTotalSim!( background[1],1e8)
+set_nTotalSim!( background[2],1e8)
+set_nTotalSim!( background[3],1e8  )
+set_nTotalSim!( background[4],1e8)
+set_nTotalSim!( background[5],1e8  )
+set_nTotalSim!( background[6],1e8  )
 
 @info "process initialized"
 println("Processes initialized.")
 
 for b in background
-    set_bins!(b, 0:10:3500)
+    set_bins!(b, 0:50:3500)
 end
-set_bins!(signal, 0:10:3500)
+set_bins!(signal, 0:50:3500)
 
 bkg_hist = [b for b in get_bkg_counts_1D.(background)] 
 bkg_hist_normed = normalize.(bkg_hist, width = true)
@@ -162,7 +162,7 @@ function get_sens_bayes(background::Vector{<:DataProcess}, signal::DataProcess)
     nDataPoints = integral(data_hist)
     muS = [par[1] * nDataPoints for par in binned_unshaped_samples.v]
 
-    exp_mu_signal_90 = quantile( muS,0.9) 
+    @show exp_mu_signal_90 = quantile( muS,0.9) 
     Na = 6.02214e23
     m = 6.067
     t = 2.88

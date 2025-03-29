@@ -178,12 +178,15 @@ end
     roi::Vector{<:Real},
     varIdxs::Vector{Int}
 )
+    i = 1
     @inbounds for (r, i) in zip(1:2:length(roi)*2-1, varIdxs)
-        if (roi[r] ≤ data[i] < roi[r+1])
-            return true
+        if !(roi[r] ≤ data[i] < roi[r+1])
+            return false
         end
+        i +=1
     end
-    return false
+    i == length(varIdxs) && return false
+    return true
 end
 
 
