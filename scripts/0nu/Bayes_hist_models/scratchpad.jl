@@ -178,7 +178,7 @@ for _ in 1:1 # do this for n hours
 end
 
 using DataFramesMeta, CSV
-# CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/data_perBkg_10keV_binning/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
+CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/data_perBkg_10keV_binning/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 # CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")
