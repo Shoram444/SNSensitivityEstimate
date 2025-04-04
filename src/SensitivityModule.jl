@@ -13,7 +13,8 @@ using
     Turing,
     CairoMakie,
     BAT,
-    DensityInterface
+    DensityInterface,
+    SpecialFunctions
 
 # Define main module abstract type
 
@@ -42,7 +43,8 @@ export
 
 include("HistFuncs.jl")
 export 
-    get_max_bin
+    get_max_bin,
+    get_pseudo_spectrum  # given a 1D histogram, returns a pseudo spectrum with Poisson distributed counts
 
 include("AbstractProcess.jl")
 export  
@@ -123,6 +125,14 @@ export
 include("Models.jl")
 export 
     turing_normal_exponential_model,
-    BAT_normal_exponential_model 
+    BAT_normal_exponential_model,
+    ## binned Models
+    my_pdf,
+    log_pdf_poisson,
+    make_hist_likelihood_dirichlet,
+    make_hist_likelihood_uniform,
+    f_dirichlet,
+    f_uniform_bkg,
+    get_sens_bayes_uniform
     
 end # module

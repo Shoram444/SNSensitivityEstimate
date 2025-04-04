@@ -49,8 +49,8 @@ bins = (
 
 processes = load_ndim_processes("fal5_TKrec", bins, vars)
 
-signal = get_process("bb0nu_foil_bulk", processes)
-# signal = get_process("bb0nuM1_foil_bulk", processes)
+# signal = get_process("bb0nu_foil_bulk", processes)
+signal = get_process("bb0nuM1_foil_bulk", processes)
 # signal = get_process("bb0nuM2_foil_bulk", processes)
 
 # declare background processes
@@ -95,20 +95,32 @@ end
 
 
 searchRange = make_stepRange(signal)
-x0 = [
-    rand(range(bins.phi[1], bins.phi[2], 100)), rand(range(bins.phi[1], bins.phi[2], 100)), 
-    rand(range(bins.sumE[1], bins.sumE[2], 100)), rand(range(bins.sumE[1], bins.sumE[2], 100)), 
-    rand(range(bins.maxE[1], bins.maxE[2], 100)), rand(range(bins.maxE[1], bins.maxE[2], 100)), 
+# x0 = [
+#     # rand(range(bins.phi[1], bins.phi[2], 100)), rand(range(bins.phi[1], bins.phi[2], 100)), 
+#     # rand(range(bins.sumE[1], bins.sumE[2], 100)), rand(range(bins.sumE[1], bins.sumE[2], 100)), 
+#     # rand(range(bins.maxE[1], bins.maxE[2], 100)), rand(range(bins.maxE[1], bins.maxE[2], 100)), 
+#     # rand(range(bins.minE[1], bins.minE[2], 100)), rand(range(bins.minE[1], bins.minE[2], 100)), 
+#     rand(range(bins.r[1], bins.r[2], 100)), rand(range(bins.r[1], bins.r[2], 100)), 
+#     # rand(range(bins.dy[1], 0.0, 100)), rand(range(0.0, bins.dy[2], 100)), 
+#     # rand(range(bins.dz[1], 0.0, 100)), rand(range(0.0, bins.dz[2], 100)), 
+#     ]
+
+x0 = float.([
+    0, 180, 
+    2000, 3200,
+    1000, 3000,
+    0, 60
     # rand(range(bins.minE[1], bins.minE[2], 100)), rand(range(bins.minE[1], bins.minE[2], 100)), 
-    rand(range(bins.r[1], bins.r[2], 100)), rand(range(bins.r[1], bins.r[2], 100)), 
+    # rand(range(bins.r[1], bins.r[2], 100)), rand(range(bins.r[1], bins.r[2], 100)), 
     # rand(range(bins.dy[1], 0.0, 100)), rand(range(0.0, bins.dy[2], 100)), 
     # rand(range(bins.dz[1], 0.0, 100)), rand(range(0.0, bins.dz[2], 100)), 
-    ]
+    ])
 
 
 prob(x0)
-prob(float.([0,10, 0,10, 0,10, 0,10]))
-@time prob(float.([0,180, 0,3100, 0,2500, 0,100]))
+
+# prob(float.([0,10, 0,10, 0,10, 0,10]))
+# @time prob(float.([0,180, 0,3100, 0,2500, 0,100]))
 
 
 res = bboptimize(
@@ -117,8 +129,8 @@ res = bboptimize(
     SearchRange = searchRange, 
     NumDimensions = length(searchRange),
     Method=:adaptive_de_rand_1_bin_radiuslimited, 
-    MaxTime = 24*3600,
-    TraceMode = :silent,
+    MaxTime = 30*60,#24*3600,
+    TraceMode = :compact,
     PopulationSize = 400  # Increase population size for more diversity
 )
 
@@ -141,13 +153,20 @@ function get_best_ROI_ND(res::Vector{<:Real}, process)
 end
 
 best_roi =  get_best_ROI_ND(res, signal)
+best2 = get_best_ROI_ND([0,180, 2700, 3200, 0, 3500, 0, 100], signal)
 
 best_sens = get_sensitivityND(
     SNparams, 
     α, 
     vcat(signal, background), 
     best_roi
-)
+) |> println
 
-println(best_sens)
+best_sens = get_sensitivityND(
+    SNparams, 
+    α, 
+    vcat(signal, background), 
+    best2
+) |> println
+
 

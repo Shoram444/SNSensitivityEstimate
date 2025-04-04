@@ -101,3 +101,9 @@ function FHist.lookup(weights::Matrix, x::Real, y::Real, binning)
 end
 
 FHist.binedges(h::Histogram) = h.edges[1]
+
+
+function get_pseudo_spectrum(h::Hist1D)
+    data_bkg = [first(FHist.sample(h)) for i=1:rand(Poisson(round(Int, integral(h))))] 
+    Hist1D( Int.(data_bkg); counttype = Int, binedges= binedges(h) |> collect .|> Int )
+end
