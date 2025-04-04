@@ -2,11 +2,12 @@
 
 # SLURM options:
 #SBATCH --partition=htc
+#SBATCH --job=bayes_RH
 #SBATCH --licenses=sps
-#SBATCH --array=0-0
-#SBATCH --time=0-2
-#SBATCH --mem=16G
-#SBATCH --cpus-per-task=4
+#SBATCH --array=0-19
+#SBATCH --time=1-2
+#SBATCH --mem=12G
+#SBATCH --cpus-per-task=1
 #SBATCH --output=/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/slurm_jobs/bayes_logs/bayes_%A_%a.log
 #SBATCH --mail-user=maros.petro@cvut.cz
 #SBATCH --mail-type=END
