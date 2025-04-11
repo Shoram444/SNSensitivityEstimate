@@ -106,8 +106,8 @@ searchRange = make_stepRange(signal)
 #     ]
 
 x0 = float.([
-    0, 180, 
-    2000, 3200,
+    5, 175, 
+    2500, 3200,
     1000, 3000,
     0, 60
     # rand(range(bins.minE[1], bins.minE[2], 100)), rand(range(bins.minE[1], bins.minE[2], 100)), 
@@ -116,7 +116,14 @@ x0 = float.([
     # rand(range(bins.dz[1], 0.0, 100)), rand(range(0.0, bins.dz[2], 100)), 
     ])
 
+using Optim
 
+lower = [0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+upper = [180.0, 180.0, 3500.0, 3500.0, 3500.0, 3500.0, 100.0, 100.0]
+
+result = optimize(prob, lower, upper, x0, Fminbox(BFGS()), Optim.Options(show_trace = true, iterations = 5))
+best2 = result.minimizer
+best2[2] = 180.0
 prob(x0)
 
 # prob(float.([0,10, 0,10, 0,10, 0,10]))
@@ -153,14 +160,14 @@ function get_best_ROI_ND(res::Vector{<:Real}, process)
 end
 
 best_roi =  get_best_ROI_ND(res, signal)
-best2 = get_best_ROI_ND([0,180, 2700, 3200, 0, 3500, 0, 100], signal)
+best2 = get_best_ROI_ND(best2, signal)
 
-best_sens = get_sensitivityND(
-    SNparams, 
-    α, 
-    vcat(signal, background), 
-    best_roi
-) |> println
+# best_sens = get_sensitivityND(
+#     SNparams, 
+#     α, 
+#     vcat(signal, background), 
+#     best_roi
+# ) |> println
 
 best_sens = get_sensitivityND(
     SNparams, 

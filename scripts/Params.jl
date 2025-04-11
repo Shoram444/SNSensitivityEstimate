@@ -13,7 +13,7 @@ SNparams = Dict(
     "hall_surface" => 1,                       # External gamma activity is given in [Bq] so no need to scale by amount
     "t" => 2.86 * 365 * 24 * 3600,              # measurement time in [s]
     "tYear" => 2.86,                             # measurement time in [y]
-    "SeThalf2nu" => measurement(9.39, 0.17)*1e19 * 365 * 24 * 3600,    # 2nu Se82 half life in [s], results from NEMO-3
+    "SeThalf2nu" => 9.39 * 1e19 * 365 * 24 * 3600,    # 2nu Se82 half life in [s], results from NEMO-3
     "SeThalf0nu" => 1e26 * 365 * 24 * 3600,     # 0nu Se82 half life in [s], results from NEMO-3
     "Q" => 2997.9                               # [keV]
 ) 
