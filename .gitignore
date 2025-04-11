@@ -17,6 +17,8 @@ notebooks/.ipynb_checkpoints
 /scripts/0nu/SensitivityEstimate.jl
 /scripts/0nu/bb0nuSensitivity.jl
 /scripts/slurm_jobs
+/scripts/ND/results
+/scripts/0nu/Bayes_hist_models/data*
 
 ################################################################################
 #                                    Julia                                     #

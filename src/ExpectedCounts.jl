@@ -32,7 +32,7 @@ function get_FC(b, α; approximate="table")
         end
     elseif( approximate == "table")
         if (b < 329 && isapprox(1.64, α, atol=0.1))
-            tbl = CSV.read("src/MPFC_table90.csv", DataFrame)
+            tbl = CSV.read(srcdir("MPFC_table90.csv"), DataFrame)
             b = tbl[findfirst(tbl[:,1].== round(b, digits =2)), 2]
         else 
             b = α * sqrt(b)

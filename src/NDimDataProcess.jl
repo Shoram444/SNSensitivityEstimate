@@ -335,7 +335,7 @@ function get_s_to_b(
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     S_b = get_FC(b, α; approximate=approximate)
 
-    return ε / S_b
+    return Measurements.value(ε / S_b)
 end
 
 function get_sensitivityND(

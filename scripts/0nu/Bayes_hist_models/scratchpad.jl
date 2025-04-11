@@ -8,10 +8,10 @@ using Random, LinearAlgebra, Statistics, Distributions, Plots, BAT, BinnedModels
 global t0 = time()
 
 analysisDict = Dict(
-    :signal => "bb0nu_foil_bulk",
-    :roi => (300, 3400),
-    :bw => 100,
-    :mode => "sumE"
+    :signal => "RH037_foil_bulk",
+    :roi => (0, 175),
+    :bw => 5,
+    :mode => "phi"
 )
 
 ROI_a, ROI_b, bw = analysisDict[:roi][1],analysisDict[:roi][2], analysisDict[:bw]
@@ -72,21 +72,26 @@ prior = NamedTupleDist(
 )   
 
 t = Float64[]
-# while(time() - t0 < 3600*20) # do this for n hours
-for _ in 1:1 # do this for n hours
+while(time() - t0 < 3600*36) # do this for n hours
+# for _ in 1:1 # do this for n hours
     GC.gc()
     t1 = time()
-    sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; ROI_a = ROI_a, ROI_b = ROI_b, nsteps = 10^4, nchains = 4)
-    println("time to fit, t = $(time() - t1) s")
-    println(sens)
-    push!(t, sens)
+    try 
+        sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; ROI_a = ROI_a, ROI_b = ROI_b, nsteps = 10^4, nchains = 4)
+        println("time to fit, t = $(time() - t1) s")
+        println(sens)
+        push!(t, sens)
+    catch
+        @warn "failed fit" 
+        continue
+    end
 end
 
 save_name = savename(analysisDict)
 
 using DataFramesMeta, CSV
 CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/data_perBkg_10keV_binning/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
-CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
+# CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")
 # vline!([median(t)], label = "Median = $(round(median(t), sigdigits = 3)) yr", color = :red, linewidth = 4)

@@ -1,10 +1,13 @@
 using CSV, DataFramesMeta, CairoMakie, StatsBase
 
 t = Float64[]
+signal = "bb0nu_foil_bulk"
 
-for f in readdir("data")
-    d = CSV.File(joinpath("data", f)) |> DataFrame
-    append!(t, d.thalf)
+for f in readdir("data_perBkg_10keV_binning")
+    if occursin(signal, f)
+        d = CSV.File(joinpath("data_perBkg_10keV_binning", f)) |> DataFrame
+        append!(t, d.thalf)
+    end
 end
 
 let

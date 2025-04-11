@@ -231,7 +231,7 @@ function get_sens_bayes_uniform(bkg_hist::Vector{<:Hist1D}, f2, signal, prior; R
 
     my_likelihood = make_hist_likelihood_uniform(data_hist, f2)
     
-    burnin = MCMCMultiCycleBurnin(max_ncycles = 30, nsteps_final=1000)
+    burnin = MCMCMultiCycleBurnin(max_ncycles = 50, nsteps_final=1000)
     mcmcalgo = MetropolisHastings(weighting = RepetitionWeighting(), tuning = AdaptiveMHTuning())
 
     posterior = PosteriorMeasure(my_likelihood, prior)
