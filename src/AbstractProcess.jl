@@ -1,11 +1,16 @@
 abstract type AbstractProcess end
 
 function get_process(isotopeName::String, processesVector::Vector{<:AbstractProcess})
-    idx = findfirst( x -> x.isotopeName == isotopeName , processesVector )
+    idx = findall( x -> x.isotopeName == isotopeName , processesVector )
     if( idx == nothing )
         @error "process $isotopeName not found!"
     end
-    return processesVector[idx]
+    if( length(idx) > 1 )
+        @info "process $isotopeName found $(length(idx)) times!"
+    end
+    
+    # return all processes that were found with the same names
+    return filter(x -> x.isotopeName == isotopeName, processesVector)
 end
 
 function set_signal!(process::AbstractProcess, signal::Bool)

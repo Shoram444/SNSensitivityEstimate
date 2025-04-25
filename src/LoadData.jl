@@ -1,4 +1,3 @@
-# include(scriptsdir("Params.jl"))
 using Distributions
 
 ffrf(file) = fill_from_root_file(file, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])
@@ -177,6 +176,7 @@ function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{Str
         data = LazyTree(f, "tree", varNames) 
 
         fileName = split(file, ".")[1]  |> split |> first 
+
         push!(
                 processes,
                 DataProcessND(

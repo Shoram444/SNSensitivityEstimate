@@ -84,23 +84,23 @@ end
 
 searchRange = make_stepRange(signal)
 
-n_samples = 5000
+n_samples = 6000
 lower_bound = [x[1] for x in searchRange] .|> float
 upper_bound = [x[2] for x in searchRange] .|> float
 
-lower_bound = [
-    0, 160,
-    0, 1000,
-    0, 1000,
-    0, 30
-] .|> float
+# lower_bound = [
+#     0, 160,
+#     0, 1000,
+#     0, 1000,
+#     0, 30
+# ] .|> float
 
-upper_bound = [
-    30, 180,
-    1000, 3500,
-    1000, 3500,
-    30, 50
-] .|> float
+# upper_bound = [
+#     30, 180,
+#     1000, 3500,
+#     1000, 3500,
+#     30, 50
+# ] .|> float
 
 
 xys = Surrogates.sample(n_samples, lower_bound, upper_bound, SobolSample())
@@ -113,17 +113,17 @@ phi1 = [x[1] for x in xs]
 phi2 = [x[2] for x in xs]
 scatter(phi1, phi2, zs, axis=(type=Axis3, xlabel = "phi1", ylabel = "phi2", zlabel = "s/b"))
 
-emax1 = [x[3] for x in xs]
-emax2 = [x[4] for x in xs]
-scatter(emax1, emax2, zs, axis=(type=Axis3, xlabel = "emax1", ylabel = "emax2", zlabel = "s/b"))
+esum1 = [x[3] for x in xs]
+esum2 = [x[4] for x in xs]
+scatter(esum1, esum2, zs, axis=(type=Axis3, xlabel = "esum1", ylabel = "esum2", zlabel = "s/b"))
 
-emin1 = [x[5] for x in xs]
-emin2 = [x[6] for x in xs]
-scatter(emin1, emin2, zs, axis=(type=Axis3, xlabel = "emin1", ylabel = "emin2", zlabel = "s/b"))
+# emin1 = [x[5] for x in xs]
+# emin2 = [x[6] for x in xs]
+# scatter(emin1, emin2, zs, axis=(type=Axis3, xlabel = "emin1", ylabel = "emin2", zlabel = "s/b"))
 
 
-r1 = [x[7] for x in xs]
-r2 = [x[8] for x in xs]
+r1 = [x[5] for x in xs]
+r2 = [x[6] for x in xs]
 scatter(r1, r2, zs, axis=(type=Axis3, xlabel = "r1", ylabel = "r2", zlabel = "s/b"))
 
 
@@ -141,14 +141,14 @@ function get_best_ROI_ND(res::Vector{<:Real}, process)
     return best_roi
 end
 
-best = get_best_ROI_ND(res, signal)
-get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="formula")
+# best = get_best_ROI_ND(res, signal)
+# get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="formula")
 
 let 
     fig = Figure(size = (800, 1200))
     ### phi
     ax1 = Axis(fig[1,1], title="phi1 vs phi2", xlabel="phi1", ylabel="phi2")
-    scatter!(ax1, phi1, phi2, color=zs)
+    scatter!(ax1, phi1, phi2, color=zs, alpha= 0.7, markersize = 6)
 
     ax3 = Axis(fig[1,2], title="phi1 vs z", xlabel="phi1", ylabel="z")
     scatter!(ax3, phi1, zs)
@@ -157,32 +157,33 @@ let
     scatter!(ax3, phi2, zs)
 
     ### esum
-    ax2 = Axis(fig[3,1], title="e1 vs e2", xlabel="e1", ylabel="e2")
-    scatter!(ax2, e1, e2, color=zs)
+    ax2 = Axis(fig[3,1], title="esum1 vs esum2", xlabel="esum1", ylabel="esum2")
+    scatter!(ax2, esum1, esum2, color=zs, alpha= 0.7, markersize = 6)
 
-    ax4 = Axis(fig[3,2], title="e1 vs z", xlabel="e1", ylabel="z")
-    scatter!(ax4, e1, zs)
+    ax4 = Axis(fig[3,2], title="esum1 vs z", xlabel="esum1", ylabel="z")
+    scatter!(ax4, esum1, zs)
 
-    ax4 = Axis(fig[4,1], title="e2 vs z", xlabel="e2", ylabel="z")
-    scatter!(ax4, e2, zs)
+    ax4 = Axis(fig[4,1], title="esum2 vs z", xlabel="esum2", ylabel="z")
+    scatter!(ax4, esum2, zs)
 
     ### r
     ax2 = Axis(fig[5,1], title="r1 vs r2", xlabel="r1", ylabel="r2")
-    scatter!(ax2, r1, r2, color=zs)
+    scatter!(ax2, r1, r2, color=zs, alpha= 0.7, markersize = 6)
 
     ax4 = Axis(fig[5,2], title="r1 vs z", xlabel="r1", ylabel="z")
     scatter!(ax4, r1, zs)
 
     ax4 = Axis(fig[6,1], title="r2 vs z", xlabel="r2", ylabel="z")
     scatter!(ax4, r2, zs)
+    save( "plots/heuristic_3d_plots.png",fig, px_per_unit = 6)
     fig
     
 end
-
+upper_bound
 let 
-    e1, e2 = range(0, 3500, 20), range(0, 3500, 20)
+    e1, e2 = range(0, 3500, 60), range(0, 3500, 60)
     m = [e1 e2]
-    k(m) = krig([40.0 180.0 m[1] m[2]])
+    k(m) = krig([0.0 180.0 m[1] m[2] 0.0 100.0] )
 
     fig = Figure(size = (800, 600))
     ax1 = Axis3(fig[1,1], azimuth = 0.3*pi)
@@ -194,7 +195,7 @@ end
 let 
     phi1, phi2 = range(0, 180, 20), range(0, 180, 20)
     m = [phi1 phi2]
-    k(m) = krig([m[1] m[2] 0.0 3500.0])
+    k(m) = krig([m[1] m[2] 0.0 3500.0 0.0 100.0])
 
     fig = Figure(size = (800, 600))
     ax1 = Axis3(fig[1,1], azimuth = 0.1*pi)

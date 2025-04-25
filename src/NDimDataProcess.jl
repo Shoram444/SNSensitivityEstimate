@@ -178,14 +178,11 @@ end
     roi::Vector{<:Real},
     varIdxs::Vector{Int}
 )
-    # i = 0
     @inbounds for (r, i) in zip(1:2:length(roi)*2-1, varIdxs)
         if !(roi[r] ≤ data[i] < roi[r+1])
             return false
         end
-        # i +=1
     end
-    # i == length(varIdxs) && return false
     return true
 end
 
@@ -254,30 +251,6 @@ function DataProcessND(
     )
 end
 
-# function DataProcessND(
-#     data::LazyTree,
-#     # data::Vector{UnROOT.LazyEvent},
-#     binsTuple::NamedTuple,
-#     varNames::Vector{String},
-#     processDict::Dict
-# )
-#     @unpack isotopeName, signal, activity, timeMeas, nTotalSim, bins, amount = processDict
-#     println("creating process: $isotopeName")
-
-#     println(typeof(collect(data)))
-#     return DataProcessND(
-#         collect(data),
-#         isotopeName,
-#         signal,
-#         activity,
-#         timeMeas,
-#         nTotalSim,
-#         binsTuple,
-#         amount,
-#         varNames,
-#         [findfirst(x -> x == n, names(data)) for n in varNames]
-#     )
-# end
 
 function get_roi_bkg_counts(
     processes::Vector{<:DataProcessND}, 
@@ -307,6 +280,19 @@ function get_roi_bkg_counts(
     return bkg
 end
 
+function get_roi_signal_efficiency(
+    processes::Vector{<:DataProcessND}, 
+    roi::Vector{<:Real},
+)
+    ε = zero(Float64)
+
+    for p in processes
+        p.signal == false && continue
+        ε += get_roi_effciencyND(p, roi).eff
+    end
+    return ε
+end
+
 function get_s_to_b(
     SNparams::Dict, 
     α::Float64, 
@@ -326,9 +312,7 @@ function get_s_to_b(
         return -1e20 # penalty for no signal process
     end
                     
-    ε = zero(Float64)
-    signal = processes[signal_id]
-    ε = get_roi_effciencyND(signal, roi).eff
+    ε = get_roi_signal_efficiency(processes, roi)
     ε == 0.0 && return -1e20 # If efficiency is zero, penalize optimization  
 
     b = get_roi_bkg_counts(processes, roi)

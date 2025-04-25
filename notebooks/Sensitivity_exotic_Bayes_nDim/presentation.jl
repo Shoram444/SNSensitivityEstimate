@@ -217,16 +217,13 @@ md"""
 md"""
 # Example for $$0\nu\beta\beta$$ N-Dim:
 
-- Chose n = 4, with variables $$E_{sum}, E_{max}, \varphi, r$$
-- ROI consists of 8 parameters: ($$E_{sum}^l, E_{sum}^u), (E_{max}^l, E_{max}^u$$)*, ($$\varphi^l, \varphi^u$$) and ($$r^l, r^u$$), where $$l, u$$ are the lower and upper boundaries of ROI
+- Chose n = 3, with variables $$\varphi, E_{sum}, r$$
+- ROI consists of 6 parameters: ($$\varphi^l, \varphi^u$$), ($$E_{sum}^l, E_{sum}^u), and ($$r^l, r^u$$), where $$l, u$$ are the lower and upper boundaries of ROI
    - let's collectively call them $$\Theta$$
 - Then sensitivity is a function of $$\Theta$$:
 ```math
 T^{1/2}(\Theta) = const.\frac{\varepsilon(\Theta)}{\mathcal{S}(\bar{b}(\Theta))}
 ```
-
-
-\* I used maximum energy instead of individual electron energies, because there are 2 electrons per each event and it complicates things a bit. I have a proposed solution for this, but it's not finished yet.
 """
 
 # ╔═╡ 470ae3b5-9dd7-44a2-82b4-ac6101b2b67e
@@ -321,19 +318,19 @@ RH037:
 # ╠═64580852-4944-45cb-9b9f-b087edb1c7ff
 # ╠═32c435b2-ee35-4a65-ba59-b23ee5ba7992
 # ╠═432c7c60-37ba-4ade-8935-500652ddc0c3
-# ╟─0bd50ff5-d407-4ba1-b4ab-f5fc52ee3c17
-# ╟─137994dd-199b-4531-98f0-ba29a44bc4db
-# ╟─cea77a5a-92f3-412d-8e50-69f4252eb52a
-# ╟─57ee9f4a-fa6a-41e5-a2ce-00107a278ea2
-# ╟─37966182-3b19-4a91-816f-d576c85dd9ba
-# ╟─4e6e0813-f5b3-4138-948d-7997bb371cdc
-# ╟─83b19179-efaa-4b92-aa71-6cfcea2b26e9
-# ╟─49ec8eb7-18ac-4d1e-9b45-401ee2563396
-# ╟─b95b52fe-f516-4a41-bdc1-d667ebfbf7bf
+# ╠═0bd50ff5-d407-4ba1-b4ab-f5fc52ee3c17
+# ╠═137994dd-199b-4531-98f0-ba29a44bc4db
+# ╠═cea77a5a-92f3-412d-8e50-69f4252eb52a
+# ╠═57ee9f4a-fa6a-41e5-a2ce-00107a278ea2
+# ╠═37966182-3b19-4a91-816f-d576c85dd9ba
+# ╠═4e6e0813-f5b3-4138-948d-7997bb371cdc
+# ╠═83b19179-efaa-4b92-aa71-6cfcea2b26e9
+# ╠═49ec8eb7-18ac-4d1e-9b45-401ee2563396
+# ╠═b95b52fe-f516-4a41-bdc1-d667ebfbf7bf
 # ╠═7b318089-8d66-46d9-a829-f74f27b9e565
 # ╠═48652f8f-274d-4899-b598-1c03b5927961
 # ╠═f5479dd2-e121-4c11-8c63-e31aaeecffca
-# ╟─9ec75f5e-bb51-40e5-b10b-f664aacc5aa9
+# ╠═9ec75f5e-bb51-40e5-b10b-f664aacc5aa9
 # ╠═edb0c835-8495-4f77-8656-dfabc5687dfd
 # ╠═137779df-f5fd-4033-92df-c608cf99aee8
 # ╠═470ae3b5-9dd7-44a2-82b4-ac6101b2b67e
