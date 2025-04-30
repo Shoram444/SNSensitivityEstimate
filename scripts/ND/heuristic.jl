@@ -4,7 +4,7 @@ using DrWatson
 println("loading pkgs")
 
 push!(LOAD_PATH, srcdir())
-using SensitivityModule, CairoMakie, Surrogates 
+using SensitivityModule, CairoMakie 
 
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
@@ -38,17 +38,17 @@ bins = (
 processes = load_ndim_processes("fal5_TKrec", bins, vars)
 
 # signal = get_process("bb0nu_foil_bulk", processes)
-signal = get_process("RH037_foil_bulk", processes)
+signal = get_process("RH037_foil_bulk", processes) |> first
 # signal = get_process("bb0nuM2_foil_bulk", processes)
 
 # declare background processes
 background = [
-    get_process("bb_foil_bulk", processes),
-    get_process("Bi214_foil_bulk", processes),
-    get_process("Bi214_wire_surface", processes),
-    get_process("Tl208_foil_bulk", processes),
-    get_process("K40_foil_bulk", processes),
-    get_process("Pa234m_foil_bulk", processes),
+    get_process("bb_foil_bulk", processes) |> first,
+    get_process("Bi214_foil_bulk", processes) |> first,
+    get_process("Bi214_wire_surface", processes) |> first,
+    get_process("Tl208_foil_bulk", processes) |> first,
+    get_process("K40_foil_bulk", processes) |> first,
+    get_process("Pa234m_foil_bulk", processes) |> first,
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -84,7 +84,6 @@ end
 
 searchRange = make_stepRange(signal)
 
-n_samples = 5000
 lower_bound = [x[1] for x in searchRange] .|> float
 upper_bound = [x[2] for x in searchRange] .|> float
 
@@ -96,9 +95,9 @@ options = Options(;
     f_tol_rel = 1e-1,
     f_tol_abs = 1e-1,
     time_limit = Inf,
-    parallel_evaluation = false,
+    parallel_evaluation = true,
     verbose = true,
-    iterations = 20,
+    iterations = 30,
     store_convergence = true
 )
 
@@ -112,15 +111,15 @@ function f_parallel(X)
     fitness
 end
 
-# result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
-result = Metaheuristics.optimize(prob, bounds, SA(;options))
+result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
+# result = Metaheuristics.optimize(prob, bounds, SA(;options))
 @show minimum(result)
-res=  minimizer(result)
+@show res=  minimizer(result)
 
 
-best = get_best_ROI_ND(res, signal)
-get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
+@show best = get_best_ROI_ND(res, signal)
+@show get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
 
 
-f_calls, best_f_value = convergence(result)
-plot(f_calls, best_f_value,)
+# f_calls, best_f_value = convergence(result)
+# plot(f_calls, best_f_value,)

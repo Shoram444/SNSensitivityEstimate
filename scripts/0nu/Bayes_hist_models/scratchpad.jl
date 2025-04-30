@@ -8,10 +8,11 @@ using Random, LinearAlgebra, Statistics, Distributions, Plots, BAT, BinnedModels
 global t0 = time()
 
 analysisDict = Dict(
-    :signal => "RH037_foil_bulk",
-    :roi => (0, 175),
-    :bw => 5,
-    :mode => "phi"
+    :signal => "bb0nuM2_foil_bulk",
+    :roi => (0, 3500),
+    :bw => 100,
+    :mode => "sumE",
+    :prior => 1e-2 # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
 )
 
 ROI_a, ROI_b, bw = analysisDict[:roi][1],analysisDict[:roi][2], analysisDict[:bw]
@@ -67,8 +68,8 @@ const f2(pars::NamedTuple{(:As, :Ab)}, x::Real) = f_uniform_bkg(pars, x, signal_
 
 # uninformed prior for each activity
 prior = NamedTupleDist(
-    As = Uniform(0,1),
-    Ab = [Uniform(0,1) for _ in 1:length(bkg_hist)] 
+    As = Uniform(1e-20, analysisDict[:prior]), # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    Ab = [Uniform(1e-20,1) for _ in 1:length(bkg_hist)] 
 )   
 
 t = Float64[]
@@ -90,7 +91,7 @@ end
 save_name = savename(analysisDict)
 
 using DataFramesMeta, CSV
-CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/data_perBkg_10keV_binning/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
+CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/informative_priors/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
 # CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")
