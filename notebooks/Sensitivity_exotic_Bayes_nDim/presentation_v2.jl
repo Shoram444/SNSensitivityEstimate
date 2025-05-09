@@ -37,9 +37,6 @@ using Distributions
 # ╔═╡ 7d6e5825-c187-4d55-b877-1e1193190ff2
 include(scriptsdir("Params.jl"))
 
-# ╔═╡ 5c201d62-6250-4289-ad8a-bcc519ef570a
-
-
 # ╔═╡ 33db2852-a205-4a2c-8744-037f5b7a6a80
 html"<button onclick='present()'>present</button>"
 
@@ -198,9 +195,6 @@ begin
         f
     end
 end
-
-# ╔═╡ 28a3b440-03b7-46fc-a08c-46084b41ae17
-bkg_hists[1] |> integral
 
 # ╔═╡ bad82399-f4f0-401c-acc7-b7f67155f27f
 md"""
@@ -638,34 +632,40 @@ md"""
 
 - Using n-dimensional approach leads to *slight* increase in sensitivities
   - better optimization should improve the results even further
+  - Choice of variables can be extended, at the cost of computing time
   - Machine learning techniques for MVA could improve it even further
 - Bayesian approach is more sensitive than frequentist when signal shape is more different from backgrounds!
   - not sure what's wrong with RH spectra, but this could be it?
 - Need to implement neutron data
-- We have an idea to use data-partitioning for angular distribution:
+- We have an idea to use data-partitioning for angular distribution
 
 
 """
 
+# ╔═╡ 9e7dbfe3-a38b-45ef-b6c6-74ca9c3392df
+md"""
+# Future
+Based on research of angular distribution for the electrons, depending on which side of foil they are emitted, the reconstruction is differently efficient. We could use this fact!
+![same_side](https://github.com/Shoram444/SNSensitivityEstimate/blob/main/notebooks/Sensitivity_exotic_Bayes_nDim/same_side_opposite.png?raw=true)
+"""
+
 # ╔═╡ Cell order:
-# ╠═5c201d62-6250-4289-ad8a-bcc519ef570a
-# ╠═33db2852-a205-4a2c-8744-037f5b7a6a80
-# ╠═96f0e67c-16af-11f0-08a5-ffefdd2c8429
-# ╠═39a6343a-b95c-4ea4-98e2-83eab6d6c602
-# ╠═c38eeb3e-11c2-40d0-98cb-89711b799441
-# ╠═992a6366-86e0-4d00-ab9c-ac29190ff693
-# ╠═7d6e5825-c187-4d55-b877-1e1193190ff2
-# ╠═107241e3-a8b7-43af-b26f-b2b205f7e294
-# ╠═838099af-cd31-480e-8952-9eda9df9e10a
-# ╠═65b97922-2625-43a4-bf9f-622cce900bcf
-# ╠═4011c3d8-d298-40f1-9986-77e991a25152
-# ╠═781740e1-5f0c-4b99-834c-1ac6a75118b7
-# ╠═4db07780-248f-4658-82a5-507ea65edb0b
-# ╠═16fbb9bb-d86b-433b-91fa-a12f8008eaa9
-# ╠═5099a914-3f46-4e86-9570-bc13f5d3ca80
-# ╠═de64766d-fda7-4a0e-bc7c-80bb90554bac
-# ╠═1f4ae42b-61be-44ed-bb82-60e7cfb582ba
-# ╠═28a3b440-03b7-46fc-a08c-46084b41ae17
+# ╟─33db2852-a205-4a2c-8744-037f5b7a6a80
+# ╟─96f0e67c-16af-11f0-08a5-ffefdd2c8429
+# ╟─39a6343a-b95c-4ea4-98e2-83eab6d6c602
+# ╟─c38eeb3e-11c2-40d0-98cb-89711b799441
+# ╟─992a6366-86e0-4d00-ab9c-ac29190ff693
+# ╟─7d6e5825-c187-4d55-b877-1e1193190ff2
+# ╟─107241e3-a8b7-43af-b26f-b2b205f7e294
+# ╟─838099af-cd31-480e-8952-9eda9df9e10a
+# ╟─65b97922-2625-43a4-bf9f-622cce900bcf
+# ╟─4011c3d8-d298-40f1-9986-77e991a25152
+# ╟─781740e1-5f0c-4b99-834c-1ac6a75118b7
+# ╟─4db07780-248f-4658-82a5-507ea65edb0b
+# ╟─16fbb9bb-d86b-433b-91fa-a12f8008eaa9
+# ╟─5099a914-3f46-4e86-9570-bc13f5d3ca80
+# ╟─de64766d-fda7-4a0e-bc7c-80bb90554bac
+# ╟─1f4ae42b-61be-44ed-bb82-60e7cfb582ba
 # ╟─bad82399-f4f0-401c-acc7-b7f67155f27f
 # ╟─4a2ca349-25ff-4a16-a4cf-075767700240
 # ╟─eb22cfcd-a08e-4e57-9f02-113612804fc1
@@ -675,11 +675,11 @@ md"""
 # ╟─d7354883-f530-4bfe-955d-ca37263d0c7b
 # ╟─87c50992-3347-47e8-8cb4-3f0dcee41ebf
 # ╟─6fa76137-73fc-47ea-927b-0ffed51149f7
-# ╠═cdcc36a8-888b-42e4-8721-18e183a3ae5e
-# ╠═724e4ff0-6dea-4a73-8708-0c886c98a8db
-# ╠═8680f3a5-6ed9-40de-b8a3-c2e34b4507e0
-# ╠═e6bbd64e-a2eb-462f-837a-079ef07f3c43
-# ╠═e768fb37-96d1-4181-9e36-1aa5af23db1f
+# ╟─cdcc36a8-888b-42e4-8721-18e183a3ae5e
+# ╟─724e4ff0-6dea-4a73-8708-0c886c98a8db
+# ╟─8680f3a5-6ed9-40de-b8a3-c2e34b4507e0
+# ╟─e6bbd64e-a2eb-462f-837a-079ef07f3c43
+# ╟─e768fb37-96d1-4181-9e36-1aa5af23db1f
 # ╟─8c041449-ec1c-4bdf-ac7b-0ef59ba777a4
 # ╟─5b254b0e-6b4b-46be-bed9-8df0efa3de44
 # ╟─518693c6-694b-45eb-a08b-c3a449a0d0bf
@@ -687,12 +687,13 @@ md"""
 # ╟─ed6b7268-412d-45a9-895c-7248b0686efe
 # ╟─c57ec8c2-68d1-47b9-b7e7-0a415ce85031
 # ╟─25f1adc4-a6f4-4a10-9fe1-b0d1817f0ece
-# ╠═085a4b0a-1fdc-44d8-a8ce-7158ac54256f
+# ╟─085a4b0a-1fdc-44d8-a8ce-7158ac54256f
 # ╟─187dfcf3-48d8-4ee9-8d33-8b3bac063b37
-# ╠═8a0763e0-bf30-49df-930c-d28ded622ded
+# ╟─8a0763e0-bf30-49df-930c-d28ded622ded
 # ╟─6d3bd21c-a856-407e-b3e7-d98d8cad0c9b
-# ╠═559c3769-c956-47e7-b5ea-07b866333104
+# ╟─559c3769-c956-47e7-b5ea-07b866333104
 # ╟─b2a28a93-2524-43e3-a9fa-6ef30ac213af
 # ╟─8e5fa765-c8a9-4419-9e4f-c58a213be563
-# ╠═7da00dac-d0a8-4b77-973e-9e46e5fa964d
-# ╠═8fc9a87c-ec29-4028-a20f-9c8cdec4c866
+# ╟─7da00dac-d0a8-4b77-973e-9e46e5fa964d
+# ╟─8fc9a87c-ec29-4028-a20f-9c8cdec4c866
+# ╟─9e7dbfe3-a38b-45ef-b6c6-74ca9c3392df
