@@ -5,6 +5,7 @@ println("loading pkgs")
 
 push!(LOAD_PATH, srcdir())
 using SensitivityModule, CairoMakie 
+using SensitivityModule, CairoMakie 
 
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
@@ -49,6 +50,12 @@ background = [
     get_process("Tl208_foil_bulk", processes) |> first,
     get_process("K40_foil_bulk", processes) |> first,
     get_process("Pa234m_foil_bulk", processes) |> first,
+    get_process("bb_foil_bulk", processes) |> first,
+    get_process("Bi214_foil_bulk", processes) |> first,
+    get_process("Bi214_wire_surface", processes) |> first,
+    get_process("Tl208_foil_bulk", processes) |> first,
+    get_process("K40_foil_bulk", processes) |> first,
+    get_process("Pa234m_foil_bulk", processes) |> first,
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -84,7 +91,6 @@ end
 
 searchRange = make_stepRange(signal)
 
-n_samples = 5000
 lower_bound = [x[1] for x in searchRange] .|> float
 upper_bound = [x[2] for x in searchRange] .|> float
 
@@ -114,8 +120,10 @@ end
 
 result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
 # result = Metaheuristics.optimize(prob, bounds, SA(;options))
+result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
+# result = Metaheuristics.optimize(prob, bounds, SA(;options))
 @show minimum(result)
-res=  minimizer(result)
+@show res=  minimizer(result)
 
 function get_best_ROI_ND(res, process)
     best = best_candidate(res)
