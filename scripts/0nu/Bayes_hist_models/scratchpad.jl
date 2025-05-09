@@ -8,11 +8,11 @@ using Random, LinearAlgebra, Statistics, Distributions, Plots, BAT, BinnedModels
 global t0 = time()
 
 analysisDict = Dict(
-    :signal => "bb0nuM2_foil_bulk",
+    :signal => "bb0nu_foil_bulk",
     :roi => (0, 3500),
     :bw => 100,
     :mode => "sumE",
-    :prior => 1e-2 # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :prior => 1e-4 # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
 )
 
 ROI_a, ROI_b, bw = analysisDict[:roi][1],analysisDict[:roi][2], analysisDict[:bw]
@@ -74,24 +74,24 @@ prior = NamedTupleDist(
 
 t = Float64[]
 # while(time() - t0 < 3600*36) # do this for n hours
-for _ in 1:1 # do this for n hours
-    GC.gc()
-    t1 = time()
-    try 
-        sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; ROI_a = ROI_a, ROI_b = ROI_b, nsteps = 10^4, nchains = 4)
-        println("time to fit, t = $(time() - t1) s")
-        println(sens)
-        push!(t, sens)
-    catch
-        @warn "failed fit" 
-        continue
-    end
-end
+# for _ in 1:1 # do this for n hours
+#     GC.gc()
+#     t1 = time()
+#     try 
+#         sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; ROI_a = ROI_a, ROI_b = ROI_b, nsteps = 10^4, nchains = 4)
+#         println("time to fit, t = $(time() - t1) s")
+#         println(sens)
+#         push!(t, sens)
+#     catch
+#         @warn "failed fit" 
+#         continue
+#     end
+# end
 
-save_name = savename(analysisDict)
+# save_name = savename(analysisDict)
 
-using DataFramesMeta, CSV
-CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/informative_priors/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
+# using DataFramesMeta, CSV
+# CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/informative_priors/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
 # CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")
@@ -176,6 +176,8 @@ eff= lookup(signal, ROI_a, ROI_b-50)
 Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
 
 Plots.plot(samples, size = (2000, 1600))
+Plots.plot(samples, :As)
+savefig("notebooks/Sensitivity_exotic_Bayes_nDim/samples_As.png")
 
 bw = analysisDict[:bw]
 xs = ROI_a:bw:ROI_b-bw/2

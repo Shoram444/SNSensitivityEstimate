@@ -1,19 +1,17 @@
 ### A Pluto.jl notebook ###
-# v0.20.5
+# v0.19.40
 
 using Markdown
 using InteractiveUtils
 
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
-    #! format: off
-    return quote
+    quote
         local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
         local el = $(esc(element))
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
         el
     end
-    #! format: on
 end
 
 # ╔═╡ bafba9a8-16f0-11f0-3353-cfe73114b0c5
@@ -86,12 +84,6 @@ function compute_log_posterior(data::Vector{<:Real}, mu_grid::Vector{<:Real}, pr
 end
 
 
-# ╔═╡ f59fd9bf-b517-4b56-bd13-1fc02246f30c
-grid |> collect
-
-# ╔═╡ 4c375db6-36b1-4d01-9811-63bb897471ca
-plot(grid, log_posterior)
-
 # ╔═╡ f303f759-767e-4c16-a253-28289090e37c
 begin
 	stephist(data, nbins = 100, size = (800, 400), legend = :outertop, label = "mean_data = $(round(mean(data)))",normalize = :pdf)
@@ -103,11 +95,17 @@ begin
 	plot!(grid, prior, linewidth = 3)
 end
 
+# ╔═╡ f59fd9bf-b517-4b56-bd13-1fc02246f30c
+grid |> collect
+
 # ╔═╡ ccf64daf-8189-4e8c-afbe-eb8376b6158b
 # ╠═╡ disabled = true
 #=╠═╡
 log_posterior = compute_log_posterior(data, collect(grid), prior)
   ╠═╡ =#
+
+# ╔═╡ 4c375db6-36b1-4d01-9811-63bb897471ca
+plot(grid, log_posterior)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """

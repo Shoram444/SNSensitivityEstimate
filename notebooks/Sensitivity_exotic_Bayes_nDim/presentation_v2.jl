@@ -29,6 +29,9 @@ end
 # ╔═╡ c38eeb3e-11c2-40d0-98cb-89711b799441
 using CairoMakie, UnROOT, DataFramesMeta, LaTeXStrings, FHist, PrettyTables, StatsBase, ColorSchemes, PlutoUI, CSV
 
+# ╔═╡ 6d3bd21c-a856-407e-b3e7-d98d8cad0c9b
+using Distributions
+
 # ╔═╡ 7d6e5825-c187-4d55-b877-1e1193190ff2
 include(scriptsdir("Params.jl"))
 
@@ -407,6 +410,120 @@ md"""
 More detailed description in: DocDB#5943 
 """
 
+# ╔═╡ e768fb37-96d1-4181-9e36-1aa5af23db1f
+md"""
+# Example, generic Bayesian inference
+
+Let's say we have some Gaussian signal and Exponential background and have measured some data. 
+
+We have:
+  -  $$\mu_{sig}$$ mean of signal Gaussian
+  -  $$\Theta_{sig}$$ proportion of signal in data
+  -  $$\lambda_{bkg}$$ decay rate of background
+  -  $$\Theta_{bkg}$$ proportion of background in data
+
+Say, for simplicity, we know $$\mu_{sig}$$ and $$\lambda_{bkg}$$. We just want to find the proportions: $$\Theta_{sig}$$, $$\Theta_{bkg}$$.
+
+\* let's ignore $$\sigma$$ for now..
+"""
+
+# ╔═╡ 8c041449-ec1c-4bdf-ac7b-0ef59ba777a4
+md"""
+# Example, generic Bayesian inference
+
+Our likelihood:
+```math
+		\mathcal{L}(data|\Theta_{sig}, \Theta_{bkg}) = \prod_i^{N^{obs}}\left( \Theta_{bkg}\lambda_{bkg} e^{-\lambda_{bkg} E_i} + \Theta_{sig}\frac{1}{\sigma\sqrt{2\pi}}e^{-(\frac{E_i-\mu_{sig}}{\sigma})^2} \right)
+```
+
+Our priors (uninformative):
+
+$$\Theta_{sig} \sim Uniform(0, 1)$$ 
+$$\Theta_{bkg} \sim Uniform(0, 1)$$ 
+
+"""
+
+# ╔═╡ 518693c6-694b-45eb-a08b-c3a449a0d0bf
+md"""
+ $$\mu_{sig}$$ = $(@bind μ_sig PlutoUI.Slider(1.0:1.0:10.0, default = 5.0, show_value = true)) 
+"""
+
+# ╔═╡ ea51b339-1d49-4f04-a8fe-744f9e855026
+md"""
+ $$\Theta_{sig}$$ = $(@bind n_sig PlutoUI.Slider(0.0:0.1:1.0, default = 0.1, show_value = true))
+"""
+
+# ╔═╡ ed6b7268-412d-45a9-895c-7248b0686efe
+md"""
+ $$\lambda_{bkg}$$ = $(@bind lambda_bkg PlutoUI.Slider(0.5:0.1:3.0, default = 0.8, show_value = true))
+"""
+
+# ╔═╡ c57ec8c2-68d1-47b9-b7e7-0a415ce85031
+md"""
+ $$\Theta_{bkg}$$ = 1 - $$\Theta_{sig}$$ = $(n_bkg = 1.0-n_sig)
+"""
+
+# ╔═╡ 5b254b0e-6b4b-46be-bed9-8df0efa3de44
+begin
+		n = 1000
+	signal_data = rand(Normal(μ_sig, 1.0), Int(round(n*n_sig)))
+	background_data = rand(Exponential(lambda_bkg), Int(round(n*n_bkg)))
+
+	h1_sig = Hist1D(signal_data; binedges = 0:0.1:10.0)
+	h1_bkg = Hist1D(background_data; binedges = 0:0.1:10.0)
+
+	true_ps = n*n_sig # true proportion of signal
+	true_pb = n*n_bkg
+	signal_dist = Normal(μ_sig, 1.0)
+	background_dist = Exponential(lambda_bkg)
+	
+	data = vcat(signal_data, background_data)
+
+	f_ex = Figure()
+	ax_ex = Axis(f_ex[1,1], xlabel = "arbitrary energy", ylabel = "counts")
+	xs = binedges(h1_sig) |> midpoints |> collect
+	p = lines!(ax_ex, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.1, label = "signal", color = :blue, linewidth = 4)
+	lines!(ax_ex,  xs, x-> pdf(Exponential(lambda_bkg), x) .* n .* 0.1, label = "background", color= :red, linewidth = 4)
+	stairs!(ax_ex, h1_sig + h1_bkg, label = "data", linewidth = 4)
+	axislegend(ax_ex)
+	f_ex
+end
+
+# ╔═╡ 25f1adc4-a6f4-4a10-9fe1-b0d1817f0ece
+begin
+	# --- Grid for p_s ---
+	ps_grid = range(0.0, 1.0; length=200)
+	log_posterior = zeros(length(ps_grid))
+	
+	# --- Evaluate likelihood over grid ---
+	for (i, ps) in enumerate(ps_grid)
+	    pb = 1 - ps
+	    log_likelihood = sum(log.(ps * pdf.(signal_dist, data) .+ pb * pdf.(background_dist, data)))
+	    log_posterior[i] = log_likelihood  # Flat prior assumed
+	end
+	
+	# --- Normalize to get posterior ---
+	posterior = exp.(log_posterior .- maximum(log_posterior))  # for numerical stability
+	posterior ./= sum(posterior)
+	
+	let 
+	f = Figure(size = (450, 600))
+	ax = Axis(f[1,1], xlabel = "arbitrary energy", ylabel = "counts")
+	xs = binedges(h1_sig) |> midpoints |> collect
+	p = lines!(ax, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.1, label = "signal", color = :blue, linewidth = 4)
+	lines!(ax,  xs, x-> pdf(Exponential(lambda_bkg), x) .* n .* 0.1, label = "background", color= :red, linewidth = 4)
+	stairs!(ax, h1_sig + h1_bkg, label = "data", linewidth = 4)
+	axislegend(ax)
+
+	a =Axis(f[2,1], xlabel = L"\Theta", ylabel = L"pdf($\Theta_i$| data)", title= "posterior distribution")
+	p = lines!(a, ps_grid, posterior, label = L"\Theta_{sig}")
+	lines!(a, 1.0 .- ps_grid, posterior, label = L"\Theta_{bkg}")
+	axislegend(a)
+	
+	f
+	end
+end
+
 # ╔═╡ 085a4b0a-1fdc-44d8-a8ce-7158ac54256f
 md"""
 # Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
@@ -458,31 +575,28 @@ md"""
 	For example, if $$0\nu\beta\beta$$ represented say 30% of our measured data, we'd get a pdf with peak around 30%. If there's no signal present, the peak would be expected at 0. The shape of the pdf is how we calculate confidence interval.
 """
 
-# ╔═╡ 25f1adc4-a6f4-4a10-9fe1-b0d1817f0ece
+# ╔═╡ 559c3769-c956-47e7-b5ea-07b866333104
+md"""
+# Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
+
+Results:
+For a single Bayesian inference we get
+
+"""
+
+# ╔═╡ b2a28a93-2524-43e3-a9fa-6ef30ac213af
 
 
-# ╔═╡ 95590884-38fa-4201-9f46-138d569aa1f7
+# ╔═╡ 8e5fa765-c8a9-4419-9e4f-c58a213be563
 
 
-# ╔═╡ 8d012b5d-d0f3-4fb6-8481-9e51eab4134f
+# ╔═╡ 7da00dac-d0a8-4b77-973e-9e46e5fa964d
 
 
-# ╔═╡ 10005fdd-1bd3-4892-be96-39e976c81e4c
+# ╔═╡ 74adf336-6e5d-49a8-9dd7-049d2b35a63f
 
 
-# ╔═╡ 6ae9d6ad-c2c2-4c2f-9c58-1f015e502d1a
-
-
-# ╔═╡ 35e1a3ac-3f0d-482e-9e19-fdc00a0a9004
-
-
-# ╔═╡ 87d20c02-cd0a-43a1-a437-016086bf76fd
-
-
-# ╔═╡ bf7e38c5-d254-4392-b526-081784269fd8
-
-
-# ╔═╡ e632053f-fbc5-41ab-a9d5-c3a826919402
+# ╔═╡ 8fc9a87c-ec29-4028-a20f-9c8cdec4c866
 
 
 # ╔═╡ Cell order:
@@ -517,15 +631,21 @@ md"""
 # ╠═724e4ff0-6dea-4a73-8708-0c886c98a8db
 # ╠═8680f3a5-6ed9-40de-b8a3-c2e34b4507e0
 # ╠═e6bbd64e-a2eb-462f-837a-079ef07f3c43
+# ╠═e768fb37-96d1-4181-9e36-1aa5af23db1f
+# ╟─8c041449-ec1c-4bdf-ac7b-0ef59ba777a4
+# ╟─5b254b0e-6b4b-46be-bed9-8df0efa3de44
+# ╟─518693c6-694b-45eb-a08b-c3a449a0d0bf
+# ╟─ea51b339-1d49-4f04-a8fe-744f9e855026
+# ╟─ed6b7268-412d-45a9-895c-7248b0686efe
+# ╟─c57ec8c2-68d1-47b9-b7e7-0a415ce85031
+# ╟─25f1adc4-a6f4-4a10-9fe1-b0d1817f0ece
 # ╠═085a4b0a-1fdc-44d8-a8ce-7158ac54256f
 # ╟─187dfcf3-48d8-4ee9-8d33-8b3bac063b37
-# ╟─8a0763e0-bf30-49df-930c-d28ded622ded
-# ╠═25f1adc4-a6f4-4a10-9fe1-b0d1817f0ece
-# ╠═95590884-38fa-4201-9f46-138d569aa1f7
-# ╠═8d012b5d-d0f3-4fb6-8481-9e51eab4134f
-# ╠═10005fdd-1bd3-4892-be96-39e976c81e4c
-# ╠═6ae9d6ad-c2c2-4c2f-9c58-1f015e502d1a
-# ╠═35e1a3ac-3f0d-482e-9e19-fdc00a0a9004
-# ╠═87d20c02-cd0a-43a1-a437-016086bf76fd
-# ╠═bf7e38c5-d254-4392-b526-081784269fd8
-# ╠═e632053f-fbc5-41ab-a9d5-c3a826919402
+# ╠═8a0763e0-bf30-49df-930c-d28ded622ded
+# ╟─6d3bd21c-a856-407e-b3e7-d98d8cad0c9b
+# ╠═559c3769-c956-47e7-b5ea-07b866333104
+# ╠═b2a28a93-2524-43e3-a9fa-6ef30ac213af
+# ╠═8e5fa765-c8a9-4419-9e4f-c58a213be563
+# ╠═7da00dac-d0a8-4b77-973e-9e46e5fa964d
+# ╠═74adf336-6e5d-49a8-9dd7-049d2b35a63f
+# ╠═8fc9a87c-ec29-4028-a20f-9c8cdec4c866
