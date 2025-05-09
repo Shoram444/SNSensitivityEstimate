@@ -59,7 +59,7 @@ analysisDict = Dict(
     :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
     :mode => "sumE", 
     :trackAlgo => "TKrec",
-    :signal => "bb0nu",
+    :signal => "bb0nuM1",
     :neutron_config => "no_neutron"
 )
 

@@ -1,17 +1,19 @@
 ### A Pluto.jl notebook ###
-# v0.19.40
+# v0.20.6
 
 using Markdown
 using InteractiveUtils
 
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
-    quote
+    #! format: off
+    return quote
         local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
         local el = $(esc(element))
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
         el
     end
+    #! format: on
 end
 
 # ╔═╡ 96f0e67c-16af-11f0-08a5-ffefdd2c8429
@@ -580,24 +582,70 @@ md"""
 # Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
 
 Results:
-For a single Bayesian inference we get
+For a single Bayesian inference we get posterior distribution of $$\Theta_{sig}$$:
+![samples](https://github.com/Shoram444/SNSensitivityEstimate/blob/main/notebooks/Sensitivity_exotic_Bayes_nDim/samples_As.png?raw=true)
 
+This means, the most probable value for $$\Theta_{sig}$$ is very close to zero, with 90% CI around $$3\times 10^-5$$, which corresponds to 3.5 events. This is the 90% CI on the number of signal events that should be plugged into the sensitivity equation.
 """
 
 # ╔═╡ b2a28a93-2524-43e3-a9fa-6ef30ac213af
+md"""
+# Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
 
+!!! danger "Danger!"
+	The Bayesian inference method shown can fluctuate a lot! Both due to the statistical nature of the Bayesian MCMC sampling and due to how the data fluctuates (this is true for Frequentist as well). To limit the effects, we create **n pseudo experiments** to gather a large enough statistics for drawing conclusions. 
+"""
 
 # ╔═╡ 8e5fa765-c8a9-4419-9e4f-c58a213be563
+md"""
+# Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
 
+![0nu_pseudo](https://github.com/Shoram444/SNSensitivityEstimate/blob/main/scripts/0nu/Bayes_hist_models/result_bb0nu_foil_bulk_sumE.png?raw=true)
+
+I ran this algorithm in 20 parallel jobs on CC-LYON cluster for 2 days each.
+The following steps were within each job:
+1. For each iteration **generate** pseudo-data based on the background model
+2. Perform bayesian inference and extract **Sensitivity**
+3. Repeat for 2 days
+4. Save all sensitivities into a file
+
+The resulting median sensitivity for $$0\nu\beta\beta$$ is:
+```math
+	T^{0\nu}_{1/2} \geq 4.66 \times 10^24 yr
+```
+"""
 
 # ╔═╡ 7da00dac-d0a8-4b77-973e-9e46e5fa964d
+md"""
+# Results
+
+|signal|1D|ND|Bayes|
+|:----:|:-:|:-:|:-:|
+|$$0\nu\beta\beta$$|$$4.14 \times 10^{24} y$$|$$4.22 \times 10^{24}y$$|$$4.66 \times 10^24 y$$|
+|$$0\nu\beta\beta\chi^0$$|$$1.45 \times 10^{23} y$$| $$1.48 \times 10^{23} y$$ | |$$ 2.38 \times 10^{23} y$$|
+|$$0\nu\beta\beta\chi^0\chi^0$$|$$2.31 \times 10^{22} y$$|  |$$1.43 \times 10^{22} y$$|
+|$$\nu_L\nu_R\beta\beta$$| $$1.83 \times 10^{22} y^*$$| | $$1.09 \times 10^{21} y^{**}$$|
 
 
-# ╔═╡ 74adf336-6e5d-49a8-9dd7-049d2b35a63f
+ \* for single-electron energy 
 
+ \*\* for angular distribution, need to investigate why this is so low.  
+"""
 
 # ╔═╡ 8fc9a87c-ec29-4028-a20f-9c8cdec4c866
+md"""
+# Conclusions
 
+- Using n-dimensional approach leads to *slight* increase in sensitivities
+  - better optimization should improve the results even further
+  - Machine learning techniques for MVA could improve it even further
+- Bayesian approach is more sensitive than frequentist when signal shape is more different from backgrounds!
+  - not sure what's wrong with RH spectra, but this could be it?
+- Need to implement neutron data
+- We have an idea to use data-partitioning for angular distribution:
+
+
+"""
 
 # ╔═╡ Cell order:
 # ╠═5c201d62-6250-4289-ad8a-bcc519ef570a
@@ -644,8 +692,7 @@ For a single Bayesian inference we get
 # ╠═8a0763e0-bf30-49df-930c-d28ded622ded
 # ╟─6d3bd21c-a856-407e-b3e7-d98d8cad0c9b
 # ╠═559c3769-c956-47e7-b5ea-07b866333104
-# ╠═b2a28a93-2524-43e3-a9fa-6ef30ac213af
-# ╠═8e5fa765-c8a9-4419-9e4f-c58a213be563
+# ╟─b2a28a93-2524-43e3-a9fa-6ef30ac213af
+# ╟─8e5fa765-c8a9-4419-9e4f-c58a213be563
 # ╠═7da00dac-d0a8-4b77-973e-9e46e5fa964d
-# ╠═74adf336-6e5d-49a8-9dd7-049d2b35a63f
 # ╠═8fc9a87c-ec29-4028-a20f-9c8cdec4c866
