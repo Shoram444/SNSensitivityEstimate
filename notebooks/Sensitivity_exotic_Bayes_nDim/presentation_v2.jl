@@ -1,19 +1,17 @@
 ### A Pluto.jl notebook ###
-# v0.20.4
+# v0.19.40
 
 using Markdown
 using InteractiveUtils
 
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
-    #! format: off
     quote
         local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
         local el = $(esc(element))
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
         el
     end
-    #! format: on
 end
 
 # ╔═╡ 96f0e67c-16af-11f0-08a5-ffefdd2c8429
@@ -22,15 +20,17 @@ using DrWatson
 # ╔═╡ 39a6343a-b95c-4ea4-98e2-83eab6d6c602
 @quickactivate "SNSensitivityEstimate"
 
-# ╔═╡ 7d6e5825-c187-4d55-b877-1e1193190ff2
+# ╔═╡ 992a6366-86e0-4d00-ab9c-ac29190ff693
 begin
 	push!(LOAD_PATH, srcdir())
 	using SensitivityModule
-	include(scriptsdir("Params.jl"))
 end
 
 # ╔═╡ c38eeb3e-11c2-40d0-98cb-89711b799441
 using CairoMakie, UnROOT, DataFramesMeta, LaTeXStrings, FHist, PrettyTables, StatsBase, ColorSchemes, PlutoUI, CSV
+
+# ╔═╡ 7d6e5825-c187-4d55-b877-1e1193190ff2
+include(scriptsdir("Params.jl"))
 
 # ╔═╡ 5c201d62-6250-4289-ad8a-bcc519ef570a
 
@@ -135,15 +135,15 @@ begin
 	    "sumE",
 	    fwhm = 0.0
 	)
-	signal = get_process("bb0nu_foil_bulk", data_processes)
+	signal = get_process("bb0nu_foil_bulk", data_processes) |> first
 
     background = [
-        get_process("bb_foil_bulk", data_processes),
-        get_process("Bi214_foil_bulk", data_processes),
-        get_process("Bi214_wire_surface", data_processes),
-        get_process("Tl208_foil_bulk", data_processes),
-        get_process("K40_foil_bulk", data_processes),
-        get_process("Pa234m_foil_bulk", data_processes),
+        get_process("bb_foil_bulk", data_processes) |> first,
+        get_process("Bi214_foil_bulk", data_processes) |> first,
+        get_process("Bi214_wire_surface", data_processes) |> first,
+        get_process("Tl208_foil_bulk", data_processes) |> first,
+        get_process("K40_foil_bulk", data_processes) |> first,
+        get_process("Pa234m_foil_bulk", data_processes) |> first,
     ]
 	set_nTotalSim!( signal ,1e8)
 	set_nTotalSim!( background[1], 0.99e8 )
@@ -355,13 +355,6 @@ md"""
 	5. Repeat until convergence (or failure...)
 """
 
-# ╔═╡ 99c39ae6-9196-4b28-be41-fc885ccf7265
-md"""
-# Example for $$0\nu\beta\beta$$ N-Dim:
-
-Plots of E, phi, r scatters
-"""
-
 # ╔═╡ 724e4ff0-6dea-4a73-8708-0c886c98a8db
 md"""
 # Example for $$0\nu\beta\beta$$ N-Dim:
@@ -371,19 +364,17 @@ $$\Theta =$$
 
 |variable | ROI |
 |:-------:|:----:|
-|$$E_{sum}$$ |(2700, 3200) keV|
-|$$E_{max}$$| (1000, 3000) keV|
-|$$\varphi$$| (0, 180)$$\degree$$|
-|$$r$$ | (0, 60) mm |
+|$$E_{sum}$$ |(2710, 3350) keV|
+|$$\varphi$$| (10, 180)$$\degree$$|
+|$$r$$ | (0, 50) mm |
 
 And 
 
 |variable | value |
 |:-------:|:----:|
-|$$\varepsilon$$ |0.15|
-|$$\bar{b}$$| 1.04 ± 0.02|
-|$$\mathcal{S}$$| 3.3|
-|$$T^{1/2}$$ | $$\geq 4.04 yr$$|
+|$$\varepsilon$$ |0.145|
+|$$\bar{b}$$| 0.73|
+|$$T^{1/2}$$ | $$\geq 4.22 yr$$|
 
 """
 
@@ -438,6 +429,7 @@ md"""
 
 # ╔═╡ 187dfcf3-48d8-4ee9-8d33-8b3bac063b37
 md"""
+# Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
 !!! note "What is...better! 🥁"
 	**Detailed** likelihood model with each process having its own pdf!
 	```math
@@ -446,7 +438,40 @@ md"""
 	Where $$pdf(sig, E_i)$$ and $$pdf(bkg_j, E_i)$$ are the signal and background normalized spectra evaluated at $$E_i$$. 
 
 	- This way we have better description of the shapes of the spectra (if we consider simulation to be correct...)
+
+!!! update "Priors and posetrior"
+	**Priors**
+	  - the parameters are set up as a "proportion of the total spectrum", so each process contributes some percentage of the total spectrum: $$\Sigma_i \Theta_i = 1$$
+	  -  $$\Theta_1$$: i.e. has a flat prior with $$p(\Theta_1 | data) \sim Uniform(0, 10^{-4})$$ 
+	    -  $$10^{-4}$$ represents roughly $$T^{1/2}\geq 10^{24} yr$$ for $$17.5 kg.y$$
+	  -   $$\Theta_i; i> 1$$: the priors are uniform between (0,1)
+
+
 """
+
+# ╔═╡ 8a0763e0-bf30-49df-930c-d28ded622ded
+md"""
+# Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
+
+!!! danger "Posterior"
+	The posterior distributions represent the **possible distributions of the parameter** given data. That means, that for each parameter (proportion of the spectrum), we get a pdf. 
+	For example, if $$0\nu\beta\beta$$ represented say 30% of our measured data, we'd get a pdf with peak around 30%. If there's no signal present, the peak would be expected at 0. The shape of the pdf is how we calculate confidence interval.
+"""
+
+# ╔═╡ 25f1adc4-a6f4-4a10-9fe1-b0d1817f0ece
+
+
+# ╔═╡ 95590884-38fa-4201-9f46-138d569aa1f7
+
+
+# ╔═╡ 8d012b5d-d0f3-4fb6-8481-9e51eab4134f
+
+
+# ╔═╡ 10005fdd-1bd3-4892-be96-39e976c81e4c
+
+
+# ╔═╡ 6ae9d6ad-c2c2-4c2f-9c58-1f015e502d1a
+
 
 # ╔═╡ 35e1a3ac-3f0d-482e-9e19-fdc00a0a9004
 
@@ -466,6 +491,7 @@ md"""
 # ╠═96f0e67c-16af-11f0-08a5-ffefdd2c8429
 # ╠═39a6343a-b95c-4ea4-98e2-83eab6d6c602
 # ╠═c38eeb3e-11c2-40d0-98cb-89711b799441
+# ╠═992a6366-86e0-4d00-ab9c-ac29190ff693
 # ╠═7d6e5825-c187-4d55-b877-1e1193190ff2
 # ╠═107241e3-a8b7-43af-b26f-b2b205f7e294
 # ╠═838099af-cd31-480e-8952-9eda9df9e10a
@@ -488,12 +514,17 @@ md"""
 # ╟─87c50992-3347-47e8-8cb4-3f0dcee41ebf
 # ╟─6fa76137-73fc-47ea-927b-0ffed51149f7
 # ╠═cdcc36a8-888b-42e4-8721-18e183a3ae5e
-# ╠═99c39ae6-9196-4b28-be41-fc885ccf7265
 # ╠═724e4ff0-6dea-4a73-8708-0c886c98a8db
 # ╠═8680f3a5-6ed9-40de-b8a3-c2e34b4507e0
 # ╠═e6bbd64e-a2eb-462f-837a-079ef07f3c43
 # ╠═085a4b0a-1fdc-44d8-a8ce-7158ac54256f
-# ╠═187dfcf3-48d8-4ee9-8d33-8b3bac063b37
+# ╟─187dfcf3-48d8-4ee9-8d33-8b3bac063b37
+# ╟─8a0763e0-bf30-49df-930c-d28ded622ded
+# ╠═25f1adc4-a6f4-4a10-9fe1-b0d1817f0ece
+# ╠═95590884-38fa-4201-9f46-138d569aa1f7
+# ╠═8d012b5d-d0f3-4fb6-8481-9e51eab4134f
+# ╠═10005fdd-1bd3-4892-be96-39e976c81e4c
+# ╠═6ae9d6ad-c2c2-4c2f-9c58-1f015e502d1a
 # ╠═35e1a3ac-3f0d-482e-9e19-fdc00a0a9004
 # ╠═87d20c02-cd0a-43a1-a437-016086bf76fd
 # ╠═bf7e38c5-d254-4392-b526-081784269fd8

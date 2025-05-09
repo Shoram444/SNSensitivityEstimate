@@ -4,7 +4,7 @@ using DrWatson
 println("loading pkgs")
 
 push!(LOAD_PATH, srcdir())
-using SensitivityModule, CairoMakie, Surrogates 
+using SensitivityModule, CairoMakie 
 
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
@@ -37,18 +37,18 @@ bins = (
 
 processes = load_ndim_processes("fal5_TKrec", bins, vars)
 
-# signal = get_process("bb0nu_foil_bulk", processes)
-signal = get_process("RH037_foil_bulk", processes)
+signal = get_process("bb0nu_foil_bulk", processes) |> first
+# signal = get_process("RH037_foil_bulk", processes) |> first
 # signal = get_process("bb0nuM2_foil_bulk", processes)
 
 # declare background processes
 background = [
-    get_process("bb_foil_bulk", processes),
-    get_process("Bi214_foil_bulk", processes),
-    get_process("Bi214_wire_surface", processes),
-    get_process("Tl208_foil_bulk", processes),
-    get_process("K40_foil_bulk", processes),
-    get_process("Pa234m_foil_bulk", processes),
+    get_process("bb_foil_bulk", processes) |> first,
+    get_process("Bi214_foil_bulk", processes) |> first,
+    get_process("Bi214_wire_surface", processes) |> first,
+    get_process("Tl208_foil_bulk", processes) |> first,
+    get_process("K40_foil_bulk", processes) |> first,
+    get_process("Pa234m_foil_bulk", processes) |> first,
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -69,7 +69,7 @@ set_nTotalSim!( background[6], 1e8 )
 println("loaded files, signal = $(signal.isotopeName)")
 
 
-prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x; approximate="formula")
+prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x; approximate="table")
 
 
 function make_stepRange(process)
@@ -95,10 +95,10 @@ options = Options(;
     f_tol = 1e-1,
     f_tol_rel = 1e-1,
     f_tol_abs = 1e-1,
-    time_limit = Inf,
-    parallel_evaluation = false,
+    time_limit = 60*60*2.0,
+    parallel_evaluation = true,
     verbose = true,
-    iterations = 20,
+    iterations = 10,
     store_convergence = true
 )
 
@@ -112,15 +112,33 @@ function f_parallel(X)
     fitness
 end
 
-# result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
-result = Metaheuristics.optimize(prob, bounds, SA(;options))
+result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
+# result = Metaheuristics.optimize(prob, bounds, SA(;options))
 @show minimum(result)
 res=  minimizer(result)
 
+function get_best_ROI_ND(res, process)
+    best = best_candidate(res)
+    best_roi = NamedTuple(
+        k => (round(best[i]), round(best[i+1])) 
+        for (i,k) in zip(1:2:length(process.bins)*2-1, keys(process.bins))
+    )
+    return best_roi
+end
+
+function get_best_ROI_ND(res::Vector{<:Real}, process)
+    best = res
+    best_roi = NamedTuple(
+        k => (round(best[i]), round(best[i+1])) 
+        for (i,k) in zip(1:2:length(process.bins)*2-1, keys(process.bins))
+    )
+    return best_roi
+end
 
 best = get_best_ROI_ND(res, signal)
 get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
 
+rsync -r mpetro@cca.in2p3.fr:~/sps_mpetro/Projects/PhD/SNSensitivityEstimate/data/sims/fal5_8perc_Boff_CAT_evis_bcu_J39/* ./data/sims/fal5_8perc_Boff_CAT_evis_bcu_J39/
 
-f_calls, best_f_value = convergence(result)
-plot(f_calls, best_f_value,)
+# f_calls, best_f_value = convergence(result)
+# plot(f_calls, best_f_value,)
