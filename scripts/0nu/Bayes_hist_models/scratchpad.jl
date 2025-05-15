@@ -73,7 +73,7 @@ prior = NamedTupleDist(
 )   
 
 t = Float64[]
-while(time() - t0 < 3600*36) # do this for n hours
+# while(time() - t0 < 3600*36) # do this for n hours
 for _ in 1:1 # do this for n hours
     GC.gc()
     t1 = time()
