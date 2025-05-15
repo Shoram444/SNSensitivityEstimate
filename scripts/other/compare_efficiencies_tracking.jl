@@ -38,20 +38,19 @@ data_processes = load_data_processes(
     fwhm = 0.0
 )
 
-# signal = get_process("bb0nuM2_foil_bulk", data_processes) |> first
-signal = get_process("RH037_foil_bulk", data_processes) |> first
+signal = get_process("bb0nu_foil_bulk", data_processes) |> first
+# signal = get_process("RH037_foil_bulk", data_processes) |> first
 
 # declare background processes
 background = [
     get_process("bb_foil_bulk", data_processes) |> first,
     get_process("Bi214_foil_bulk", data_processes) |> first,
-    get_process("Bi214_field_wires", data_processes) |> first,
+    get_process("Bi214_wire_surface", data_processes) |> first,
     get_process("Tl208_foil_bulk", data_processes) |> first,
     get_process("K40_foil_bulk", data_processes) |> first,
     get_process("Pa234m_foil_bulk", data_processes) |> first,
 ]
 
-get_process("Bi214_field_wires", data_processes)
 
 set_signal!(background[1], false)
 
@@ -67,11 +66,11 @@ println("Processes initialized.")
 
 α = 1.64485362695147
 
-t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
+t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
 best_t12ESum = get_max_bin(t12MapESum)
 expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 effbb = lookup(signal, best_t12ESum)
-ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α; approximate = "table"), sigdigits=3)
+ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α; approximate = "formula"), sigdigits=3)
 
 bkg_hists = get_bkg_counts_1D.(background)
 sig_hist = get_bkg_counts_1D(signal)
