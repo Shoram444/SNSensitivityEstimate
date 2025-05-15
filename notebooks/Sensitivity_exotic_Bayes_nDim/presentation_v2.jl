@@ -54,7 +54,7 @@ md"""
 # Outline
 
 ### 1. Background model
-### 2.  Methodolofy
+### 2.  Methodology
    1. #### Feldman Cousins sensitivity
    2. #### Bayesian sensitivity
 ### 3. Results
