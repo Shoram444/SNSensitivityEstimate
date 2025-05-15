@@ -2,7 +2,7 @@
 
 # SLURM options:
 #SBATCH --partition=htc
-#SBATCH --job=bayes_M2
+#SBATCH --job=RH_bayes
 #SBATCH --licenses=sps
 #SBATCH --array=0-19
 #SBATCH --time=0-40
