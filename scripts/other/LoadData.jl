@@ -6,7 +6,7 @@ push!(LOAD_PATH, srcdir())
 using SensitivityModule, StatsPlots, UnROOT, DataFramesMeta, LaTeXStrings, Revise, StatsBase, FHist
 Revise.track(SensitivityModule)
 
-include(scriptsdir("Params.jl"))
+include(srcdir("params/Params.jl"))
 
 ffrf(file) = fill_from_root_file(file, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])
 

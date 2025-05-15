@@ -619,7 +619,7 @@ md"""
 |$$0\nu\beta\beta$$|$$4.14 \times 10^{24} y$$|$$4.22 \times 10^{24}y$$|$$4.66 \times 10^{24} y$$|
 |$$0\nu\beta\beta\chi^0$$|$$1.45 \times 10^{23} y$$| $$1.48 \times 10^{23} y$$ | $$2.38 \times 10^{23} y$$ |
 |$$0\nu\beta\beta\chi^0\chi^0$$|$$2.31 \times 10^{22} y$$|$$2.31 \times 10^{22} y$$  |$$1.43 \times 10^{22} y$$|
-|$$\nu_L\nu_R\beta\beta$$| $$1.30 \times 10^{22} y^*$$| | $$1.09 \times 10^{21} y^{**}$$|
+|$$\nu_L\nu_R\beta\beta$$| $$1.30 \times 10^{22} y^*$$| $$1.30 \times 10^{22} y^*$$ | $$1.09 \times 10^{21} y^{**}$$|
 
 
  \* for single-electron energy 

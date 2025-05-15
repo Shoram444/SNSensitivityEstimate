@@ -29,7 +29,7 @@ function load_files(dir::String)
 end
 
 function load_data_processes(dir::String, mode::String; fwhm = 0.08)
-    include(scriptsdir("Params.jl"))
+    include(srcdir("params/Params.jl"))
     full_dir = datadir("sims", dir)
     processes = DataProcess[]
 
@@ -90,7 +90,7 @@ end
 
 
 function load_hist_processes(dir::String, mode::String)
-    include(scriptsdir("Params.jl"))
+    include(srcdir("params/Params.jl"))
     full_dir = datadir("sims", dir)
     processes = HistProcess[]
 
@@ -154,7 +154,7 @@ end
 
 
 function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{String})
-    include(scriptsdir("Params.jl"))
+    include(srcdir("params/Params.jl"))
     full_dir = datadir("mva", dir)
     processes = DataProcessND[]
 
@@ -195,7 +195,7 @@ function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{Str
 end
 
 function load_3D_processes(dir::String, binsAngle, binsESingle, binsESum; fwhm = 0.08)
-    include(scriptsdir("Params.jl"))
+    include(srcdir("params/Params.jl"))
     full_dir = datadir("sims", dir)
     processes = DataProcess3D[]
 
