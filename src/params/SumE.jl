@@ -57,6 +57,17 @@ sumEBi214_wire_surface_Params = Dict(
     :amount => SNparams["gasVolume"]
 )
 
+sumEBi214_field_wires_Params = Dict(
+    :isotopeName => "Bi214_field_wires", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:Bi214_field_wires], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:Bi214_field_wires],
+    :bins => binningDict[:SumE],
+    :vertexPosition => "radon",
+    :amount => SNparams["gasVolume"]
+)
+
 sumEBi214_hall_surface_Params = Dict(
     :isotopeName => "Bi214_hall_surface", 
     :signal => :false, 
@@ -295,6 +306,7 @@ sumEParams = Dict(
     :Bi214_PMT_glass_bulk => sumEBi214_PMT_glass_bulk_Params,
     :Bi214_wire_bulk => sumEBi214_wire_bulk_Params,
     :Bi214_wire_surface => sumEBi214_wire_surface_Params,
+    :Bi214_field_wires => sumEBi214_field_wires_Params,
     :Bi210_foil_bulk => sumEBi210_foil_bulk_Params,
     :Bi210_foil_surface => sumEBi210_foil_surface_Params,
     :Bi210_wire_bulk => sumEBi210_wire_bulk_Params,

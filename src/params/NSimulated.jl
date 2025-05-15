@@ -5,6 +5,7 @@ SimulationParams = Dict(
     :Bi214_PMT_glass_bulk => 1e8,
     :Bi214_wire_bulk => 1e8,
     :Bi214_wire_surface => 1e8,
+    :Bi214_field_wires => 1e8,
     :Bi214_hall_surface => 1e8, 
     :Bi210_foil_bulk => 1e8 ,       
     :Bi210_foil_surface => 1e8 ,    

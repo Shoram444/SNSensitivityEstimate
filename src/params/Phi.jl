@@ -55,6 +55,17 @@ phiBi214_wire_surface_Params = Dict(
     :amount => SNparams["gasVolume"]
 )
 
+phiBi214_field_wires_Params = Dict(
+    :isotopeName => "Bi214_field_wires", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:Bi214_field_wires], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:Bi214_field_wires],
+    :bins => binningDict[:Phi],
+    :vertexPosition => "radon",
+    :amount => SNparams["gasVolume"]
+)
+
 phiBi214_hall_surface_Params = Dict(
     :isotopeName => "Bi214_hall_surface", 
     :signal => :false, 
@@ -295,6 +306,7 @@ phiParams = Dict(
     :Bi214_PMT_glass_bulk => phiBi214_PMT_glass_bulk_Params,
     :Bi214_wire_bulk => phiBi214_wire_bulk_Params,
     :Bi214_wire_surface => phiBi214_wire_surface_Params,
+    :Bi214_field_wires => phiBi214_field_wires_Params,
     :Bi210_foil_bulk => phiBi210_foil_bulk_Params,
     :Bi210_foil_surface => phiBi210_foil_surface_Params,
     :Bi210_wire_bulk => phiBi210_wire_bulk_Params,

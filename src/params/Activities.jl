@@ -5,6 +5,7 @@ BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-
     :Bi214_foil_bulk => 10 / 1_000_000,               # [μBq/kg] converted to [Bq/kg] from SN measurements
     :Bi214_foil_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi214_wire_surface => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
+    :Bi214_field_wires => 150 / 1_000_000 ,                  # [μBq/m3] converted to [Bq/m3] from SN measurements; gas volume 15m3 
     :Bi214_wire_bulk => 0.00001 ,                       # MOCK VALUE
     :Bi214_PMT_glass_bulk => 140 / 286,                 # [Bq/kg] originally the value is given as 417Bq, I just divide by PMT weight here
     :Tl208_foil_bulk => 2 / 1_000_000,                # [μBq/kg] converted to [Bq/kg] from SN measurements
