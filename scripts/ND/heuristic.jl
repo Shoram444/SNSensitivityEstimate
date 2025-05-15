@@ -5,7 +5,6 @@ println("loading pkgs")
 
 push!(LOAD_PATH, srcdir())
 using SensitivityModule, CairoMakie 
-using SensitivityModule, CairoMakie 
 
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
@@ -120,8 +119,6 @@ end
 
 result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
 # result = Metaheuristics.optimize(prob, bounds, SA(;options))
-result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
-# result = Metaheuristics.optimize(prob, bounds, SA(;options))
 @show minimum(result)
 @show res=  minimizer(result)
 
@@ -146,7 +143,7 @@ end
 best = get_best_ROI_ND(res, signal)
 get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
 
-rsync -r mpetro@cca.in2p3.fr:~/sps_mpetro/Projects/PhD/SNSensitivityEstimate/data/sims/fal5_8perc_Boff_CAT_evis_bcu_J39/* ./data/sims/fal5_8perc_Boff_CAT_evis_bcu_J39/
 
 # f_calls, best_f_value = convergence(result)
 # plot(f_calls, best_f_value,)
+

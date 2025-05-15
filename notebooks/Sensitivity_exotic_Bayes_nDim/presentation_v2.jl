@@ -28,11 +28,11 @@ begin
 	using SensitivityModule
 end
 
-# ╔═╡ c38eeb3e-11c2-40d0-98cb-89711b799441
-using CairoMakie, UnROOT, DataFramesMeta, LaTeXStrings, FHist, PrettyTables, StatsBase, ColorSchemes, PlutoUI, CSV
-
 # ╔═╡ 6d3bd21c-a856-407e-b3e7-d98d8cad0c9b
 using Distributions
+
+# ╔═╡ c38eeb3e-11c2-40d0-98cb-89711b799441
+using CairoMakie, UnROOT, DataFramesMeta, LaTeXStrings, FHist, PrettyTables, StatsBase, ColorSchemes, PlutoUI, CSV
 
 # ╔═╡ 7d6e5825-c187-4d55-b877-1e1193190ff2
 include(scriptsdir("Params.jl"))
@@ -59,9 +59,10 @@ md"""
    2. #### Bayesian sensitivity
 ### 3. Results
    1. #### $$0\nu\beta\beta$$
-   2. #### $$0\nu\beta\beta\chi^0$$ & $$0\nu\beta\beta\chi^0\chi^0$$
-   3. #### $$\nu_R\nu_L\beta\beta$$
-   4. #### $$2\nu\beta\beta$$ with $$\xi_{31}, \xi_{51}$$
+   2. #### $$0\nu\beta\beta\chi^0$$ 
+   3. #### $$0\nu\beta\beta\chi^0\chi^0$$
+   4. #### $$\nu_R\nu_L\beta\beta$$
+   
 """
 
 # ╔═╡ 65b97922-2625-43a4-bf9f-622cce900bcf
@@ -81,7 +82,7 @@ md"""
 md"""
 # Simulation setup:
 1. Falaise version 5.1.5 
-2. Reconstruction pipeline: `MockCalibration -> TKrec -> ChargedParticleTracker -> GammaClusterizer -> SNCuts -> MiModule`
+2. Reconstruction pipeline: `MockCalibration -> ` **Cimrman** `-> ChargedParticleTracker -> GammaClusterizer -> SNCuts -> MiModule`
 3. Magnetic field **off**
 4. 8% FWHM energy resolution
 5. Foil geometry: `RealisticFlat`
@@ -615,10 +616,10 @@ md"""
 
 |signal|1D|ND|Bayes|
 |:----:|:-:|:-:|:-:|
-|$$0\nu\beta\beta$$|$$4.14 \times 10^{24} y$$|$$4.22 \times 10^{24}y$$|$$4.66 \times 10^24 y$$|
-|$$0\nu\beta\beta\chi^0$$|$$1.45 \times 10^{23} y$$| $$1.48 \times 10^{23} y$$ | |$$ 2.38 \times 10^{23} y$$|
-|$$0\nu\beta\beta\chi^0\chi^0$$|$$2.31 \times 10^{22} y$$|  |$$1.43 \times 10^{22} y$$|
-|$$\nu_L\nu_R\beta\beta$$| $$1.83 \times 10^{22} y^*$$| | $$1.09 \times 10^{21} y^{**}$$|
+|$$0\nu\beta\beta$$|$$4.14 \times 10^{24} y$$|$$4.22 \times 10^{24}y$$|$$4.66 \times 10^{24} y$$|
+|$$0\nu\beta\beta\chi^0$$|$$1.45 \times 10^{23} y$$| $$1.48 \times 10^{23} y$$ | $$2.38 \times 10^{23} y$$ |
+|$$0\nu\beta\beta\chi^0\chi^0$$|$$2.31 \times 10^{22} y$$|$$2.31 \times 10^{22} y$$  |$$1.43 \times 10^{22} y$$|
+|$$\nu_L\nu_R\beta\beta$$| $$1.30 \times 10^{22} y^*$$| | $$1.09 \times 10^{21} y^{**}$$|
 
 
  \* for single-electron energy 
@@ -651,11 +652,6 @@ Based on research of angular distribution for the electrons, depending on which 
 
 # ╔═╡ Cell order:
 # ╟─33db2852-a205-4a2c-8744-037f5b7a6a80
-# ╟─96f0e67c-16af-11f0-08a5-ffefdd2c8429
-# ╟─39a6343a-b95c-4ea4-98e2-83eab6d6c602
-# ╟─c38eeb3e-11c2-40d0-98cb-89711b799441
-# ╟─992a6366-86e0-4d00-ab9c-ac29190ff693
-# ╟─7d6e5825-c187-4d55-b877-1e1193190ff2
 # ╟─107241e3-a8b7-43af-b26f-b2b205f7e294
 # ╟─838099af-cd31-480e-8952-9eda9df9e10a
 # ╟─65b97922-2625-43a4-bf9f-622cce900bcf
@@ -694,6 +690,11 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╟─559c3769-c956-47e7-b5ea-07b866333104
 # ╟─b2a28a93-2524-43e3-a9fa-6ef30ac213af
 # ╟─8e5fa765-c8a9-4419-9e4f-c58a213be563
-# ╟─7da00dac-d0a8-4b77-973e-9e46e5fa964d
+# ╠═7da00dac-d0a8-4b77-973e-9e46e5fa964d
 # ╟─8fc9a87c-ec29-4028-a20f-9c8cdec4c866
 # ╟─9e7dbfe3-a38b-45ef-b6c6-74ca9c3392df
+# ╟─96f0e67c-16af-11f0-08a5-ffefdd2c8429
+# ╟─39a6343a-b95c-4ea4-98e2-83eab6d6c602
+# ╟─c38eeb3e-11c2-40d0-98cb-89711b799441
+# ╟─992a6366-86e0-4d00-ab9c-ac29190ff693
+# ╟─7d6e5825-c187-4d55-b877-1e1193190ff2

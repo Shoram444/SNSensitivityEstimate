@@ -8,10 +8,10 @@ using Random, LinearAlgebra, Statistics, Distributions, Plots, BAT, BinnedModels
 global t0 = time()
 
 analysisDict = Dict(
-    :signal => "bb0nu_foil_bulk",
+    :signal => "RH037_foil_bulk",
     :roi => (0, 3500),
     :bw => 100,
-    :mode => "sumE",
+    :mode => "singleE",
     :prior => 1e-4 # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
 )
 
@@ -39,18 +39,18 @@ background = [
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
-set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( signal, 2*1e8 )
 # set_nTotalSim!( signal, 1e8 )
 
 set_signal!(background[1], false)
 
 # set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1],0.99e8)
-set_nTotalSim!( background[2],1e8)
-set_nTotalSim!( background[3],1e8  )
-set_nTotalSim!( background[4],1e8)
-set_nTotalSim!( background[5],1e8  )
-set_nTotalSim!( background[6],1e8  )
+set_nTotalSim!( background[1], 2*0.99e8)
+set_nTotalSim!( background[2], 2*1e8)
+set_nTotalSim!( background[3], 2*1e8  )
+set_nTotalSim!( background[4], 2*1e8)
+set_nTotalSim!( background[5], 2*1e8  )
+set_nTotalSim!( background[6], 2*1e8  )
 
 @info "process initialized"
 println("Processes initialized.")

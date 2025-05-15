@@ -127,6 +127,37 @@ end
 
 α= 1.64485362695147
 
+function get_s_to_b1(
+    SNparams::Dict, 
+    α::Float64, 
+    processes::Vector{<:Partition}, 
+    roi::Vector{Float64};
+    approximate="table"
+)
+    for i in 1:2:length(roi)-1
+        if roi[i] >= roi[i+1]
+            return -1e20  # penalty for invalid ROI
+        end
+    end
+
+    signal_id = findfirst(p -> p.signal, processes)
+    if signal_id === nothing
+        @error "No signal process found!"
+        return -1e20 # penalty for no signal process
+    end
+                    
+    
+    ε = get_roi_signal_efficiency(processes, roi)
+    ε == 0.0 && return -1e20 # If efficiency is zero, penalize optimization  
+
+    b = get_roi_bkg_counts(processes, roi)
+    @unpack W, foilMass, Nₐ, tYear, a = SNparams
+    S_b = get_FC(b, α; approximate=approximate)
+
+    return Measurements.value(ε / S_b)
+end
+
+
 prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x; approximate="formula")
 
 
