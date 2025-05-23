@@ -35,7 +35,7 @@ using Distributions
 using CairoMakie, UnROOT, DataFramesMeta, LaTeXStrings, FHist, PrettyTables, StatsBase, ColorSchemes, PlutoUI, CSV
 
 # ╔═╡ 7d6e5825-c187-4d55-b877-1e1193190ff2
-include(scriptsdir("Params.jl"))
+include(srcdir("params/Params.jl"))
 
 # ╔═╡ 33db2852-a205-4a2c-8744-037f5b7a6a80
 html"<button onclick='present()'>present</button>"
@@ -126,7 +126,7 @@ Emin = $(@bind Emin PlutoUI.Slider(300:100:3500, default=0; show_value=true)) ke
 
 Emax = $(@bind Emax PlutoUI.Slider(0:100:3500, default=3500; show_value=:true)) keV
 
-Thalf = $(@bind Thalf PlutoUI.Slider((1e3:-200:1)*1e24, default=1e27; show_value=:true)) yr
+Thalf = $(@bind Thalf PlutoUI.Slider((1:10:1000)*1e22, default=1e24; show_value=:true)) yr
 """
 
 # ╔═╡ 1f4ae42b-61be-44ed-bb82-60e7cfb582ba
@@ -188,7 +188,7 @@ begin
             hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
             
         end
-        lines!(ax, midpoints(binedges(sig_hist)), bincounts(sig_hist) .* (Thalf/1e26), label = signal.isotopeName, color = :black, linestyle = :dash, linewidth = 2.5)
+        lines!(ax, midpoints(binedges(sig_hist)), bincounts(sig_hist) .* (1e24/Thalf), label = signal.isotopeName, color = :black, linestyle = :dash, linewidth = 2.5)
 
         ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
         ax.xticks = 0:500:3500
@@ -267,6 +267,41 @@ T^{1/2}(ROI) = T^{1/2}(E_{sum}^l, E_{sum}^u) = const.\frac{\varepsilon(E_{sum}^l
 
 
 """
+
+# ╔═╡ 6edb8cab-331c-403c-8c93-b8af84f38989
+md"""
+# Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
+
+Boundaries of ROI affect signal + background differently!
+"""
+
+# ╔═╡ da4b1d6e-3447-4451-b5b8-fbff4ebfe3ee
+let
+	f = Figure()
+	a1 = Axis(f[1,1])
+	hsig = Hist1D(signal.dataVector; binedges = signal.bins) |> normalize
+	h1 = stairs!(a1, hsig, label = "signal")
+	xband_min = 2700
+	xband_max = 3100
+	ymin = 0
+	ymax = maximum(bincounts(hsig))
+
+
+	hbkg = Hist1D(background[1].dataVector; binedges = background[1].bins) |> normalize
+	h2 = stairs!(a1, hbkg, label = "background")
+
+	poly!(
+		a1,
+		[xband_min, xband_max, xband_max, xband_min],
+    	[ymin, ymin, ymax, ymax],
+		color = (:blue, 0.3),
+		label = "ROI"
+	)
+	axislegend(a1, position = :lt)
+	
+	f
+	
+end
 
 # ╔═╡ c519cbff-afb1-4ac7-9bfe-1e07cf78979b
 begin
@@ -433,12 +468,18 @@ Our likelihood:
 		\mathcal{L}(data|\Theta_{sig}, \Theta_{bkg}) = \prod_i^{N^{obs}}\left( \Theta_{bkg}\lambda_{bkg} e^{-\lambda_{bkg} E_i} + \Theta_{sig}\frac{1}{\sigma\sqrt{2\pi}}e^{-(\frac{E_i-\mu_{sig}}{\sigma})^2} \right)
 ```
 
-Our priors (uninformative):
-
-$$\Theta_{sig} \sim Uniform(0, 1)$$ 
-$$\Theta_{bkg} \sim Uniform(0, 1)$$ 
+Posterior for signal is:
+```math
+	pdf(\Theta_{sig}|data) \propto \mathcal{L}(data|\Theta_{sig}, \Theta_{bkg}) \cdot pdf(\Theta_{sig})
+```
 
 """
+
+# ╔═╡ 1910efa8-1530-4139-8287-d9d05c3e69ae
+md"""
+ n = $(@bind n PlutoUI.Slider(5:100:3000, default = 100, show_value = true))
+"""
+
 
 # ╔═╡ 518693c6-694b-45eb-a08b-c3a449a0d0bf
 md"""
@@ -447,7 +488,7 @@ md"""
 
 # ╔═╡ ea51b339-1d49-4f04-a8fe-744f9e855026
 md"""
- $$\Theta_{sig}$$ = $(@bind n_sig PlutoUI.Slider(0.0:0.1:1.0, default = 0.1, show_value = true))
+ $$\Theta_{sig}$$ = $(@bind n_sig PlutoUI.Slider(0.001:0.1:1.0, default = 0.1, show_value = true))
 """
 
 # ╔═╡ ed6b7268-412d-45a9-895c-7248b0686efe
@@ -457,17 +498,17 @@ md"""
 
 # ╔═╡ c57ec8c2-68d1-47b9-b7e7-0a415ce85031
 md"""
- $$\Theta_{bkg}$$ = 1 - $$\Theta_{sig}$$ = $(n_bkg = 1.0-n_sig)
+ $$\Theta_{bkg}$$ = 1 - $$\Theta_{sig}$$ = $(n_bkg = 1.0-round(n_sig, sigdigits= 1))
 """
 
 # ╔═╡ 5b254b0e-6b4b-46be-bed9-8df0efa3de44
 begin
-		n = 1000
+	
 	signal_data = rand(Normal(μ_sig, 1.0), Int(round(n*n_sig)))
 	background_data = rand(Exponential(lambda_bkg), Int(round(n*n_bkg)))
 
-	h1_sig = Hist1D(signal_data; binedges = 0:0.1:10.0)
-	h1_bkg = Hist1D(background_data; binedges = 0:0.1:10.0)
+	h1_sig = Hist1D(signal_data; binedges = 0:0.2:10.0)
+	h1_bkg = Hist1D(background_data; binedges = 0:0.2:10.0)
 
 	true_ps = n*n_sig # true proportion of signal
 	true_pb = n*n_bkg
@@ -479,36 +520,53 @@ begin
 	f_ex = Figure()
 	ax_ex = Axis(f_ex[1,1], xlabel = "arbitrary energy", ylabel = "counts")
 	xs = binedges(h1_sig) |> midpoints |> collect
-	p = lines!(ax_ex, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.1, label = "signal", color = :blue, linewidth = 4)
-	lines!(ax_ex,  xs, x-> pdf(Exponential(lambda_bkg), x) .* n .* 0.1, label = "background", color= :red, linewidth = 4)
+	p = lines!(ax_ex, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.2 , label = "signal", color = :blue, linewidth = 4)
+	lines!(ax_ex,  xs, x-> pdf(Exponential(lambda_bkg), x) .* n .* 0.2, label = "background", color= :red, linewidth = 4)
 	stairs!(ax_ex, h1_sig + h1_bkg, label = "data", linewidth = 4)
 	axislegend(ax_ex)
 	f_ex
 end
 
+# ╔═╡ e5664e79-6d50-43dc-963a-d2207c48b9a8
+md"""
+p1 = $(@bind prior_par1 PlutoUI.Slider(1:1:10.0, default = 1, show_value = true))
+"""
+
+# ╔═╡ cc0d49b8-3d6b-4a2c-8300-0aea834df028
+md"""
+p2 = $(@bind prior_par2 PlutoUI.Slider(1:1:5.0, default = 1, show_value = true))
+"""
+
 # ╔═╡ 25f1adc4-a6f4-4a10-9fe1-b0d1817f0ece
 begin
 	# --- Grid for p_s ---
-	ps_grid = range(0.0, 1.0; length=200)
+	ps_grid = range(0.0, 1.0; length=500)
 	log_posterior = zeros(length(ps_grid))
-	
+
+	prior_signal = Beta(prior_par1,prior_par2)
 	# --- Evaluate likelihood over grid ---
 	for (i, ps) in enumerate(ps_grid)
 	    pb = 1 - ps
 	    log_likelihood = sum(log.(ps * pdf.(signal_dist, data) .+ pb * pdf.(background_dist, data)))
-	    log_posterior[i] = log_likelihood  # Flat prior assumed
+		log_prior = logpdf(prior_signal, ps)
+	    log_posterior[i] = log_likelihood + log_prior # Flat prior assumed
 	end
 	
 	# --- Normalize to get posterior ---
 	posterior = exp.(log_posterior .- maximum(log_posterior))  # for numerical stability
 	posterior ./= sum(posterior)
+
+	fit_f(x, p) = p[1]*pdf(Normal(μ_sig, 1.0), x) + p[2]*pdf(Exponential(lambda_bkg), x)
+
+	p_best = [argmax(posterior)/length(posterior), 1-argmax(posterior)/length(posterior)]
 	
 	let 
-	f = Figure(size = (450, 600))
-	ax = Axis(f[1,1], xlabel = "arbitrary energy", ylabel = "counts")
+	f = Figure(size = (600, 600))
+	ax = Axis(f[1,1:2], xlabel = "arbitrary energy", ylabel = "counts")
 	xs = binedges(h1_sig) |> midpoints |> collect
-	p = lines!(ax, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.1, label = "signal", color = :blue, linewidth = 4)
-	lines!(ax,  xs, x-> pdf(Exponential(lambda_bkg), x) .* n .* 0.1, label = "background", color= :red, linewidth = 4)
+	p = lines!(ax, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.2, label = "signal", color = :blue, linewidth = 4)
+	lines!(ax,  xs, x-> pdf(Exponential(lambda_bkg), x) .* n .* 0.2, label = "background", color= :red, linewidth = 4)
+	lines!(ax,  xs, x-> fit_f(x, p_best) .* n .* 0.2, label = "fit", color= :green, linewidth = 4)
 	stairs!(ax, h1_sig + h1_bkg, label = "data", linewidth = 4)
 	axislegend(ax)
 
@@ -516,7 +574,10 @@ begin
 	p = lines!(a, ps_grid, posterior, label = L"\Theta_{sig}")
 	lines!(a, 1.0 .- ps_grid, posterior, label = L"\Theta_{bkg}")
 	axislegend(a)
-	
+
+	a_prior = Axis(f[2,2], title = "prior signal")
+	lines!(a_prior, ps_grid, x-> pdf(prior_signal, x))
+		
 	f
 	end
 end
@@ -622,7 +683,7 @@ md"""
 |$$\nu_L\nu_R\beta\beta$$| $$1.30 \times 10^{22} y^*$$| $$1.30 \times 10^{22} y^*$$ | $$1.09 \times 10^{21} y^{**}$$|
 
 
- \* for single-electron energy 
+ \* for angular distribution
 
  \*\* for angular distribution, need to investigate why this is so low.  
 """
@@ -650,6 +711,9 @@ Based on research of angular distribution for the electrons, depending on which 
 ![same_side](https://github.com/Shoram444/SNSensitivityEstimate/blob/main/notebooks/Sensitivity_exotic_Bayes_nDim/same_side_opposite.png?raw=true)
 """
 
+# ╔═╡ 8789bf21-3712-404c-b047-b0304d7917da
+
+
 # ╔═╡ Cell order:
 # ╟─33db2852-a205-4a2c-8744-037f5b7a6a80
 # ╟─107241e3-a8b7-43af-b26f-b2b205f7e294
@@ -667,6 +731,8 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╟─eb22cfcd-a08e-4e57-9f02-113612804fc1
 # ╟─aae87c04-2352-4db5-9018-f8d0fa75e4b9
 # ╟─c8539419-4919-48a9-ad41-0dcba22318e8
+# ╟─6edb8cab-331c-403c-8c93-b8af84f38989
+# ╠═da4b1d6e-3447-4451-b5b8-fbff4ebfe3ee
 # ╟─c519cbff-afb1-4ac7-9bfe-1e07cf78979b
 # ╟─d7354883-f530-4bfe-955d-ca37263d0c7b
 # ╟─87c50992-3347-47e8-8cb4-3f0dcee41ebf
@@ -677,11 +743,14 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╟─e6bbd64e-a2eb-462f-837a-079ef07f3c43
 # ╟─e768fb37-96d1-4181-9e36-1aa5af23db1f
 # ╟─8c041449-ec1c-4bdf-ac7b-0ef59ba777a4
+# ╟─1910efa8-1530-4139-8287-d9d05c3e69ae
 # ╟─5b254b0e-6b4b-46be-bed9-8df0efa3de44
 # ╟─518693c6-694b-45eb-a08b-c3a449a0d0bf
 # ╟─ea51b339-1d49-4f04-a8fe-744f9e855026
 # ╟─ed6b7268-412d-45a9-895c-7248b0686efe
 # ╟─c57ec8c2-68d1-47b9-b7e7-0a415ce85031
+# ╟─e5664e79-6d50-43dc-963a-d2207c48b9a8
+# ╟─cc0d49b8-3d6b-4a2c-8300-0aea834df028
 # ╟─25f1adc4-a6f4-4a10-9fe1-b0d1817f0ece
 # ╟─085a4b0a-1fdc-44d8-a8ce-7158ac54256f
 # ╟─187dfcf3-48d8-4ee9-8d33-8b3bac063b37
@@ -690,11 +759,12 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╟─559c3769-c956-47e7-b5ea-07b866333104
 # ╟─b2a28a93-2524-43e3-a9fa-6ef30ac213af
 # ╟─8e5fa765-c8a9-4419-9e4f-c58a213be563
-# ╠═7da00dac-d0a8-4b77-973e-9e46e5fa964d
+# ╟─7da00dac-d0a8-4b77-973e-9e46e5fa964d
 # ╟─8fc9a87c-ec29-4028-a20f-9c8cdec4c866
 # ╟─9e7dbfe3-a38b-45ef-b6c6-74ca9c3392df
 # ╟─96f0e67c-16af-11f0-08a5-ffefdd2c8429
 # ╟─39a6343a-b95c-4ea4-98e2-83eab6d6c602
 # ╟─c38eeb3e-11c2-40d0-98cb-89711b799441
 # ╟─992a6366-86e0-4d00-ab9c-ac29190ff693
-# ╟─7d6e5825-c187-4d55-b877-1e1193190ff2
+# ╠═7d6e5825-c187-4d55-b877-1e1193190ff2
+# ╠═8789bf21-3712-404c-b047-b0304d7917da

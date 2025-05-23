@@ -17,7 +17,7 @@ include(srcdir("params/Params.jl"))
 analysisDict = Dict(
     :Bfield => "Boff", # magnetic field on/off
     :Eres => "8perc", # FWHM of the OMs (sorry for the naming...)
-    :mode => "sumE", 
+    :mode => "singleE", 
     :trackAlgo => "TKrec",
     :signal => "bb0nu_foil_bulk", # signal process
     :neutron_config => "no_neutron"
@@ -38,8 +38,8 @@ data_processes = load_data_processes(
     fwhm = 0.0
 )
 
-signal = get_process("bb0nu_foil_bulk", data_processes) |> first
-# signal = get_process("RH037_foil_bulk", data_processes) |> first
+# signal = get_process("bb0nu_foil_bulk", data_processes) |> first
+signal = get_process("RH037_foil_bulk", data_processes) |> first
 
 # declare background processes
 background = [
@@ -54,23 +54,23 @@ background = [
 
 set_signal!(background[1], false)
 
-set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 1e8 )
-set_nTotalSim!( background[2], 1e8 )
-set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 1e8 )
-set_nTotalSim!( background[5], 1e8 )
-set_nTotalSim!( background[6], 1e8 )
+set_nTotalSim!( signal, 2*1e8 )
+set_nTotalSim!( background[1], 2*1e8 )
+set_nTotalSim!( background[2], 2*1e8 )
+set_nTotalSim!( background[3], 2*1e8 )
+set_nTotalSim!( background[4], 2*1e8 )
+set_nTotalSim!( background[5], 2*1e8 )
+set_nTotalSim!( background[6], 2*1e8 )
 
 println("Processes initialized.")
 
 α = 1.64485362695147
 
-t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="formula")
+t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
 best_t12ESum = get_max_bin(t12MapESum)
 expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 effbb = lookup(signal, best_t12ESum)
-ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α; approximate = "formula"), sigdigits=3)
+ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α; approximate = "table"), sigdigits=3)
 
 bkg_hists = get_bkg_counts_1D.(background)
 sig_hist = get_bkg_counts_1D(signal)

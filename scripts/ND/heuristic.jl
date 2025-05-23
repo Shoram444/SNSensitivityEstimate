@@ -11,7 +11,7 @@ using SensitivityModule, CairoMakie
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
 # dictionaries into this script, which uses their values. 
 println("loaded pkgs")
-include(scriptsdir("Params.jl"))
+include(srcdir("params/Params.jl"))
 
 vars = [
     "phi", 
@@ -49,12 +49,6 @@ background = [
     get_process("Tl208_foil_bulk", processes) |> first,
     get_process("K40_foil_bulk", processes) |> first,
     get_process("Pa234m_foil_bulk", processes) |> first,
-    get_process("bb_foil_bulk", processes) |> first,
-    get_process("Bi214_foil_bulk", processes) |> first,
-    get_process("Bi214_wire_surface", processes) |> first,
-    get_process("Tl208_foil_bulk", processes) |> first,
-    get_process("K40_foil_bulk", processes) |> first,
-    get_process("Pa234m_foil_bulk", processes) |> first,
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -63,7 +57,7 @@ set_signal!(background[1], false)
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
 set_nTotalSim!( signal, 1e8 )
 # set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 0.99e8 )
+set_nTotalSim!( background[1], 1e8 )
 set_nTotalSim!( background[2], 1e8 )
 set_nTotalSim!( background[3], 1e8 )
 set_nTotalSim!( background[4], 1e8 )
@@ -142,6 +136,8 @@ end
 
 best = get_best_ROI_ND(res, signal)
 get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
+
+best2 = 
 
 
 # f_calls, best_f_value = convergence(result)
