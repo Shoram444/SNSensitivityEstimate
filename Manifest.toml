@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "6cdc81fa0031c678e615d5ccfbce3cc945d98791"
+project_hash = "041ba48684efa238f577d1c2ebf9a871666e1e92"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "e2478490447631aedba0823d4d7a80b2cc8cdb32"
@@ -2538,6 +2538,12 @@ deps = ["AbstractTrees", "Base64", "Dates", "Gumbo", "LazyArtifacts", "Pkg", "Pl
 git-tree-sha1 = "923dcc01d0021e8c4c0b23cbfae58e6409133f80"
 uuid = "359b1769-a58e-495b-9770-312e911026ad"
 version = "7.0.4"
+
+[[deps.PlutoStyles]]
+deps = ["Pluto"]
+git-tree-sha1 = "d56c39facd567c61485eb995971dca4a28d02a48"
+uuid = "16e07271-a41c-4e3e-b73a-b807cf2ea0eb"
+version = "0.1.13"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
