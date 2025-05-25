@@ -5,13 +5,14 @@ println("loading pkgs")
 
 push!(LOAD_PATH, srcdir())
 using SensitivityModule, CairoMakie 
-
+using Revise
+Revise.track(SensitivityModule)
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
 # dictionaries into this script, which uses their values. 
 println("loaded pkgs")
-include(scriptsdir("Params.jl"))
+include(srcdir("params/Params.jl"))
 
 vars = [
     "phi", 
@@ -37,18 +38,12 @@ bins = (
 
 processes = load_ndim_processes("fal5_TKrec", bins, vars)
 
-signal = get_process("bb0nu_foil_bulk", processes) |> first
-# signal = get_process("RH037_foil_bulk", processes) |> first
+# signal = get_process("bb0nuM1_foil_bulk", processes) |> first
+signal = get_process("RH037_foil_bulk", processes) |> first
 # signal = get_process("bb0nuM2_foil_bulk", processes)
 
 # declare background processes
 background = [
-    get_process("bb_foil_bulk", processes) |> first,
-    get_process("Bi214_foil_bulk", processes) |> first,
-    get_process("Bi214_wire_surface", processes) |> first,
-    get_process("Tl208_foil_bulk", processes) |> first,
-    get_process("K40_foil_bulk", processes) |> first,
-    get_process("Pa234m_foil_bulk", processes) |> first,
     get_process("bb_foil_bulk", processes) |> first,
     get_process("Bi214_foil_bulk", processes) |> first,
     get_process("Bi214_wire_surface", processes) |> first,
@@ -63,7 +58,7 @@ set_signal!(background[1], false)
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
 set_nTotalSim!( signal, 1e8 )
 # set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 0.99e8 )
+set_nTotalSim!( background[1], 1e8 )
 set_nTotalSim!( background[2], 1e8 )
 set_nTotalSim!( background[3], 1e8 )
 set_nTotalSim!( background[4], 1e8 )
@@ -100,10 +95,10 @@ options = Options(;
     f_tol = 1e-1,
     f_tol_rel = 1e-1,
     f_tol_abs = 1e-1,
-    time_limit = 60*60*2.0,
+    time_limit = 60*60*1.0,
     parallel_evaluation = true,
     verbose = true,
-    iterations = 10,
+    iterations = 15,
     store_convergence = true
 )
 
@@ -142,6 +137,12 @@ end
 
 best = get_best_ROI_ND(res, signal)
 get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
+
+begin
+    res2 = float.([30,175, 0, 3200, 0, 50])
+    best2 = get_best_ROI_ND(res2, signal)
+    get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=1.2)
+end
 
 
 # f_calls, best_f_value = convergence(result)

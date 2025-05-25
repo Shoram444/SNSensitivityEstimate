@@ -327,7 +327,8 @@ function get_sensitivityND(
     α::Real, 
     processes::Vector{<:DataProcessND}, 
     roi::NamedTuple;
-    approximate="table"
+    approximate="table",
+    add_mock_bkg =0.0
 )
 
     #check that rois are within the range of the data
@@ -347,7 +348,7 @@ function get_sensitivityND(
     ε = get_roi_effciencyND(signal_process, roi).eff
     ε == 0 && return SensitivityEstimateND(roi, 0.0, 0.0, 0.0) # If efficiency is zero, return zero sensitivity
 
-    b = get_roi_bkg_counts(processes, roi)
+    b = get_roi_bkg_counts(processes, roi) + add_mock_bkg
 
     @unpack W, foilMass, Nₐ, tYear, a = SNparams
     constantTerm = log(2) * (Nₐ / W) * (foilMass * a * tYear )
