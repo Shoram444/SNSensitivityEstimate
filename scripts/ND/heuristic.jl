@@ -137,7 +137,10 @@ end
 best = get_best_ROI_ND(res, signal)
 get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
 
-best2 = 
+res2 = float.([10,175,2710,3350,0,50])
+best2 = get_best_ROI_ND(res2, signal)
+get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=1.43)
+
 
 
 # f_calls, best_f_value = convergence(result)

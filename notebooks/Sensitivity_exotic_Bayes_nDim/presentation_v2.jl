@@ -94,7 +94,7 @@ md"""
 - 2 **distinct** associated calo-hits
 -  $$E_{sum} \in (300, 3500)$$ keV
 - max vertex distance on foil $$r < 50$$ mm
-- ToF: $$P_{int} \geq 4%$$ & $$P_{ext} \leq 1%$$
+- ToF: $$P_{int} \geq 4\%$$ & $$P_{ext} \leq 1\%$$
 
 """
 
@@ -128,74 +128,6 @@ Emax = $(@bind Emax PlutoUI.Slider(0:100:3500, default=3500; show_value=:true)) 
 
 Thalf = $(@bind Thalf PlutoUI.Slider((1:10:1000)*1e22, default=1e24; show_value=:true)) yr
 """
-
-# ╔═╡ 1f4ae42b-61be-44ed-bb82-60e7cfb582ba
-begin
-	files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
-
-	data_processes = load_data_processes(
-	    files_directory, 
-	    "sumE",
-	    fwhm = 0.0
-	)
-	signal = get_process("bb0nu_foil_bulk", data_processes) |> first
-
-    background = [
-        get_process("bb_foil_bulk", data_processes) |> first,
-        get_process("Bi214_foil_bulk", data_processes) |> first,
-        get_process("Bi214_wire_surface", data_processes) |> first,
-        get_process("Tl208_foil_bulk", data_processes) |> first,
-        get_process("K40_foil_bulk", data_processes) |> first,
-        get_process("Pa234m_foil_bulk", data_processes) |> first,
-    ]
-	set_nTotalSim!( signal ,1e8)
-	set_nTotalSim!( background[1], 0.99e8 )
-    set_nTotalSim!( background[2], 1e8 )
-    set_nTotalSim!( background[3], 1e8 )
-    set_nTotalSim!( background[4], 1e8 )
-    set_nTotalSim!( background[5], 1e8 )
-    set_nTotalSim!( background[6], 1e8 )
-	set_signal!(background[1], false)
-	nothing
-end
-
-# ╔═╡ de64766d-fda7-4a0e-bc7c-80bb90554bac
-begin
-	# Total background model:
-    bkg_hists = [restrict(get_bkg_counts_1D(b), Emin, Emax) for b in background]
-    sig_hist = get_bkg_counts_1D(signal)
-
-
-    with_theme(theme_latexfonts()) do
-        f = Figure()
-        ax = Axis(
-            f[1,1], 
-            # xlabel = analysisDict[:mode], 
-            xlabel = L"$E_1 + E_2$ (keV)", 
-            ylabel = L"counts / $17.5$kg.yr exposure / $100$ keV", 
-            yscale = log10, 
-            limits = (Emin, Emax, 1e-4, 1e6),
-            # limits = (2500, 3500, 0, 3),
-            title = "Total background model\nsummed 2-electron energy"
-        )
-        
-        colors = ColorSchemes.tol_vibrant
-        labels = [b.isotopeName for b in background]
-        st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
-        errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
-        
-        for i=2:length(bkg_hists)
-            hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
-            
-        end
-        lines!(ax, midpoints(binedges(sig_hist)), bincounts(sig_hist) .* (1e24/Thalf), label = signal.isotopeName, color = :black, linestyle = :dash, linewidth = 2.5)
-
-        ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
-        ax.xticks = 0:500:3500
-        Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 3)
-        f
-    end
-end
 
 # ╔═╡ bad82399-f4f0-401c-acc7-b7f67155f27f
 md"""
@@ -273,62 +205,18 @@ md"""
 # Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
 
 Boundaries of ROI affect signal + background differently!
+
+That we are interested in is:
+- signal efficiency $$\varepsilon(ROI)$$
+- expected background counts $$\bar{b}(ROI)$$
 """
 
-# ╔═╡ da4b1d6e-3447-4451-b5b8-fbff4ebfe3ee
-let
-	f = Figure()
-	a1 = Axis(f[1,1])
-	hsig = Hist1D(signal.dataVector; binedges = signal.bins) |> normalize
-	h1 = stairs!(a1, hsig, label = "signal")
-	xband_min = 2700
-	xband_max = 3100
-	ymin = 0
-	ymax = maximum(bincounts(hsig))
+# ╔═╡ 1e127dad-951d-4873-b711-fb8a23f3d712
+md"""
+# Example for $$0\nu\beta\beta$$ and $$E_{sum}$$:
 
-
-	hbkg = Hist1D(background[1].dataVector; binedges = background[1].bins) |> normalize
-	h2 = stairs!(a1, hbkg, label = "background")
-
-	poly!(
-		a1,
-		[xband_min, xband_max, xband_max, xband_min],
-    	[ymin, ymin, ymax, ymax],
-		color = (:blue, 0.3),
-		label = "ROI"
-	)
-	axislegend(a1, position = :lt)
-	
-	f
-	
-end
-
-# ╔═╡ c519cbff-afb1-4ac7-9bfe-1e07cf78979b
-begin
-	global α = 1.64485362695147
-	t12MapESum = get_tHalf_map(SNparams, α, signal, background...;)
-    best_t12ESum = get_max_bin(t12MapESum)
-
-    # If you want additional info, like background counts in the ROI, use: `get_bkg_counts_ROI`.
-    expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
-
-    # To get the signal efficiency at the ROI, use: `lookup(signal, best_t12ESum)`
-    effbb = lookup(signal, best_t12ESum)
-	ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
-	lbl = "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV 
-          b  = $(round(expBkgESum, digits = 2)) 
-          T12 ≥  $(ThalfbbESum) yr 
-          ε = $(round(effbb, digits = 2)*100)%"
-
-    let 
-        f = Figure(size=(600, 400))
-        a = Axis(f[1,1], xlabel = "min_ROI [keV]", ylabel = "max_ROI [keV]")
-        p = plot!(a, t12MapESum)
-        text!(a, 2000, 500, text=lbl)
-        Colorbar(f[1,2], p, label="sensitivity [yr]", scale=log10)
-        f
-    end
-end
+For each combination of ROI ($$E_{sum}^l, E_{sum}^u$$) we get a different value of $$T^{1/2}$$ --> pick maximum
+"""
 
 # ╔═╡ d7354883-f530-4bfe-955d-ca37263d0c7b
 md"""
@@ -357,6 +245,35 @@ md"""
 	5. Once you've measured data --> fit in ROI to get $$\bar{b}$$ --> calculate sensitivity 
 	   * use $$\varepsilon$$ from simulation, $$\bar{b}$$ from data
 
+"""
+
+# ╔═╡ 9ae6e7cf-fa54-4d17-834f-a11f7201bdff
+md"""
+# Extending to multiple dimensions:
+Let's take the example methodology above, but use 2 variables for best ROI: $$E_{sum}$$ and $$\varphi$$
+
+**Again, we look at the spectrum for signal and background (now a 2D histogram):**
+"""
+
+# ╔═╡ 112a6be9-e6ac-4ee2-b7b4-82fc7d5d7b88
+md"""
+ $$E^l_{sum}$$ = $(@bind E_l PlutoUI.Slider(0:100:3500, default =2500, show_value = true))
+
+ $$E^u_{sum}$$ = $(@bind E_u PlutoUI.Slider(0:100:3500, default =3300, show_value = true))
+
+ $$\varphi^l_{sum}$$ = $(@bind p_l PlutoUI.Slider(0:5:180, default =10, show_value = true))
+
+ $$\varphi^u_{sum}$$ = $(@bind p_u PlutoUI.Slider(0:5:180, default =160, show_value = true))
+"""
+
+# ╔═╡ 8bc26abf-c593-44d8-b1d1-5f2db8d07705
+md"""
+We can see that taking a 2D ROI (basically a data-cut), we can keep a lot of signal while reducing the amount of background.
+In this example however, it is not exactly clear which is the **best** choice!
+
+
+!!! note ""
+	This approach can be extended to many dimensions!
 """
 
 # ╔═╡ 6fa76137-73fc-47ea-927b-0ffed51149f7
@@ -542,6 +459,7 @@ begin
 	# --- Grid for p_s ---
 	ps_grid = range(0.0, 1.0; length=500)
 	log_posterior = zeros(length(ps_grid))
+	log_likelihood_vector = zeros(length(ps_grid))
 
 	prior_signal = Beta(prior_par1,prior_par2)
 	# --- Evaluate likelihood over grid ---
@@ -549,8 +467,11 @@ begin
 	    pb = 1 - ps
 	    log_likelihood = sum(log.(ps * pdf.(signal_dist, data) .+ pb * pdf.(background_dist, data)))
 		log_prior = logpdf(prior_signal, ps)
+		log_likelihood_vector[i] = log_likelihood
 	    log_posterior[i] = log_likelihood + log_prior # Flat prior assumed
 	end
+
+	
 	
 	# --- Normalize to get posterior ---
 	posterior = exp.(log_posterior .- maximum(log_posterior))  # for numerical stability
@@ -564,11 +485,12 @@ begin
 	f = Figure(size = (600, 600))
 	ax = Axis(f[1,1:2], xlabel = "arbitrary energy", ylabel = "counts")
 	xs = binedges(h1_sig) |> midpoints |> collect
+	stairs!(ax, h1_sig + h1_bkg, label = "data", linewidth = 4)
 	p = lines!(ax, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.2, label = "signal", color = :blue, linewidth = 4)
 	lines!(ax,  xs, x-> pdf(Exponential(lambda_bkg), x) .* n .* 0.2, label = "background", color= :red, linewidth = 4)
-	lines!(ax,  xs, x-> fit_f(x, p_best) .* n .* 0.2, label = "fit", color= :green, linewidth = 4)
-	stairs!(ax, h1_sig + h1_bkg, label = "data", linewidth = 4)
+	lines!(ax,  xs, x-> fit_f(x, p_best) .* n .* 0.2, label = "fit", color= :purple, linewidth = 4)
 	axislegend(ax)
+
 
 	a =Axis(f[2,1], xlabel = L"\Theta", ylabel = L"pdf($\Theta_i$| data)", title= "posterior distribution")
 	p = lines!(a, ps_grid, posterior, label = L"\Theta_{sig}")
@@ -577,6 +499,12 @@ begin
 
 	a_prior = Axis(f[2,2], title = "prior signal")
 	lines!(a_prior, ps_grid, x-> pdf(prior_signal, x))
+	
+	a_ll = Axis(f[3,1:2], title = "log likelihood", limits = (nothing, nothing, maximum(log_likelihood_vector)*1.5,maximum(log_likelihood_vector)*0.9))
+
+	lines!(a_ll, ps_grid, log_likelihood_vector, label = "log_likelihood")
+	scatter!(a_ll, argmax(log_likelihood_vector)/length(ps_grid), maximum(log_likelihood_vector), label = "mle value = $(argmax(log_likelihood_vector)/length(ps_grid))", color = :black)
+	axislegend(a_ll)
 		
 	f
 	end
@@ -674,12 +602,14 @@ The resulting median sensitivity for $$0\nu\beta\beta$$ is:
 # ╔═╡ 7da00dac-d0a8-4b77-973e-9e46e5fa964d
 md"""
 # Results
+Numbers in parenthasis are with **manually** added "total neutrons in given ROI" (without performing ND/Bayes analysis)
+
 
 |signal|1D|ND|Bayes|
 |:----:|:-:|:-:|:-:|
-|$$0\nu\beta\beta$$|$$4.14 \times 10^{24} y$$|$$4.22 \times 10^{24}y$$|$$4.66 \times 10^{24} y$$|
-|$$0\nu\beta\beta\chi^0$$|$$1.45 \times 10^{23} y$$| $$1.48 \times 10^{23} y$$ | $$2.38 \times 10^{23} y$$ |
-|$$0\nu\beta\beta\chi^0\chi^0$$|$$2.31 \times 10^{22} y$$|$$2.31 \times 10^{22} y$$  |$$1.43 \times 10^{22} y$$|
+|$$0\nu\beta\beta$$|$$4.14 \times 10^{24} y$$|$$4.22 (3.20) \times 10^{24}y$$|$$4.66 \times 10^{24} y$$|
+|$$0\nu\beta\beta\chi^0$$|$$1.45 \times 10^{23} y$$| $$1.48 (1.45) \times 10^{23} y$$ | $$2.38 \times 10^{23} y$$ |
+|$$0\nu\beta\beta\chi^0\chi^0$$|$$2.31 \times 10^{22} y$$|$$2.32(2.32) \times 10^{22} y$$  |$$1.43 \times 10^{22} y$$|
 |$$\nu_L\nu_R\beta\beta$$| $$1.30 \times 10^{22} y^*$$| $$1.30 \times 10^{22} y^*$$ | $$1.09 \times 10^{21} y^{**}$$|
 
 
@@ -688,12 +618,24 @@ md"""
  \*\* for angular distribution, need to investigate why this is so low.  
 """
 
+# ╔═╡ 5b544df2-977a-414b-a97a-d464e7f67b3b
+md"""
+E_sum ROIs for neutron counts (current shielding config):
+
+-  $$0\nu\beta\beta$$: 2700,3400keV -> neutron 1.4
+-  $$0\nu\beta\beta\chi^2$$: 2500,3100keV -> neutron 1.2
+-  $$0\nu\beta\beta\chi^2\chi^2$$: 1200,3100keV -> neutron 3.66
+
+"""
+
 # ╔═╡ 8fc9a87c-ec29-4028-a20f-9c8cdec4c866
 md"""
 # Conclusions
 
-- Using n-dimensional approach leads to *slight* increase in sensitivities
+- Using n-dimensional approach (sometimes) leads to *slight* increase in sensitivities
   - better optimization should improve the results even further
+     - The choice of data-cut on $$r<50 mm$$ **is way too strict!**
+     - Will try to optimize ToF values as well
   - Choice of variables can be extended, at the cost of computing time
   - Machine learning techniques for MVA could improve it even further
 - Bayesian approach is more sensitive than frequentist when signal shape is more different from backgrounds!
@@ -714,6 +656,204 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╔═╡ 8789bf21-3712-404c-b047-b0304d7917da
 
 
+# ╔═╡ 1f4ae42b-61be-44ed-bb82-60e7cfb582ba
+begin
+	files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
+
+	data_processes = load_data_processes(
+	    files_directory, 
+	    "sumE",
+	    fwhm = 0.0
+	)
+	signal = get_process("bb0nu_foil_bulk", data_processes) |> first
+
+    background = [
+        get_process("bb_foil_bulk", data_processes) |> first,
+        get_process("Bi214_foil_bulk", data_processes) |> first,
+        get_process("Bi214_wire_surface", data_processes) |> first,
+        get_process("Tl208_foil_bulk", data_processes) |> first,
+        get_process("K40_foil_bulk", data_processes) |> first,
+        get_process("Pa234m_foil_bulk", data_processes) |> first,
+    ]
+	set_nTotalSim!( signal ,1e8)
+	set_nTotalSim!( background[1], 0.99e8 )
+    set_nTotalSim!( background[2], 1e8 )
+    set_nTotalSim!( background[3], 1e8 )
+    set_nTotalSim!( background[4], 1e8 )
+    set_nTotalSim!( background[5], 1e8 )
+    set_nTotalSim!( background[6], 1e8 )
+	set_signal!(background[1], false)
+	nothing
+end
+
+# ╔═╡ de64766d-fda7-4a0e-bc7c-80bb90554bac
+begin
+	# Total background model:
+    bkg_hists = [restrict(get_bkg_counts_1D(b), Emin, Emax) for b in background]
+    sig_hist = restrict(get_bkg_counts_1D(signal), Emin, Emax)
+
+
+    with_theme(theme_latexfonts()) do
+        f = Figure()
+        ax = Axis(
+            f[1,1], 
+            # xlabel = analysisDict[:mode], 
+            xlabel = L"$E_1 + E_2$ (keV)", 
+            ylabel = L"counts / $17.5$kg.yr exposure / $100$ keV", 
+            yscale = log10, 
+            limits = (Emin, Emax, 1e-4, 1e6),
+            # limits = (2500, 3500, 0, 3),
+            title = "Total background model\nsummed 2-electron energy"
+        )
+        
+        colors = ColorSchemes.tol_vibrant
+        labels = [b.isotopeName for b in background]
+        st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
+        errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
+        
+        for i=2:length(bkg_hists)
+            hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
+            
+        end
+        lines!(ax, midpoints(binedges(sig_hist)), (bincounts(sig_hist) .* (1e24/Thalf)) .+ bincounts(sum(bkg_hists)), label = L"0\nu\beta\beta", color = :red, linewidth = 3.5)
+
+        ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
+        ax.xticks = 0:500:3500
+        Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 3)
+        f
+    end
+end
+
+# ╔═╡ da4b1d6e-3447-4451-b5b8-fbff4ebfe3ee
+let
+	f = Figure()
+	a1 = Axis(f[1,1], xlabel = "energy", ylabel = "a.u.", title = "normalized spectra of signal and background")
+	hsig = Hist1D(signal.dataVector; binedges = signal.bins) |> normalize
+	h1 = stairs!(a1, hsig, label = "signal")
+	xband_min = 2700
+	xband_max = 3100
+	ymin = 0
+	ymax = 1.2maximum(bincounts(hsig))
+
+
+	hbkg = Hist1D(background[1].dataVector; binedges = background[1].bins) |> normalize
+	h2 = stairs!(a1, hbkg, label = "background")
+
+	poly!(
+		a1,
+		[xband_min, xband_max, xband_max, xband_min],
+    	[ymin, ymin, ymax, ymax],
+		color = (:blue, 0.3),
+		label = "ROI"
+	)
+	axislegend(a1, position = :lt)
+	
+	f
+	
+end
+
+# ╔═╡ c519cbff-afb1-4ac7-9bfe-1e07cf78979b
+begin
+	global α = 1.64485362695147
+	t12MapESum = get_tHalf_map(SNparams, α, signal, background...;)
+    best_t12ESum = get_max_bin(t12MapESum)
+
+    # If you want additional info, like background counts in the ROI, use: `get_bkg_counts_ROI`.
+    expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
+
+    # To get the signal efficiency at the ROI, use: `lookup(signal, best_t12ESum)`
+    effbb = lookup(signal, best_t12ESum)
+	ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α), sigdigits=3)
+	lbl = "$(best_t12ESum[:minBinEdge]) - $(best_t12ESum[:maxBinEdge]) keV 
+          b  = $(round(expBkgESum, digits = 2)) 
+          T12 ≥  $(ThalfbbESum) yr 
+          ε = $(round(effbb, digits = 2)*100)%"
+
+    let 
+        f = Figure(size=(600, 400))
+        a = Axis(f[1,1], xlabel = "min_ROI [keV]", ylabel = "max_ROI [keV]")
+        p = plot!(a, t12MapESum)
+        text!(a, 2000, 500, text=lbl)
+        Colorbar(f[1,2], p, label="sensitivity [yr]", scale=log10)
+        f
+    end
+end
+
+# ╔═╡ c8d16dc1-b06a-4b61-b7cc-0304dadfbcb8
+begin
+	vars = [
+	    "phi", 
+	    "sumE"
+	]
+	bins = (
+	    phi = (0,180),
+	    sumE = (0, 3500)
+	)
+	processesND = load_ndim_processes("fal5_TKrec", bins, vars)
+	nothing
+end
+
+# ╔═╡ 4cb301ac-87ba-46a9-969d-8bc2ae77bdc4
+begin
+	signalND = get_process("bb0nu_foil_bulk", processesND) |> first
+	backgroundND = get_process("Tl208_foil_bulk", processesND) |> first
+	set_signal!(backgroundND, false)
+	set_nTotalSim!( signalND, 1e8 )
+	set_nTotalSim!( backgroundND, 1e8 )
+	nothing
+end
+
+# ╔═╡ e842c11a-81db-47f1-aa65-4d53ee4bfea5
+begin
+	phiSignalND = getproperty.(signalND.data,:phi)
+	esumSignalND = getproperty.(signalND.data,:sumE)
+	phiBackgroundND = getproperty.(backgroundND.data,:phi)
+	esumBackgroundND = getproperty.(backgroundND.data,:sumE)
+	nothing
+end
+
+# ╔═╡ fef5daa1-3806-450d-a80f-e3416f066924
+let 
+	f = Figure(size=(800,350))
+	a1 = Axis(f[1,1], xlabel = L"\varphi", ylabel = L"E_{sum}", title = "Signal")
+	
+	h2dsignal = Hist2D(
+			(phiSignalND, esumSignalND);
+			binedges = (0:5:180, 0:100:3500)
+		)
+	h2dbackground = Hist2D(
+			(phiBackgroundND, esumBackgroundND);
+			binedges = (0:5:180, 0:100:3500)
+		)
+
+	h1 = plot!(a1, h2dsignal, colormap = :coolwarm)
+	text!(15, E_l-300, text="ROI", fontsize = 15, color = :red)
+	
+
+	a2 = Axis(f[1,2], xlabel = L"\varphi", ylabel = L"E_{sum}", title = "Background")
+	h2 = plot!(a2, h2dbackground, colormap = :coolwarm)
+	text!(15, E_l-300, text="ROI", fontsize = 15, color = :red)
+
+
+	poly!(
+		a1,
+		[p_l,p_u,p_u,p_l],
+		[E_l,E_l,E_u,E_u],
+		color = (:black,0),
+		strokewidth = 3,
+		strokecolor = :red,
+	 )
+	poly!(
+		a2,
+		[p_l,p_u,p_u,p_l],
+		[E_l,E_l,E_u,E_u],
+		color = (:black,0),
+		strokewidth = 3,
+		strokecolor = :red,
+	 )
+	f
+end
+
 # ╔═╡ Cell order:
 # ╟─33db2852-a205-4a2c-8744-037f5b7a6a80
 # ╟─107241e3-a8b7-43af-b26f-b2b205f7e294
@@ -725,17 +865,23 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╟─16fbb9bb-d86b-433b-91fa-a12f8008eaa9
 # ╟─5099a914-3f46-4e86-9570-bc13f5d3ca80
 # ╟─de64766d-fda7-4a0e-bc7c-80bb90554bac
-# ╟─1f4ae42b-61be-44ed-bb82-60e7cfb582ba
 # ╟─bad82399-f4f0-401c-acc7-b7f67155f27f
 # ╟─4a2ca349-25ff-4a16-a4cf-075767700240
 # ╟─eb22cfcd-a08e-4e57-9f02-113612804fc1
 # ╟─aae87c04-2352-4db5-9018-f8d0fa75e4b9
 # ╟─c8539419-4919-48a9-ad41-0dcba22318e8
 # ╟─6edb8cab-331c-403c-8c93-b8af84f38989
-# ╠═da4b1d6e-3447-4451-b5b8-fbff4ebfe3ee
+# ╟─da4b1d6e-3447-4451-b5b8-fbff4ebfe3ee
+# ╟─1e127dad-951d-4873-b711-fb8a23f3d712
 # ╟─c519cbff-afb1-4ac7-9bfe-1e07cf78979b
 # ╟─d7354883-f530-4bfe-955d-ca37263d0c7b
 # ╟─87c50992-3347-47e8-8cb4-3f0dcee41ebf
+# ╟─9ae6e7cf-fa54-4d17-834f-a11f7201bdff
+# ╟─112a6be9-e6ac-4ee2-b7b4-82fc7d5d7b88
+# ╟─fef5daa1-3806-450d-a80f-e3416f066924
+# ╟─8bc26abf-c593-44d8-b1d1-5f2db8d07705
+# ╟─4cb301ac-87ba-46a9-969d-8bc2ae77bdc4
+# ╟─e842c11a-81db-47f1-aa65-4d53ee4bfea5
 # ╟─6fa76137-73fc-47ea-927b-0ffed51149f7
 # ╟─cdcc36a8-888b-42e4-8721-18e183a3ae5e
 # ╟─724e4ff0-6dea-4a73-8708-0c886c98a8db
@@ -760,6 +906,7 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╟─b2a28a93-2524-43e3-a9fa-6ef30ac213af
 # ╟─8e5fa765-c8a9-4419-9e4f-c58a213be563
 # ╟─7da00dac-d0a8-4b77-973e-9e46e5fa964d
+# ╟─5b544df2-977a-414b-a97a-d464e7f67b3b
 # ╟─8fc9a87c-ec29-4028-a20f-9c8cdec4c866
 # ╟─9e7dbfe3-a38b-45ef-b6c6-74ca9c3392df
 # ╟─96f0e67c-16af-11f0-08a5-ffefdd2c8429
@@ -768,3 +915,5 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╟─992a6366-86e0-4d00-ab9c-ac29190ff693
 # ╠═7d6e5825-c187-4d55-b877-1e1193190ff2
 # ╠═8789bf21-3712-404c-b047-b0304d7917da
+# ╟─1f4ae42b-61be-44ed-bb82-60e7cfb582ba
+# ╟─c8d16dc1-b06a-4b61-b7cc-0304dadfbcb8
