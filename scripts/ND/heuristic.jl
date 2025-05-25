@@ -5,7 +5,8 @@ println("loading pkgs")
 
 push!(LOAD_PATH, srcdir())
 using SensitivityModule, CairoMakie 
-
+using Revise
+Revise.track(SensitivityModule)
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -37,8 +38,8 @@ bins = (
 
 processes = load_ndim_processes("fal5_TKrec", bins, vars)
 
-signal = get_process("bb0nu_foil_bulk", processes) |> first
-# signal = get_process("RH037_foil_bulk", processes) |> first
+# signal = get_process("bb0nuM1_foil_bulk", processes) |> first
+signal = get_process("RH037_foil_bulk", processes) |> first
 # signal = get_process("bb0nuM2_foil_bulk", processes)
 
 # declare background processes
@@ -94,10 +95,10 @@ options = Options(;
     f_tol = 1e-1,
     f_tol_rel = 1e-1,
     f_tol_abs = 1e-1,
-    time_limit = 60*60*2.0,
+    time_limit = 60*60*1.0,
     parallel_evaluation = true,
     verbose = true,
-    iterations = 10,
+    iterations = 15,
     store_convergence = true
 )
 
@@ -141,6 +142,12 @@ res2 = float.([10,175,2710,3350,0,50])
 best2 = get_best_ROI_ND(res2, signal)
 get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=1.43)
 
+
+begin
+    res2 = float.([30,175, 0, 3200, 0, 50])
+    best2 = get_best_ROI_ND(res2, signal)
+    get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=1.2)
+end
 
 
 # f_calls, best_f_value = convergence(result)

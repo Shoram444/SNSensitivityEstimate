@@ -328,7 +328,7 @@ function get_sensitivityND(
     processes::Vector{<:DataProcessND}, 
     roi::NamedTuple;
     approximate="table",
-    add_mock_bkg = 0.0
+    add_mock_bkg =0.0
 )
 
     #check that rois are within the range of the data

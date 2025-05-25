@@ -38,8 +38,8 @@ data_processes = load_data_processes(
     fwhm = 0.0
 )
 
-# signal = get_process("bb0nu_foil_bulk", data_processes) |> first
-signal = get_process("RH037_foil_bulk", data_processes) |> first
+signal = get_process("bb0nuM2_foil_bulk", data_processes) |> first
+# signal = get_process("RH037_foil_bulk", data_processes) |> first
 
 # declare background processes
 background = [
@@ -67,71 +67,72 @@ println("Processes initialized.")
 α = 1.64485362695147
 
 t12MapESum = get_tHalf_map(SNparams, α, signal, background...; approximate ="table")
-best_t12ESum = get_max_bin(t12MapESum)
+@show best_t12ESum = get_max_bin(t12MapESum)
 expBkgESum = get_bkg_counts_ROI(best_t12ESum, background...)
 effbb = lookup(signal, best_t12ESum)
-ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α; approximate = "table"), sigdigits=3)
+@show ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α; approximate = "table"), sigdigits=3)
 
 bkg_hists = get_bkg_counts_1D.(background)
 sig_hist = get_bkg_counts_1D(signal)
 
 
-labels = [
-    "0nubb",
-    "2nubb",
-    "Bi214",
-    "Radon",
-    "Tl208",
-    "K40",
-    "Pa234m"
-]
 
-effs_ROI = [
-    lookup(signal, best_t12ESum),
-    lookup(background[1], best_t12ESum),
-    lookup(background[2], best_t12ESum),
-    lookup(background[3], best_t12ESum),
-    lookup(background[4], best_t12ESum),
-    lookup(background[5], best_t12ESum),
-    lookup(background[6], best_t12ESum)
-] .* 100
+# labels = [
+#     "0nubb",
+#     "2nubb",
+#     "Bi214",
+#     "Radon",
+#     "Tl208",
+#     "K40",
+#     "Pa234m"
+# ]
 
-full_ROI = Dict(
-    :minBinEdge => 0.0,
-    :maxBinEdge => 3500.0,
-)
+# effs_ROI = [
+#     lookup(signal, best_t12ESum),
+#     lookup(background[1], best_t12ESum),
+#     lookup(background[2], best_t12ESum),
+#     lookup(background[3], best_t12ESum),
+#     lookup(background[4], best_t12ESum),
+#     lookup(background[5], best_t12ESum),
+#     lookup(background[6], best_t12ESum)
+# ] .* 100
 
-effs_full = [
-    lookup(signal, full_ROI),
-    lookup(background[1], full_ROI),
-    lookup(background[2], full_ROI),
-    lookup(background[3], full_ROI),
-    lookup(background[4], full_ROI),
-    lookup(background[5], full_ROI),
-    lookup(background[6], full_ROI)
-] .* 100
+# full_ROI = Dict(
+#     :minBinEdge => 0.0,
+#     :maxBinEdge => 3500.0,
+# )
 
-df = DataFrame(
-    process = labels,
-    efficiency_ROI = effs_ROI,
-    efficiency_full = effs_full,
-)
+# effs_full = [
+#     lookup(signal, full_ROI),
+#     lookup(background[1], full_ROI),
+#     lookup(background[2], full_ROI),
+#     lookup(background[3], full_ROI),
+#     lookup(background[4], full_ROI),
+#     lookup(background[5], full_ROI),
+#     lookup(background[6], full_ROI)
+# ] .* 100
 
-pt = pretty_table(
-    df,
-    header = (["Process", "Efficiency (ROI)", "Efficiency (Full)"], [" ", "%", "%"]),
-    backend = Val(:markdown),
-    formatters = ft_printf("%.3E"),
-)
+# df = DataFrame(
+#     process = labels,
+#     efficiency_ROI = effs_ROI,
+#     efficiency_full = effs_full,
+# )
 
-sn = savename("eff", analysisDict, "md")
+# pt = pretty_table(
+#     df,
+#     header = (["Process", "Efficiency (ROI)", "Efficiency (Full)"], [" ", "%", "%"]),
+#     backend = Val(:markdown),
+#     formatters = ft_printf("%.3E"),
+# )
 
-open(scriptsdir("other","efficiencies",sn), "w") do io
-    pretty_table(
-        io, 
-        df,
-        header = (["Process", "Efficiency (ROI)", "Efficiency (Full)"], [" ", "%", "%"]),
-        backend = Val(:markdown),
-        formatters = ft_printf("%.3E"),
-    )
-end
+# sn = savename("eff", analysisDict, "md")
+
+# open(scriptsdir("other","efficiencies",sn), "w") do io
+#     pretty_table(
+#         io, 
+#         df,
+#         header = (["Process", "Efficiency (ROI)", "Efficiency (Full)"], [" ", "%", "%"]),
+#         backend = Val(:markdown),
+#         formatters = ft_printf("%.3E"),
+#     )
+# end
