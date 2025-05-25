@@ -467,7 +467,7 @@ begin
 	
 	data = vcat(signal_data, background_data)
 
-	f_ex = Figure()
+	f_ex = Figure(size = (1200, 450), fontsize = 22)
 	ax_ex = Axis(f_ex[1,1], xlabel = "arbitrary energy", ylabel = "counts")
 	xs = binedges(h1_sig) |> midpoints |> collect
 	p = lines!(ax_ex, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.2 , label = "signal", color = :blue, linewidth = 4)
@@ -533,7 +533,7 @@ begin
 	p_best = [argmax(posterior)/length(posterior), 1-argmax(posterior)/length(posterior)]
 	
 	let 
-	f = Figure(size = (1000, 700))
+	f = Figure(size = (1200, 700), fontsize = 24)
 	ax = Axis(f[1,1:2], xlabel = "arbitrary energy", ylabel = "counts")
 	xs = binedges(h1_sig) |> midpoints |> collect
 	stairs!(ax, h1_sig + h1_bkg, label = "data", linewidth = 4)
@@ -786,7 +786,7 @@ begin
 
 
     with_theme(theme_latexfonts()) do
-        f = Figure()
+        f = Figure(size = (1200, 600), fontsize = 20)
         ax = Axis(
             f[1,1], 
             # xlabel = analysisDict[:mode], 
@@ -818,7 +818,7 @@ end
 
 # ╔═╡ da4b1d6e-3447-4451-b5b8-fbff4ebfe3ee
 let
-	f = Figure()
+	f = Figure(size = (1200, 500), fontsize = 20)
 	a1 = Axis(f[1,1], xlabel = "energy", ylabel = "a.u.", title = "signal vs background")
 	hsig = Hist1D(signal.dataVector; binedges = signal.bins) |> normalize
 	h1 = stairs!(a1, hsig, label = "signal")
@@ -864,7 +864,7 @@ begin
           ε = $(round(effbb, digits = 2)*100)%"
 
     let 
-        f = Figure(size=(600, 400))
+        f = Figure(size=(1200, 500), fontsize = 20)
         a = Axis(f[1,1], xlabel = "min_ROI [keV]", ylabel = "max_ROI [keV]")
         p = plot!(a, t12MapESum)
         text!(a, 2000, 500, text=lbl)
@@ -910,7 +910,7 @@ end
 
 # ╔═╡ fef5daa1-3806-450d-a80f-e3416f066924
 let 
-	f = Figure(size=(1300,600))
+	f = Figure(size=(1300,600), fontsize = 22)
 	a1 = Axis(f[1,1], xlabel = L"\varphi", ylabel = L"E_{sum}", title = "Signal")
 	
 	h2dsignal = Hist2D(
@@ -958,7 +958,7 @@ let
 	esumSignalNDM1 = getproperty.(signalNDM1.data,:sumE)
 
 	
-	f = Figure(size=(1300,800))
+	f = Figure(size=(1300,800), fontsize = 22)
 	a01 = Axis(f[1,1:2], xlabel = L"E_{sum}", title = L"$E_{sum}$ $0\nu\beta\beta\chi^0$")
 	a02 = Axis(f[1,3:4], xlabel = L"\varphi", title = L"$E_{sum}$ $0\nu\beta\beta\chi^0$")
 	h1signalE = Hist1D(esumSignalNDM1; binedges = (0:100:3500))
@@ -1017,7 +1017,7 @@ let
 	esumSignalNDM2 = getproperty.(signalNDM2.data,:sumE)
 
 	
-	f = Figure(size=(1300,800))
+	f = Figure(size=(1300,800), fontsize = 22)
 	a01 = Axis(f[1,1:2], xlabel = L"E_{sum}", title = L"$E_{sum}$ $0\nu\beta\beta\chi^0\chi^0$")
 	a02 = Axis(f[1,3:4], xlabel = L"\varphi", title = L"$E_{sum}$ $0\nu\beta\beta\chi^0\chi^0$")
 	h1signalE = Hist1D(esumSignalNDM2; binedges = (0:100:3500))
@@ -1076,7 +1076,7 @@ let
 	esumSignalNDdRH = getproperty.(signalNDdRH.data,:sumE)
 
 	
-	f = Figure(size=(1300,800))
+	f = Figure(size=(1300,800), fontsize = 22)
 	a01 = Axis(f[1,1:2], xlabel = L"E_{sum}", title = L"$E_{sum}$ $\nu_R\nu_L\beta\beta$")
 	a02 = Axis(f[1,3:4], xlabel = L"\varphi", title = L"$E_{sum}$ $\nu_R\nu_L\beta\beta$")
 	h1signalE = Hist1D(esumSignalNDdRH; binedges = (0:100:3500))
@@ -1156,8 +1156,8 @@ end
 # ╟─112a6be9-e6ac-4ee2-b7b4-82fc7d5d7b88
 # ╟─fef5daa1-3806-450d-a80f-e3416f066924
 # ╟─8bc26abf-c593-44d8-b1d1-5f2db8d07705
-# ╠═4cb301ac-87ba-46a9-969d-8bc2ae77bdc4
-# ╠═e842c11a-81db-47f1-aa65-4d53ee4bfea5
+# ╟─4cb301ac-87ba-46a9-969d-8bc2ae77bdc4
+# ╟─e842c11a-81db-47f1-aa65-4d53ee4bfea5
 # ╟─6fa76137-73fc-47ea-927b-0ffed51149f7
 # ╟─cdcc36a8-888b-42e4-8721-18e183a3ae5e
 # ╟─724e4ff0-6dea-4a73-8708-0c886c98a8db
