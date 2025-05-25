@@ -35,7 +35,20 @@ using Distributions
 using CairoMakie, UnROOT, DataFramesMeta, LaTeXStrings, FHist, PrettyTables, StatsBase, ColorSchemes, PlutoUI, CSV
 
 # ╔═╡ 7d6e5825-c187-4d55-b877-1e1193190ff2
-include(scriptsdir("Params.jl"))
+include(srcdir("params/Params.jl"))
+
+# ╔═╡ 53f4db97-b7e8-4dcf-ac1a-9e7936a2824c
+html"""
+<style>
+  main {
+    max-width: 900px;
+	}
+
+	pluto-output {
+		font-size: 24px !important; 
+	}
+</style>
+"""
 
 # ╔═╡ 33db2852-a205-4a2c-8744-037f5b7a6a80
 html"<button onclick='present()'>present</button>"
@@ -76,25 +89,28 @@ md"""
 
 !!! note "Obtaining the background model"
 	To obtain the background model used in this analysis I performed a series of **simulations** of various background **sources** (identified mostly from NEMO-3). 
+
 """
 
-# ╔═╡ 781740e1-5f0c-4b99-834c-1ac6a75118b7
+# ╔═╡ 9862503d-1b79-49b3-b877-3f26bdd60372
 md"""
+
+
 # Simulation setup:
-1. Falaise version 5.1.5 
-2. Reconstruction pipeline: `MockCalibration -> ` **Cimrman** `-> ChargedParticleTracker -> GammaClusterizer -> SNCuts -> MiModule`
-3. Magnetic field **off**
-4. 8% FWHM energy resolution
-5. Foil geometry: `RealisticFlat`
+1. Falaise version 5.1.5  
+2. Reconstruction pipeline: `MockCalibration` → **Cimrman** → `ChargedParticleTracker` → `GammaClusterizer` → `SNCuts` → `MiModule`  
+3. Magnetic field **off**  
+4. 8% FWHM energy resolution  
+5. Foil geometry: `RealisticFlat`  
 
 # Data-cuts (using SNCuts)
+- 2 tracks  
+- 2 foil vertices  
+- 2 **distinct** associated calo-hits  
+-  $E_{sum} \in (300,\ 3500)$ keV  
+- max vertex distance on foil $r \leq 50$ mm  
+- ToF: $P_{int} \geq 4\%$ & $P_{ext} \leq 1\%$
 
-- 2 tracks
-- 2 foil vertices
-- 2 **distinct** associated calo-hits
--  $$E_{sum} \in (300, 3500)$$ keV
-- max vertex distance on foil $$r < 50$$ mm
-- ToF: $$P_{int} \geq 4%$$ & $$P_{ext} \leq 1%$$
 
 """
 
@@ -651,12 +667,13 @@ Based on research of angular distribution for the electrons, depending on which 
 """
 
 # ╔═╡ Cell order:
-# ╟─33db2852-a205-4a2c-8744-037f5b7a6a80
+# ╟─53f4db97-b7e8-4dcf-ac1a-9e7936a2824c
+# ╠═33db2852-a205-4a2c-8744-037f5b7a6a80
 # ╟─107241e3-a8b7-43af-b26f-b2b205f7e294
 # ╟─838099af-cd31-480e-8952-9eda9df9e10a
 # ╟─65b97922-2625-43a4-bf9f-622cce900bcf
 # ╟─4011c3d8-d298-40f1-9986-77e991a25152
-# ╟─781740e1-5f0c-4b99-834c-1ac6a75118b7
+# ╟─9862503d-1b79-49b3-b877-3f26bdd60372
 # ╟─4db07780-248f-4658-82a5-507ea65edb0b
 # ╟─16fbb9bb-d86b-433b-91fa-a12f8008eaa9
 # ╟─5099a914-3f46-4e86-9570-bc13f5d3ca80
@@ -690,11 +707,11 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╟─559c3769-c956-47e7-b5ea-07b866333104
 # ╟─b2a28a93-2524-43e3-a9fa-6ef30ac213af
 # ╟─8e5fa765-c8a9-4419-9e4f-c58a213be563
-# ╠═7da00dac-d0a8-4b77-973e-9e46e5fa964d
+# ╟─7da00dac-d0a8-4b77-973e-9e46e5fa964d
 # ╟─8fc9a87c-ec29-4028-a20f-9c8cdec4c866
 # ╟─9e7dbfe3-a38b-45ef-b6c6-74ca9c3392df
-# ╟─96f0e67c-16af-11f0-08a5-ffefdd2c8429
-# ╟─39a6343a-b95c-4ea4-98e2-83eab6d6c602
-# ╟─c38eeb3e-11c2-40d0-98cb-89711b799441
-# ╟─992a6366-86e0-4d00-ab9c-ac29190ff693
-# ╟─7d6e5825-c187-4d55-b877-1e1193190ff2
+# ╠═96f0e67c-16af-11f0-08a5-ffefdd2c8429
+# ╠═39a6343a-b95c-4ea4-98e2-83eab6d6c602
+# ╠═c38eeb3e-11c2-40d0-98cb-89711b799441
+# ╠═992a6366-86e0-4d00-ab9c-ac29190ff693
+# ╠═7d6e5825-c187-4d55-b877-1e1193190ff2
