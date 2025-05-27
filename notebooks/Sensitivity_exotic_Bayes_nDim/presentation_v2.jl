@@ -141,7 +141,7 @@ Emin = $(@bind Emin PlutoUI.Slider(300:100:3500, default=0; show_value=true)) ke
 
 Emax = $(@bind Emax PlutoUI.Slider(0:100:3500, default=3500; show_value=:true)) keV
 
-Thalf = $(@bind Thalf PlutoUI.Slider((1:10:1000)*1e22, default=1e24; show_value=:true)) yr
+Thalf = $(@bind Thalf PlutoUI.Slider((1:10:1000)*1e20, default=1e22; show_value=:true)) yr 
 """
 
 # ╔═╡ bad82399-f4f0-401c-acc7-b7f67155f27f
@@ -786,20 +786,21 @@ begin
 
 
     with_theme(theme_latexfonts()) do
-        f = Figure(size = (1200, 600), fontsize = 20)
+		
+        f = Figure(size = (800, 600), fontsize = 20)
         ax = Axis(
-            f[1,1], 
+            f[2,1], 
             # xlabel = analysisDict[:mode], 
             xlabel = L"$E_1 + E_2$ (keV)", 
             ylabel = L"counts / $17.5$kg.yr exposure / $100$ keV", 
             yscale = log10, 
             limits = (Emin, Emax, 1e-4, 1e6),
             # limits = (2500, 3500, 0, 3),
-            title = "Total background model\nsummed 2-electron energy"
+            # title = "Total background model\nsummed 2-electron energy"
         )
         
         colors = ColorSchemes.tol_vibrant
-        labels = [b.isotopeName for b in background]
+        labels = [L"2\nu\beta\beta", L"^{214}Bi", "radon", L"^{208}Tl", L"^{40}K", L"^{234m}Pa"]
         st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
         errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
         
@@ -811,7 +812,9 @@ begin
 
         ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
         ax.xticks = 0:500:3500
-        Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 3)
+        Legend(f[1,1], ax, orientation=:horizontal, fontsize=8, nbanks = 1, tellwidth = true)
+		Label(f[0,1], "Total background model\nsummed 2-electron energy", tellwidth = false)
+		
         f
     end
 end
@@ -877,11 +880,13 @@ end
 begin
 	vars = [
 	    "phi", 
-	    "sumE"
+	    "sumE",
+		"sameSide"
 	]
 	bins = (
 	    phi = (0,180),
-	    sumE = (0, 3500)
+	    sumE = (0, 3500),
+		sameSide = (0,1)
 	)
 	processesND = load_ndim_processes("fal5_TKrec", bins, vars)
 	nothing
@@ -1127,6 +1132,12 @@ let
 	f
 end
 
+# ╔═╡ 529ffaa0-6823-421d-8d04-aaf4616344e7
+
+
+# ╔═╡ 4fac5ba4-861d-4bbd-884c-9a5a0778777c
+
+
 # ╔═╡ Cell order:
 # ╟─1a041346-47c7-41a4-a30c-5710a5dd8786
 # ╟─33db2852-a205-4a2c-8744-037f5b7a6a80
@@ -1193,14 +1204,16 @@ end
 # ╟─e2e4a637-dc3e-4cd5-a156-9cd0ebe56495
 # ╟─5583f1a0-8383-42d8-88fb-e3d6e806954c
 # ╟─a1dca343-7819-4ed2-9639-067805c17085
-# ╟─87f06108-c73d-4509-8e97-4f1ea07dd484
+# ╠═87f06108-c73d-4509-8e97-4f1ea07dd484
 # ╟─8fc9a87c-ec29-4028-a20f-9c8cdec4c866
 # ╟─9e7dbfe3-a38b-45ef-b6c6-74ca9c3392df
 # ╟─96f0e67c-16af-11f0-08a5-ffefdd2c8429
 # ╟─39a6343a-b95c-4ea4-98e2-83eab6d6c602
-# ╟─c38eeb3e-11c2-40d0-98cb-89711b799441
-# ╟─992a6366-86e0-4d00-ab9c-ac29190ff693
-# ╟─7d6e5825-c187-4d55-b877-1e1193190ff2
-# ╟─8789bf21-3712-404c-b047-b0304d7917da
-# ╟─1f4ae42b-61be-44ed-bb82-60e7cfb582ba
-# ╟─c8d16dc1-b06a-4b61-b7cc-0304dadfbcb8
+# ╠═c38eeb3e-11c2-40d0-98cb-89711b799441
+# ╠═992a6366-86e0-4d00-ab9c-ac29190ff693
+# ╠═7d6e5825-c187-4d55-b877-1e1193190ff2
+# ╠═8789bf21-3712-404c-b047-b0304d7917da
+# ╠═1f4ae42b-61be-44ed-bb82-60e7cfb582ba
+# ╠═c8d16dc1-b06a-4b61-b7cc-0304dadfbcb8
+# ╠═529ffaa0-6823-421d-8d04-aaf4616344e7
+# ╠═4fac5ba4-861d-4bbd-884c-9a5a0778777c
