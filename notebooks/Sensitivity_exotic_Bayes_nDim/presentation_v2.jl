@@ -119,14 +119,14 @@ md"""
 # Background sources
 
 Simulated 100M events each:
-1.  $$2\nu\beta\beta$$  --> $$T^{2\nu}_{1/2} =$$ $(round(SNparams["SeThalf2nu"] / (3600*24*365), sigdigits =2)) yr
-2.  $$^{214}$$Bi  --> A = $(round(BkgActivityParams[:Bi214_foil_bulk], sigdigits = 3)) $$Bq/kg$$
-2.  $$^{208}$$Tl  --> A = $(round(BkgActivityParams[:Tl208_foil_bulk], sigdigits = 3)) $$Bq/kg$$
-2.  $$^{40}$$K  --> A = $(round(BkgActivityParams[:K40_foil_bulk], sigdigits = 3)) $$Bq/kg$$
-2.  $$^{234m}$$Pa  --> A = $(round(BkgActivityParams[:Pa234m_foil_bulk], sigdigits = 3)) $$Bq/kg$$
-2.  Radon  --> A = $(round(BkgActivityParams[:Bi214_wire_surface], sigdigits = 3)) $$Bq/m^3$$
+1.  $$2\nu\beta\beta$$  --> $$T^{2\nu}_{1/2} = 9.4 \times 10^{19}$$ yr
+2.  $$^{214}$$Bi  --> A = $$10 ~\mu Bq/kg$$
+2.  $$^{208}$$Tl  --> A = $$2 ~\mu Bq/kg$$
+2.  $$^{40}$$K  --> A = $$58 ~mBq/kg$$
+2.  $$^{234m}$$Pa  --> A = $$17 ~mBq/kg$$
+2.  Radon  --> A = $$150 \mu Bq/m^3$$
 
-🤔 Neutron data will be added later. I received the files from Sam but haven't yet been able to add them to my framework. 🤭
+🤔 Neutron data is obtained from Sam but not used everywhere cause I wasn't able to do it properly in time. 🤭
 
 """
 
@@ -156,7 +156,8 @@ md"""
 | Tl208            | 1.0227±0.0034       |
 | K40              | 12155.0±63.0        |
 | Pa234m           | 15578.0±39.0        |
-| total            | 115417.0±80.0       |
+| neutron          | 5.91                |
+| total            | 115422.91±80.0       |
 
 
 !!! update " "
@@ -165,7 +166,7 @@ md"""
       - Bad for 0nu
 	- K40 and Pa234m relevant **only** at lower energies 
 	- Radon will highly depend on whether or not we have anti-Rn
-	- For now, no neutron data
+	- For now, "simple" neutron data
 
 """
 
@@ -533,28 +534,36 @@ begin
 	p_best = [argmax(posterior)/length(posterior), 1-argmax(posterior)/length(posterior)]
 	
 	let 
-	f = Figure(size = (1200, 700), fontsize = 24)
+	f = Figure(size = (1200, 900), fontsize = 24)
 	ax = Axis(f[1,1:2], xlabel = "arbitrary energy", ylabel = "counts")
 	xs = binedges(h1_sig) |> midpoints |> collect
 	stairs!(ax, h1_sig + h1_bkg, label = "data", linewidth = 4)
-	p = lines!(ax, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.2, label = "signal", color = :blue, linewidth = 4)
-	lines!(ax,  xs, x-> pdf(Exponential(lambda_bkg), x) .* n .* 0.2, label = "background", color= :red, linewidth = 4)
+	# p = lines!(ax, xs, x-> pdf(Normal(μ_sig, 1.0), x) .* n .* 0.2, label = "signal", color = :blue, linewidth = 4)
+	# lines!(ax,  xs, x-> pdf(Exponential(lambda_bkg), x) .* n .* 0.2, label = "background", color= :red, linewidth = 4)
 	lines!(ax,  xs, x-> fit_f(x, p_best) .* n .* 0.2, label = "fit", color= :purple, linewidth = 4)
 	axislegend(ax)
 
 
 	a =Axis(f[3,1:2], xlabel = L"\Theta", ylabel = L"pdf($\Theta_i$| data)", title= "posterior distribution")
-	p = lines!(a, ps_grid, posterior, label = L"\Theta_{sig}")
-	lines!(a, 1.0 .- ps_grid, posterior, label = L"\Theta_{bkg}")
-	axislegend(a)
+	p = lines!(a, ps_grid, posterior, label = L"\Theta_{sig}", color = :blue)
+	band!(a, ps_grid, zeros(length(ps_grid)), posterior, color = (:blue, 0.3))
+		
+	lines!(a, 1.0 .- ps_grid, posterior, label = L"\Theta_{bkg}", color = :red)
+	band!(a, 1.0 .- ps_grid, zeros(length(ps_grid)), posterior, color = (:red, 0.3))
+		
+	scatter!(a, argmax(posterior)/length(ps_grid), maximum(posterior), label = "MAP value = $(argmax(posterior)/length(ps_grid))", color = :black, markersize = 18)
+		
+	axislegend(a, position = :cb)
 
 	a_prior = Axis(f[2,2], title = "prior signal")
-	lines!(a_prior, ps_grid, x-> pdf(prior_signal, x))
+	lines!(a_prior, ps_grid, x-> pdf(prior_signal, x), linewidth = 4)
+	band!(a_prior, ps_grid, zeros(length(ps_grid)), map(x-> pdf(prior_signal, x), ps_grid), color = (:blue, 0.6))
+		
 	
 	a_ll = Axis(f[2,1], title = "log likelihood", limits = (nothing, nothing, maximum(log_likelihood_vector)*1.5,maximum(log_likelihood_vector)*0.9))
 
 	lines!(a_ll, ps_grid, log_likelihood_vector, label = "log_likelihood")
-	scatter!(a_ll, argmax(log_likelihood_vector)/length(ps_grid), maximum(log_likelihood_vector), label = "mle value = $(argmax(log_likelihood_vector)/length(ps_grid))", color = :black)
+	scatter!(a_ll, argmax(log_likelihood_vector)/length(ps_grid), maximum(log_likelihood_vector), label = "mle value = $(argmax(log_likelihood_vector)/length(ps_grid))", color = :black, markersize = 18)
 	axislegend(a_ll)
 		
 	f
@@ -748,6 +757,15 @@ Based on research of angular distribution for the electrons, depending on which 
 # ╔═╡ 8789bf21-3712-404c-b047-b0304d7917da
 
 
+# ╔═╡ cc530190-752b-46a9-9674-200a16a7ba62
+begin
+	hist_processes = load_hist_processes(
+	    "fal5_8perc_Boff_TKrec_evis_bcu_J38",  
+	    "sumE"
+	)
+	nothing
+end
+
 # ╔═╡ 1f4ae42b-61be-44ed-bb82-60e7cfb582ba
 begin
 	files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
@@ -779,29 +797,31 @@ begin
 end
 
 # ╔═╡ de64766d-fda7-4a0e-bc7c-80bb90554bac
-begin
+let
+	tot_bkg = vcat(background, get_process("neutron_external", hist_processes, "current_shielding"))
 	# Total background model:
-    bkg_hists = [restrict(get_bkg_counts_1D(b), Emin, Emax) for b in background]
+    bkg_hists = [restrict(get_bkg_counts_1D(b), Emin, Emax) for b in tot_bkg]
     sig_hist = restrict(get_bkg_counts_1D(signal), Emin, Emax)
 
 
     with_theme(theme_latexfonts()) do
 		
-        f = Figure(size = (800, 600), fontsize = 20)
+        f = Figure(size = (1400, 600), fontsize = 20)
         ax = Axis(
-            f[2,1], 
+            f[1,2], 
             # xlabel = analysisDict[:mode], 
             xlabel = L"$E_1 + E_2$ (keV)", 
             ylabel = L"counts / $17.5$kg.yr exposure / $100$ keV", 
             yscale = log10, 
             limits = (Emin, Emax, 1e-4, 1e6),
             # limits = (2500, 3500, 0, 3),
-            # title = "Total background model\nsummed 2-electron energy"
+            title = "log-scale",
+			
         )
         
         colors = ColorSchemes.tol_vibrant
-        labels = [L"2\nu\beta\beta", L"^{214}Bi", "radon", L"^{208}Tl", L"^{40}K", L"^{234m}Pa"]
-        st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
+        labels = [L"2\nu\beta\beta", L"^{214}Bi", "radon", L"^{208}Tl", L"^{40}K", L"^{234m}Pa", "neutron"]
+        hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
         errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
         
         for i=2:length(bkg_hists)
@@ -812,8 +832,30 @@ begin
 
         ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
         ax.xticks = 0:500:3500
-        Legend(f[1,1], ax, orientation=:horizontal, fontsize=8, nbanks = 1, tellwidth = true)
-		Label(f[0,1], "Total background model\nsummed 2-electron energy", tellwidth = false)
+
+		ax2 = Axis(
+            f[1,1], 
+            # xlabel = analysisDict[:mode], 
+            xlabel = L"$E_1 + E_2$ (keV)", 
+            ylabel = L"counts / $17.5$kg.yr exposure / $100$ keV", 
+            limits = (Emin, Emax, 0, 1.3e4),
+            # limits = (2500, 3500, 0, 3),
+            title = "lin-scale"
+        )
+        hist!(ax2, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
+        errorbars!(ax2, sum(bkg_hists), color = :black, whiskerwidth = 7)
+        
+        for i=2:length(bkg_hists)
+            hist!(ax2, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
+            
+        end
+        lines!(ax2, midpoints(binedges(sig_hist)), (bincounts(sig_hist) .* (1e24/Thalf)) .+ bincounts(sum(bkg_hists)), label = L"0\nu\beta\beta", color = :red, linewidth = 3.5)
+
+        # ax2.yticks = ([1e-4, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
+        ax2.xticks = 0:500:3500
+		
+        Legend(f[2,1:2], ax, orientation=:horizontal, fontsize=8, nbanks = 1, tellwidth = true)
+		Label(f[0,1:2], "Total background model\nsummed 2-electron energy", tellwidth = false)
 		
         f
     end
@@ -824,13 +866,13 @@ let
 	f = Figure(size = (1200, 500), fontsize = 20)
 	a1 = Axis(f[1,1], xlabel = "energy", ylabel = "a.u.", title = "signal vs background")
 	hsig = Hist1D(signal.dataVector; binedges = signal.bins) |> normalize
-	h1 = stairs!(a1, hsig, label = "signal")
+	h1 = stairs!(a1, hsig, label = "signal", linewidth = 3)
 
 
 
 	hbkg = Hist1D(background[1].dataVector; binedges = background[1].bins) |> normalize
 	hbkg.bincounts .*= 10
-	h2 = stairs!(a1, hbkg, label = "background")
+	h2 = stairs!(a1, hbkg, label = "background", linewidth = 3)
 
 	xband_min = 2700
 	xband_max = 3100
@@ -1149,7 +1191,7 @@ end
 # ╟─4db07780-248f-4658-82a5-507ea65edb0b
 # ╟─16fbb9bb-d86b-433b-91fa-a12f8008eaa9
 # ╟─5099a914-3f46-4e86-9570-bc13f5d3ca80
-# ╟─de64766d-fda7-4a0e-bc7c-80bb90554bac
+# ╠═de64766d-fda7-4a0e-bc7c-80bb90554bac
 # ╟─bad82399-f4f0-401c-acc7-b7f67155f27f
 # ╟─c12114cf-0b28-4579-8bbb-147e8acc6f33
 # ╟─4a2ca349-25ff-4a16-a4cf-075767700240
@@ -1213,6 +1255,7 @@ end
 # ╠═992a6366-86e0-4d00-ab9c-ac29190ff693
 # ╠═7d6e5825-c187-4d55-b877-1e1193190ff2
 # ╠═8789bf21-3712-404c-b047-b0304d7917da
+# ╠═cc530190-752b-46a9-9674-200a16a7ba62
 # ╠═1f4ae42b-61be-44ed-bb82-60e7cfb582ba
 # ╠═c8d16dc1-b06a-4b61-b7cc-0304dadfbcb8
 # ╠═529ffaa0-6823-421d-8d04-aaf4616344e7
