@@ -23,33 +23,38 @@ vars = [
     # "dy", 
     # "dz",
     # "sameSide"
+    "Pint",
+    "Pext"
     ]
 
 bins = (
     phi = (0,180),
-    sumE = (0, 3500),
+    sumE = (300, 3500),
     # maxE = (0, 3500),
     # minE = (0, 3500),
-    r = (0, 100),
+    r = (0, 200),
     # dy = (-100, 100),
     # dz = (-100, 100),
     # sameSide = (0, 1)
+    Pint = (0, 1),
+    Pext = (0, 1)
 )
 
-processes = load_ndim_processes("fal5_TKrec", bins, vars)
+processes = load_ndim_processes("fal5_TKrec_J40", bins, vars)
 
-# signal = get_process("bb0nuM1_foil_bulk", processes) |> first
-signal = get_process("RH037_foil_bulk", processes) |> first
+signal = get_process("bb0nu_foil_bulk", processes) |> first
+# signal = get_process("RH037_foil_bulk", processes) |> first
 # signal = get_process("bb0nuM2_foil_bulk", processes)
 
 # declare background processes
 background = [
     get_process("bb_foil_bulk", processes) |> first,
-    get_process("Bi214_foil_bulk", processes) |> first,
+    # get_process("Bi214_foil_bulk", processes) |> first,
     get_process("Bi214_wire_surface", processes) |> first,
     get_process("Tl208_foil_bulk", processes) |> first,
-    get_process("K40_foil_bulk", processes) |> first,
-    get_process("Pa234m_foil_bulk", processes) |> first,
+    # get_process("K40_foil_bulk", processes) |> first,
+    # get_process("Pa234m_foil_bulk", processes) |> first,
+    get_process("Bi214_PMT_glass_bulk", processes) |> first,
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -61,9 +66,11 @@ set_nTotalSim!( signal, 1e8 )
 set_nTotalSim!( background[1], 1e8 )
 set_nTotalSim!( background[2], 1e8 )
 set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 1e8 )
-set_nTotalSim!( background[5], 1e8 )
-set_nTotalSim!( background[6], 1e8 )
+set_nTotalSim!( background[4], 5e8 )
+# set_nTotalSim!( background[5], 1e8 )
+# set_nTotalSim!( background[6], 1e8 )
+
+set_activity!(background[4], 140 / 286 * 0.004) 
 
 α= 1.64485362695147
 
@@ -95,10 +102,10 @@ options = Options(;
     f_tol = 1e-1,
     f_tol_rel = 1e-1,
     f_tol_abs = 1e-1,
-    time_limit = 60*60*1.0,
+    time_limit = 60*60*4.0,
     parallel_evaluation = true,
     verbose = true,
-    iterations = 15,
+    # iterations = 15,
     store_convergence = true
 )
 
@@ -120,7 +127,7 @@ result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
 function get_best_ROI_ND(res, process)
     best = best_candidate(res)
     best_roi = NamedTuple(
-        k => (round(best[i]), round(best[i+1])) 
+        k => (best[i], best[i+1]) 
         for (i,k) in zip(1:2:length(process.bins)*2-1, keys(process.bins))
     )
     return best_roi
@@ -129,7 +136,7 @@ end
 function get_best_ROI_ND(res::Vector{<:Real}, process)
     best = res
     best_roi = NamedTuple(
-        k => (round(best[i]), round(best[i+1])) 
+        k => (best[i], best[i+1]) 
         for (i,k) in zip(1:2:length(process.bins)*2-1, keys(process.bins))
     )
     return best_roi
@@ -138,18 +145,19 @@ end
 best = get_best_ROI_ND(res, signal)
 get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
 
-res2 = float.([10,175,2710,3350,0,50])
-best2 = get_best_ROI_ND(res2, signal)
-get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=1.43)
+# res2 = float.([10,175,2710,3350,0,50])
+# best2 = get_best_ROI_ND(res2, signal)
+# get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=1.43)
 
 
 begin
-    res2 = float.([30,175, 0, 3200, 0, 50])
+    res2 = float.([0, 180, 300, 3500, 0, 50, 0.04, 1.0, 0, 0.01])
     best2 = get_best_ROI_ND(res2, signal)
-    get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=1.2)
+    get_sensitivityND(SNparams, α, vcat(signal, background[4]), best2; approximate="table")
+
 end
 
 
-# f_calls, best_f_value = convergence(result)
-# plot(f_calls, best_f_value,)
+# # f_calls, best_f_value = convergence(result)
+# # plot(f_calls, best_f_value,)
 

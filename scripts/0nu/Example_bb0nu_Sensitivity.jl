@@ -64,7 +64,7 @@ analysisDict = Dict(
 )
 
 # files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
-files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
+files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J40"
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 #  1. dir::String -> the name of the directory where the root files are stored
@@ -91,31 +91,32 @@ for c in ["current_shielding"]
     # declare background processes
     global background = [
         get_process("bb_foil_bulk", data_processes) |> first,
-        get_process("Bi214_foil_bulk", data_processes) |> first,
+        # get_process("Bi214_foil_bulk", data_processes) |> first,
         get_process("Bi214_wire_surface", data_processes) |> first,
         get_process("Tl208_foil_bulk", data_processes) |> first,
-        get_process("K40_foil_bulk", data_processes) |> first,
-        get_process("Pa234m_foil_bulk", data_processes) |> first,
-        get_process("neutron_external", hist_processes, analysisDict[:neutron_config])
+        # get_process("K40_foil_bulk", data_processes) |> first,
+        # get_process("Pa234m_foil_bulk", data_processes) |> first,
+        # get_process("neutron_external", hist_processes, analysisDict[:neutron_config])
+        get_process("Bi214_PMT_glass_bulk", data_processes) |> first
     ]
 
-    labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa"]
+    labels = [L"$2\nu\beta\beta$", L"Radon $$", L"$^{208}$Tl", "external"]
     # labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons (5-sided)"]
     # labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl"]
 
-    if(analysisDict[:neutron_config] == "full_shielding")
-        labels[end] = "neutrons (6-sided)"
-    elseif (analysisDict[:neutron_config] == "iron_shielding")
-        labels[end] = "neutrons (0-sided)"
-    elseif (analysisDict[:neutron_config] == "no_french_wall_shielding")
-        labels[end] = "neutrons (5-sided)"
-    elseif (analysisDict[:neutron_config] == "italian_shielding")
-        labels[end] = "neutrons (5-sided)"
-    elseif (analysisDict[:neutron_config] == "current_shielding")
-        labels[end] = "neutrons (4-sided)"
-    else
-        labels[end] = "neutrons"
-    end
+    # if(analysisDict[:neutron_config] == "full_shielding")
+    #     labels[end] = "neutrons (6-sided)"
+    # elseif (analysisDict[:neutron_config] == "iron_shielding")
+    #     labels[end] = "neutrons (0-sided)"
+    # elseif (analysisDict[:neutron_config] == "no_french_wall_shielding")
+    #     labels[end] = "neutrons (5-sided)"
+    # elseif (analysisDict[:neutron_config] == "italian_shielding")
+    #     labels[end] = "neutrons (5-sided)"
+    # elseif (analysisDict[:neutron_config] == "current_shielding")
+    #     labels[end] = "neutrons"
+    # else
+    #     labels[end] = "neutrons"
+    # end
 
     # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
     set_signal!(background[1], false)
@@ -134,9 +135,9 @@ for c in ["current_shielding"]
     set_nTotalSim!( background[1], 1e8 )
     set_nTotalSim!( background[2], 1e8 )
     set_nTotalSim!( background[3], 1e8 )
-    set_nTotalSim!( background[4], 1e8 )
-    set_nTotalSim!( background[5], 1e8 )
-    set_nTotalSim!( background[6], 1e8 )
+    set_nTotalSim!( background[4], 5e8 )
+    # set_nTotalSim!( background[5], 1e8 )
+    # set_nTotalSim!( background[6], 1e8 )
 
     println("Processes initialized.")
 
@@ -216,43 +217,43 @@ for c in ["current_shielding"]
 
 
     # Total background model:
-    # bkg_hists = get_bkg_counts_1D.(background)
-    # sig_hist = get_bkg_counts_1D(signal)
+    bkg_hists = get_bkg_counts_1D.(background)
+    sig_hist = get_bkg_counts_1D(signal)
 
 
-    # with_theme(theme_latexfonts()) do
-    #     f = Figure()
-    #     ax = Axis(
-    #         f[1,1], 
-    #         # xlabel = analysisDict[:mode], 
-    #         xlabel = L"$E_1 + E_2$ (keV)", 
-    #         ylabel = L"counts / $17.5$kg.yr exposure / $100$ keV", 
-    #         yscale = log10, 
-    #         limits = (300, 3500, 1e-4, 1e6),
-    #         # limits = (2500, 3500, 0, 3),
-    #         title = "Total background model\nsummed 2-electron energy"
-    #     )
+    with_theme(theme_latexfonts()) do
+        f = Figure()
+        ax = Axis(
+            f[1,1], 
+            # xlabel = analysisDict[:mode], 
+            xlabel = L"$E_1 + E_2$ (keV)", 
+            ylabel = L"counts / $17.5$kg.yr exposure / $100$ keV", 
+            yscale = log10, 
+            limits = (300, 3500, 1e-4, 1e6),
+            # limits = (2500, 3500, 0, 3),
+            title = "Total background model\nsummed 2-electron energy"
+        )
         
-    #     colors = colorschemes[:tol_bright]
-    #     # labels = [b.isotopeName for b in background]
-    #     # labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
-    #     st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
-    #     errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
+        colors = colorschemes[:Set2_7]
+        # labels = [b.isotopeName for b in background]
+        # labels[end] = "neutron_external\n$(analysisDict[:neutron_config])"
+        st = hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
+        errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
         
-    #     for i=2:length(bkg_hists)
-    #         hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
-    #         # errorbars!(ax, sum(bkg_hists[i:end]), color = :black, whiskerwidth = 7)
+        for i=2:length(bkg_hists)
+            hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
+            # errorbars!(ax, sum(bkg_hists[i:end]), color = :black, whiskerwidth = 7)
             
-    #     end
-    #     # lines!(ax, midpoints(binedges(sig_hist)), bincounts(sig_hist), label = signal.isotopeName, color = :red, linestyle = :dash, linewidth = 2.5)
-    #     # errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
+        end
+        # lines!(ax, midpoints(binedges(sig_hist)), bincounts(sig_hist), label = signal.isotopeName, color = :red, linestyle = :dash, linewidth = 2.5)
+        # errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
 
-    #     ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
-    #     ax.xticks = 0:500:3500
-    #     Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 2)
-    #     saveName = savename("background_model", analysisDict, "png")
-    #     wsave(plotsdir("LSM_report", "background_model", analysisDict[:mode], saveName), f, px_per_unit = 6)
-    #     f
+        ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
+        ax.xticks = 0:500:3500
+        Legend(f[2,1], ax, orientation=:horizontal, fontsize=8, nbanks = 2)
+        saveName = savename("background_model", analysisDict, "png")
+        wsave(plotsdir("for_Will", analysisDict[:mode], saveName), f, px_per_unit = 6)
+        f
     end
 
 
@@ -286,7 +287,7 @@ for c in ["current_shielding"]
     # end
 
     signals = [
-        get_process("bb0nu_foil_bulk", data_processes),
+        get_process("bb0nu_foil_bulk", data_processes) |> first,
         # get_process("bb0nuM1_foil_bulk", data_processes),
         # get_process("bb0nuM2_foil_bulk", data_processes)
     ]
@@ -296,11 +297,12 @@ for c in ["current_shielding"]
     # save_sensitivity_table(signals, background, "LSM_report/sensitivityTables/sumE")
 
     for s in signals
-        save_background_table(s, background, "LSM_report/backgroundTables/sumE"; labels=labels, ROI = (0, 3500))
+        # save_background_table(s, background, "for_Will/backgroundTables/sumE"; labels=labels, ROI = (0, 3500))
+        save_background_table(s, background, "for_Will/backgroundTables/sumE"; labels=labels)
     end
 end;
 
-begin
+# begin
     global α = 1.64485362695147
     global t = range(0, 5, 100)
 
@@ -337,16 +339,16 @@ begin
     ### bb0nuM1_foil_bul
     # set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface])
 
-    # signal = get_process("bb0nuM1_foil_bulk", data_processes)
-    # set_nTotalSim!( signal, 1e8 )
+    signal = get_process("bb0nuM1_foil_bulk", data_processes) |> first
+    set_nTotalSim!( signal, 1e8 )
 
     # background[end] =  get_process("neutron_external", hist_processes, "current_shielding")
 
-    # t_current_nu0M1 = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams
-    # )
+    t_current_nu0M1 = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
 
     # #################
     # background[end] = get_process("neutron_external", hist_processes, "iron_shielding")
@@ -424,17 +426,17 @@ begin
 
     # #### M2
     # set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface])
-    # signal = get_process("bb0nuM2_foil_bulk", data_processes)
+    signal = get_process("bb0nuM2_foil_bulk", data_processes) |> first
     # background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
     # # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-    # set_nTotalSim!(signal, 1e8 )
+    set_nTotalSim!(signal, 1e8 )
 
-    # t_current_nu0M2 = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams
-    # )
+    t_current_nu0M2 = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams
+    )
 
     # #################
 
@@ -519,7 +521,7 @@ begin
     # set_nTotalSim!( signal, 0.98e8 )
 
 
-    background[end] = get_process("neutron_external", hist_processes, "current_shielding")
+    # background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
     t_current_nu0 = get_sensitivities_vs_time(
         signal,
@@ -585,50 +587,50 @@ begin
     #     neutron_bkg = 0.01*500
     # )
 
-    let
-        f = Figure(size=(700, 500), fontsize = 16)
-        a = Axis(
-            f[1,1], 
-            xlabel = "exposure (kg.yr)", 
-            ylabel = "sensitivity (yr)", 
-            limits= (0,5*6.11, nothing, nothing),
-            title = L"Sensitivity for $0\nu\beta\beta$ at 90% CL"
-            )
-        # p1 = lines!(a, t, t_full_nu0, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
-        # lines!(a, t, t_italian_nu0, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
-        # p2 = lines!(a, t, t_current_nu0, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
-        p2 = lines!(a, t .* 6.11, t_current_nu0, label = "SuperNEMO sensitivity estimate", linewidth = 4.5)#, linestyle=(:dash, :dense))
-        # lines!(a, t, t_iron_nu0, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
-        # p3 = lines!(a, t, t_full_nu0_wo, label = "6-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[1])
-        # p4 =lines!(a, t, t_current_nu0_wo, label = "4-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[2])
-        # h= hlines!(a, [4.6e24], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
-        axislegend(a, position = :lt, patchsize = (20, 7), patchlabelgap = 6, nbanks = 2)
-        # Legend(
-        #     f[1,1], [h], ["CUPID-0 90% CL"], fontsize=12, 
-        #     orientation=:horizontal, tellheight = false, tellwidth = false,
-        #     margin = (-150, 0, -350, 10),
-        # )
-        # Legend(
-        #     f[1,1], [p1, p2], ["6-sided", "4-sided"], "With Anti-Rn", fontsize=12, 
-        #     tellheight = false, tellwidth = false,
-        #     margin = (150, 0, -300, 10),
-        # )
-        # Legend(
-        #     f[1,1], [p3, p4], ["6-sided", "4-sided"], "Without Anti-Rn", fontsize=12, 
-        #     tellheight = false, tellwidth = false,
-        #     margin = (420, 0, -300, 10),
-        # )
-        saveName = savename("sensitivity_in_time_nu0", analysisDict, "png")
-        safesave(plotsdir("for_Will", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
-        f 
-    end
+    # let
+    #     f = Figure(size=(700, 500), fontsize = 16)
+    #     a = Axis(
+    #         f[1,1], 
+    #         xlabel = "exposure (kg.yr)", 
+    #         ylabel = "sensitivity (yr)", 
+    #         limits= (0,5*6.11, nothing, nothing),
+    #         title = L"Sensitivity for $0\nu\beta\beta$ at 90% CL"
+    #         )
+    #     # p1 = lines!(a, t, t_full_nu0, label = "6-sided", linewidth = 2.5)#, linestyle=(:dot, :dense))
+    #     # lines!(a, t, t_italian_nu0, label = "5-sided", linewidth = 2.5)#, linestyle=(:dashdotdot, :dense))
+    #     # p2 = lines!(a, t, t_current_nu0, label = "4-sided", linewidth = 2.5)#, linestyle=(:dash, :dense))
+    #     p2 = lines!(a, t .* 6.11, t_current_nu0, label = "SuperNEMO sensitivity estimate", linewidth = 4.5)#, linestyle=(:dash, :dense))
+    #     # lines!(a, t, t_iron_nu0, label = "0-sided", linewidth = 2.5)#, linestyle=(:dashdot, :dense))
+    #     # p3 = lines!(a, t, t_full_nu0_wo, label = "6-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[1])
+    #     # p4 =lines!(a, t, t_current_nu0_wo, label = "4-sided w/o Anti-Rn factory", linewidth = 2.5, linestyle=(:dash, :dense), color = Makie.wong_colors()[2])
+    #     # h= hlines!(a, [4.6e24], color = :black, linestyle = :solid, label = "CUPID-0 90% CL", linewidth = 2)
+    #     axislegend(a, position = :lt, patchsize = (20, 7), patchlabelgap = 6, nbanks = 2)
+    #     # Legend(
+    #     #     f[1,1], [h], ["CUPID-0 90% CL"], fontsize=12, 
+    #     #     orientation=:horizontal, tellheight = false, tellwidth = false,
+    #     #     margin = (-150, 0, -350, 10),
+    #     # )
+    #     # Legend(
+    #     #     f[1,1], [p1, p2], ["6-sided", "4-sided"], "With Anti-Rn", fontsize=12, 
+    #     #     tellheight = false, tellwidth = false,
+    #     #     margin = (150, 0, -300, 10),
+    #     # )
+    #     # Legend(
+    #     #     f[1,1], [p3, p4], ["6-sided", "4-sided"], "Without Anti-Rn", fontsize=12, 
+    #     #     tellheight = false, tellwidth = false,
+    #     #     margin = (420, 0, -300, 10),
+    #     # )
+    #     saveName = savename("sensitivity_in_time_nu0", analysisDict, "png")
+    #     safesave(plotsdir("for_Will", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
+    #     f 
+    # end
 
 
     ## RH L
     # set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface])
 
-    # signal = get_process("bb0nu_foil_bulk", data_processes)
-    # set_nTotalSim!( signal, 0.98e8 )
+    signal = get_process("bb0nu_foil_bulk", data_processes) |> first
+    set_nTotalSim!( signal, 1e8 )
 
     # background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
@@ -641,12 +643,12 @@ begin
 
     # background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
-    # t_current_RH_L = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams;
-    #     effFactor = 0.489
-    # )
+    t_current_RH_L = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.489
+    )
 
     # ### Adjust radon activity
     # set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface]*100.0)
@@ -716,8 +718,8 @@ begin
     # # ## RH E
 
     # set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface])
-    # signal = get_process("bb0nu_foil_bulk", data_processes)
-    # set_nTotalSim!( signal, 0.98e8 )
+    signal = get_process("bb0nu_foil_bulk", data_processes) |> first
+    set_nTotalSim!( signal, 1e8 )
 
     # background[end] = get_process("neutron_external", hist_processes, "full_shielding")
 
@@ -730,12 +732,12 @@ begin
 
     # background[end] = get_process("neutron_external", hist_processes, "current_shielding")
 
-    # t_current_RH_e = get_sensitivities_vs_time(
-    #     signal,
-    #     background,
-    #     SNparams;
-    #     effFactor = 0.888
-    # )
+    t_current_RH_e = get_sensitivities_vs_time(
+        signal,
+        background,
+        SNparams;
+        effFactor = 0.888
+    )
 
     # set_activity!(background[3], BkgActivityParams[:Bi214_wire_surface]*100.0)
     # background[end] = get_process("neutron_external", hist_processes, "full_shielding")
@@ -796,7 +798,7 @@ begin
     #     safesave(plotsdir("LSM_report", "sensitivity_over_time", analysisDict[:mode], saveName), f, px_per_unit = 6)
     #     f 
     # end
-end
+# end
 
 
 # analysisDictSingle = Dict(
@@ -919,3 +921,52 @@ end
 #     save_background_table(signal, backgroundSingle, "LSM_report/backgroundTables/singleE/0_1000keV_ROI"; analysisDict = analysisDictSingle, ROI = (0, 1000))
 
 # end
+
+
+
+using CSV
+
+dff = DataFrame(time = t, 
+                t12_nu0M1 = t_current_nu0M1, 
+                t12_nu0M2 = t_current_nu0M2, 
+                t12_nu0 = t_current_nu0,
+                t12_RH_e = t_current_RH_e,
+                t12_RH_L = t_current_RH_L
+                )
+
+open("sensitivities.csv", "w") do io
+    CSV.write(io, dff)
+end
+
+
+ROI_a, ROI_b = 300, 3500
+
+bin_counts = [bincounts(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)]
+bin_errs = [sqrt.(sumw2(restrict(b, ROI_a, ROI_b))) for b in get_bkg_counts_1D.(background)]
+bin_edges = binedges(restrict(get_bkg_counts_1D(signal), ROI_a, ROI_b))[1:end-1] |> collect
+
+dfff = DataFrame(
+    bin_edges = bin_edges,
+    bin_counts_bb = bin_counts[1],
+    bin_counts_Bi214 = bin_counts[2],
+    bin_counts_Bi214_wire = bin_counts[3],
+    bin_counts_Tl208 = bin_counts[4],
+    bin_counts_K40 = bin_counts[5],
+    bin_counts_Pa234m = bin_counts[6],
+    bin_counts_neutrons = bin_counts[7],
+    bin_errs_bb = bin_errs[1],
+    bin_errs_Bi214 = bin_errs[2],
+    bin_errs_Bi214_wire = bin_errs[3],
+    bin_errs_Tl208 = bin_errs[4],
+    bin_errs_K40 = bin_errs[5],
+    bin_errs_Pa234m = bin_errs[6],
+    bin_errs_neutrons = bin_errs[7],
+)
+
+open("background_counts_per_bin_per_process.csv", "w") do io
+    CSV.write(io, dfff)
+end
+
+bkgs = [sum(bincounts(restrict(b, ROI_a, ROI_b))) ± sqrt(sum(sumw2(restrict(b, ROI_a, ROI_b)))) for b in get_bkg_counts_1D.(background)]
+
+

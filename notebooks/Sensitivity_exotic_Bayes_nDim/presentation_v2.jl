@@ -141,7 +141,7 @@ Emin = $(@bind Emin PlutoUI.Slider(300:100:3500, default=0; show_value=true)) ke
 
 Emax = $(@bind Emax PlutoUI.Slider(0:100:3500, default=3500; show_value=:true)) keV
 
-Thalf = $(@bind Thalf PlutoUI.Slider((1:10:1000)*1e20, default=1e22; show_value=:true)) yr 
+Thalf = $(@bind Thalf PlutoUI.Slider((1:100:10000)*1e21, default=1e22; show_value=:true)) yr 
 """
 
 # ╔═╡ bad82399-f4f0-401c-acc7-b7f67155f27f
@@ -801,8 +801,9 @@ let
 	tot_bkg = vcat(background, get_process("neutron_external", hist_processes, "current_shielding"))
 	# Total background model:
     bkg_hists = [restrict(get_bkg_counts_1D(b), Emin, Emax) for b in tot_bkg]
-    sig_hist = restrict(get_bkg_counts_1D(signal), Emin, Emax)
+	set_bins!(signal, Emin:100:Emax)
 
+     sig_hist = restrict(get_bkg_counts_1D(signal), Emin, Emax) 
 
     with_theme(theme_latexfonts()) do
 		
@@ -819,7 +820,7 @@ let
 			
         )
         
-        colors = ColorSchemes.tol_vibrant
+        colors = ColorSchemes.Set2_8
         labels = [L"2\nu\beta\beta", L"^{214}Bi", "radon", L"^{208}Tl", L"^{40}K", L"^{234m}Pa", "neutron"]
         hist!(ax, sum(bkg_hists), label =labels[1],color=colors[1], strokewidth = 1, strokecolor = :black)
         errorbars!(ax, sum(bkg_hists), color = :black, whiskerwidth = 7)
@@ -828,7 +829,7 @@ let
             hist!(ax, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
             
         end
-        lines!(ax, midpoints(binedges(sig_hist)), (bincounts(sig_hist) .* (1e24/Thalf)) .+ bincounts(sum(bkg_hists)), label = L"0\nu\beta\beta", color = :red, linewidth = 3.5)
+        stairs!(ax, midpoints(binedges(sig_hist)) .+ 50, (bincounts(sig_hist) .* (1e26/Thalf)) .+ repeat(bincounts(sum(bkg_hists)), inner = 1), label = L"0\nu\beta\beta", color = :red, linewidth = 3.5)
 
         ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
         ax.xticks = 0:500:3500
@@ -849,7 +850,8 @@ let
             hist!(ax2, sum(bkg_hists[i:end]), label=labels[i], color=colors[i], strokewidth = 1, strokecolor = :black)
             
         end
-        lines!(ax2, midpoints(binedges(sig_hist)), (bincounts(sig_hist) .* (1e24/Thalf)) .+ bincounts(sum(bkg_hists)), label = L"0\nu\beta\beta", color = :red, linewidth = 3.5)
+		
+        stairs!(ax2, midpoints(binedges(sig_hist)) .+ 50, (bincounts(sig_hist) .* (1e26/Thalf)) .+ repeat(bincounts(sum(bkg_hists)), inner = 1), label = L"0\nu\beta\beta", color = :red, linewidth = 3.5)
 
         # ax2.yticks = ([1e-4, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])
         ax2.xticks = 0:500:3500
@@ -1007,7 +1009,7 @@ let
 	
 	f = Figure(size=(1300,800), fontsize = 22)
 	a01 = Axis(f[1,1:2], xlabel = L"E_{sum}", title = L"$E_{sum}$ $0\nu\beta\beta\chi^0$")
-	a02 = Axis(f[1,3:4], xlabel = L"\varphi", title = L"$E_{sum}$ $0\nu\beta\beta\chi^0$")
+	a02 = Axis(f[1,3:4], xlabel = L"\varphi", title = L"$\varphi: $ $0\nu\beta\beta\chi^0$")
 	h1signalE = Hist1D(esumSignalNDM1; binedges = (0:100:3500))
 	h1signalPhi = Hist1D(phiSignalNDM1; binedges = (0:5:180))
 
@@ -1066,7 +1068,7 @@ let
 	
 	f = Figure(size=(1300,800), fontsize = 22)
 	a01 = Axis(f[1,1:2], xlabel = L"E_{sum}", title = L"$E_{sum}$ $0\nu\beta\beta\chi^0\chi^0$")
-	a02 = Axis(f[1,3:4], xlabel = L"\varphi", title = L"$E_{sum}$ $0\nu\beta\beta\chi^0\chi^0$")
+	a02 = Axis(f[1,3:4], xlabel = L"\varphi", title = L"$\varphi :$ $0\nu\beta\beta\chi^0\chi^0$")
 	h1signalE = Hist1D(esumSignalNDM2; binedges = (0:100:3500))
 	h1signalPhi = Hist1D(phiSignalNDM2; binedges = (0:5:180))
 
@@ -1125,7 +1127,7 @@ let
 	
 	f = Figure(size=(1300,800), fontsize = 22)
 	a01 = Axis(f[1,1:2], xlabel = L"E_{sum}", title = L"$E_{sum}$ $\nu_R\nu_L\beta\beta$")
-	a02 = Axis(f[1,3:4], xlabel = L"\varphi", title = L"$E_{sum}$ $\nu_R\nu_L\beta\beta$")
+	a02 = Axis(f[1,3:4], xlabel = L"\varphi", title = L"$\varphi$ $\nu_R\nu_L\beta\beta$")
 	h1signalE = Hist1D(esumSignalNDdRH; binedges = (0:100:3500))
 	h1signalPhi = Hist1D(phiSignalNDdRH; binedges = (0:5:180))
 
@@ -1191,7 +1193,7 @@ end
 # ╟─4db07780-248f-4658-82a5-507ea65edb0b
 # ╟─16fbb9bb-d86b-433b-91fa-a12f8008eaa9
 # ╟─5099a914-3f46-4e86-9570-bc13f5d3ca80
-# ╠═de64766d-fda7-4a0e-bc7c-80bb90554bac
+# ╟─de64766d-fda7-4a0e-bc7c-80bb90554bac
 # ╟─bad82399-f4f0-401c-acc7-b7f67155f27f
 # ╟─c12114cf-0b28-4579-8bbb-147e8acc6f33
 # ╟─4a2ca349-25ff-4a16-a4cf-075767700240
@@ -1246,7 +1248,7 @@ end
 # ╟─e2e4a637-dc3e-4cd5-a156-9cd0ebe56495
 # ╟─5583f1a0-8383-42d8-88fb-e3d6e806954c
 # ╟─a1dca343-7819-4ed2-9639-067805c17085
-# ╠═87f06108-c73d-4509-8e97-4f1ea07dd484
+# ╟─87f06108-c73d-4509-8e97-4f1ea07dd484
 # ╟─8fc9a87c-ec29-4028-a20f-9c8cdec4c866
 # ╟─9e7dbfe3-a38b-45ef-b6c6-74ca9c3392df
 # ╟─96f0e67c-16af-11f0-08a5-ffefdd2c8429
