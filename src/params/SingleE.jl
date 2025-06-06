@@ -302,6 +302,19 @@ singleEbb0nuM2Params = Dict(
     :amount => SNparams["foilMass"]
 )
 
+### bb0nuRHl_foil_bulk
+
+singleEbb0nuRHlParams = Dict(
+    :isotopeName => "bb0nuRHl_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:bb0nuRHl_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:bb0nuRHl_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+
 
 ### neutron_external
 
@@ -337,5 +350,6 @@ singleEParams = Dict(
     :bb0nu_foil_bulk => singleEbb0nuParams,
     :bb0nuM1_foil_bulk => singleEbb0nuM1Params,
     :bb0nuM2_foil_bulk => singleEbb0nuM2Params,
+    :bb0nuRHl_foil_bulk => singleEbb0nuRHlParams,
     :neutron_external => singleNeutronParams
 )

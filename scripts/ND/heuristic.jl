@@ -19,9 +19,9 @@ vars = [
     "sumE", 
     # "maxE", 
     # "minE", 
-    "r", 
-    # "dy", 
-    # "dz",
+    # "r", 
+    "dy", 
+    "dz",
     # "sameSide"
     "Pint",
     "Pext"
@@ -32,9 +32,9 @@ bins = (
     sumE = (300, 3500),
     # maxE = (0, 3500),
     # minE = (0, 3500),
-    r = (0, 200),
-    # dy = (-100, 100),
-    # dz = (-100, 100),
+    # r = (0, 200),
+    dy = (0, 300),
+    dz = (0, 300),
     # sameSide = (0, 1)
     Pint = (0, 1),
     Pext = (0, 1)
@@ -49,11 +49,11 @@ signal = get_process("bb0nu_foil_bulk", processes) |> first
 # declare background processes
 background = [
     get_process("bb_foil_bulk", processes) |> first,
-    # get_process("Bi214_foil_bulk", processes) |> first,
+    get_process("Bi214_foil_bulk", processes) |> first,
     get_process("Bi214_wire_surface", processes) |> first,
     get_process("Tl208_foil_bulk", processes) |> first,
-    # get_process("K40_foil_bulk", processes) |> first,
-    # get_process("Pa234m_foil_bulk", processes) |> first,
+    get_process("K40_foil_bulk", processes) |> first,
+    get_process("Pa234m_foil_bulk", processes) |> first,
     get_process("Bi214_PMT_glass_bulk", processes) |> first,
 ]
 
@@ -61,16 +61,17 @@ background = [
 set_signal!(background[1], false)
 
 # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
-set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( signal, 0.1e8 )
 # set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 1e8 )
+set_nTotalSim!( background[1], 0.1e8 )
 set_nTotalSim!( background[2], 1e8 )
 set_nTotalSim!( background[3], 1e8 )
-set_nTotalSim!( background[4], 5e8 )
-# set_nTotalSim!( background[5], 1e8 )
-# set_nTotalSim!( background[6], 1e8 )
+set_nTotalSim!( background[4], 1e8 )
+set_nTotalSim!( background[5], 1e8 )
+set_nTotalSim!( background[6], 1e8 )
+set_nTotalSim!( background[7], 5e8 )
 
-set_activity!(background[4], 140 / 286 * 0.004) 
+# set_activity!(background[4], 140 / 286 * 0.004) 
 
 α= 1.64485362695147
 
@@ -102,7 +103,7 @@ options = Options(;
     f_tol = 1e-1,
     f_tol_rel = 1e-1,
     f_tol_abs = 1e-1,
-    time_limit = 60*60*4.0,
+    time_limit = 60*60*1.0,
     parallel_evaluation = true,
     verbose = true,
     # iterations = 15,
@@ -119,8 +120,8 @@ function f_parallel(X)
     fitness
 end
 
-result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
-# result = Metaheuristics.optimize(prob, bounds, SA(;options))
+# result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
+result = Metaheuristics.optimize(prob, bounds, SA(;options))
 @show minimum(result)
 @show res=  minimizer(result)
 
@@ -149,15 +150,41 @@ get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="tab
 # best2 = get_best_ROI_ND(res2, signal)
 # get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=1.43)
 
+res
+-1.5901e-03
 
 begin
-    res2 = float.([0, 180, 300, 3500, 0, 50, 0.04, 1.0, 0, 0.01])
+    res2 = float.([
+        0, 
+        180, 
+        2700, 
+        3100, 
+        0, 
+        200, 
+        0, 
+        200, 
+        0.04, 
+        1, 
+        0, 
+        0.01
+        ])
     best2 = get_best_ROI_ND(res2, signal)
-    get_sensitivityND(SNparams, α, vcat(signal, background[4]), best2; approximate="table")
+    get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=0.0)
 
 end
 
 
 # # f_calls, best_f_value = convergence(result)
 # # plot(f_calls, best_f_value,)
+using FHist
+let 
+    f = Figure()
+    a = Axis(f[1,1])
 
+    pint = getpropert.(signal, :Pint)
+    pext = getpropert.(signal, :Pext)
+
+    h2 = Hist2D((pint, pext); binedges = (0:0.01:1, 0:0.01:1))
+    plot!(a, h2, colormap = :viridis)
+    f
+end

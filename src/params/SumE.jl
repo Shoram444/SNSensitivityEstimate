@@ -292,6 +292,18 @@ sumEbb0nuM2Params = Dict(
     :amount => SNparams["foilMass"]
 )
 
+### 0nubbRHl
+sumEbb0nuRHlParams = Dict(
+    :isotopeName => "bb0nuRHl_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:bb0nuRHl_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:bb0nuRHl_foil_bulk],
+    :bins => binningDict[:SumE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+
 ### neutron
 sumNeutronParams = Dict(
     :isotopeName => "neutron_external", 
@@ -325,5 +337,6 @@ sumEParams = Dict(
     :bb0nu_foil_bulk => sumEbb0nuParams,
     :bb0nuM1_foil_bulk => sumEbb0nuM1Params,
     :bb0nuM2_foil_bulk => sumEbb0nuM2Params,
+    :bb0nuRHl_foil_bulk => sumEbb0nuRHlParams,
     :neutron_external => sumNeutronParams
 )
