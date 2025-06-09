@@ -19,9 +19,9 @@ vars = [
     "sumE", 
     # "maxE", 
     # "minE", 
-    "r", 
-    # "dy", 
-    # "dz",
+    # "r", 
+    "dy", 
+    "dz",
     # "sameSide"
     "lPint",
     "lPext"
@@ -32,9 +32,9 @@ bins = (
     sumE = (300, 3500),
     # maxE = (0, 3500),
     # minE = (0, 3500),
-    r = (0, 200),
-    # dy = (0, 300),
-    # dz = (0, 300),
+    # r = (0, 200),
+    dy = (0, 300),
+    dz = (0, 300),
     # sameSide = (0, 1)
     lPint = (0, 100),
     lPext = (0, 100)
@@ -107,17 +107,19 @@ x0 = float.([
         2700, 
         3100, 
         0, 
-        50, 
+        80,
+        0, 
+        80, 
         0, # pint max 
-        1.4, # pint min
-        3,  # pext min
+        8.95, # pint min
+        0.7,  # pext min
         100 # pext max
     ])
 
 using Optim
 
-lower = [0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0]
-upper = [180.0, 180.0, 3500.0, 3500.0, 50.0, 50.0, 100.0, 100.0, 100.0, 100.0]
+lower = [0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0]
+upper = [180.0, 180.0, 3500.0, 3500.0, 200.0, 200.0, 200.0, 200.0, 100.0, 100.0, 100.0, 100.0]
 
 # result = optimize(prob, lower, upper, x0, Fminbox(BFGS()), Optim.Options(show_trace = true, iterations = 5))
 # best2 = result.minimizer
@@ -134,7 +136,7 @@ res = bboptimize(
     SearchRange = searchRange, 
     NumDimensions = length(searchRange),
     Method=:adaptive_de_rand_1_bin_radiuslimited, 
-    MaxTime = 0.5*60,#24*3600,
+    MaxTime = 3*60,#24*3600,
     TraceMode = :compact,
     PopulationSize = 800  # Increase population size for more diversity
 )
@@ -180,13 +182,16 @@ let
         2700, 
         3100, 
         0, 
-        50, 
+        80,
+        0, 
+        80, 
         0, # pint max 
-        1.4, # pint min
-        3,  # pext min
+        8.95, # pint min
+        0.7,  # pext min
         100 # pext max
         ])
     best2 = get_best_ROI_ND(res2, signal)
+    println(best2)
     println(get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=0.0).tHalf)
 
 end
