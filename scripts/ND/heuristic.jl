@@ -163,10 +163,10 @@ begin
         100, 
         0, 
         100, 
-        0.04, 
-        1, 
-        0, 
-        0.01
+        0.0, 
+        20, 
+        -log(0.01), 
+        100
         ])
     best2 = get_best_ROI_ND(res2, signal)
     get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=0.0)
@@ -179,27 +179,27 @@ end
 using FHist
 
 
-pint = getproperty.(signal.data, :Pint) .|> log
-replace!(pint, -Inf32 => -100.0)  # replace -Inf32 with 0.0 for plotting
-pext = getproperty.(signal.data, :Pext) .|> log
-replace!(pext, -Inf32 => -100.0)  # replace -Inf32 with 0.0 for plotting
+pint = getproperty.(signal.data, :lPint) 
+# replace!(pint, -Inf32 => 110)
+pext = getproperty.(signal.data, :lPext) 
+# replace!(pext, -Inf32 => 110)
 
-pintb = getproperty.(background[1].data, :Pint) .|> log
-replace!(pintb, -Inf32 => -100.0)  # replace -Inf32 with 0.0 for plotting
-pextb = getproperty.(background[1].data, :Pext) .|> log
-replace!(pextb, -Inf32 => -100.0)  # replace -Inf32 with 0.0 for plotting
+pintb = getproperty.(background[end].data, :lPint) 
+# replace!(pintb, -Inf32 => 110)
+pextb = getproperty.(background[end].data, :lPext) 
+# replace!(pextb, -Inf32 => 110)
 
 begin
-    name = "2nubb"
+    name = "gamma"
     f = Figure(size = (1800,800), fontsize = 25)
-    a = Axis(f[1,1], xlabel = "Pint", ylabel = "Pext", title = "signal: log(P_tof)")
-    a2 = Axis(f[1,3], xlabel = "Pint", ylabel = "Pext", title = "$name: log(P_tof)")
+    a = Axis(f[1,1], xlabel = "Pint", ylabel = "Pext", title = "signal: -log(P_tof)")
+    a2 = Axis(f[1,3], xlabel = "Pint", ylabel = "Pext", title = "$name: -log(P_tof)")
 
-    colorscale = cgrad(:plasma, 0.01, scale = :log10)
-    colorscaleb = cgrad(:plasma, 0.01, scale = :log10)
+    colorscale = cgrad(:plasma, 1, scale = :log10)
+    colorscaleb = cgrad(:plasma, 1, scale = :log10)
 
-    h2 = Hist2D((pint, pext); binedges = (-100:2:0.0, -100:2:0.0)) |> normalize
-    h2b = Hist2D((pintb, pextb); binedges = (-100:2:0.0, -100:2:0.0)) |> normalize
+    h2 = Hist2D((abs.(pint), abs.(pext)); binedges = (0:2:110, 0:2:110)) 
+    h2b = Hist2D((abs.(pintb), abs.(pextb)); binedges = (0:2:110, 0:2:110)) 
     p = plot!(a, h2, colormap = colorscale)
 
     p2 = plot!(a2, h2b, colormap = colorscaleb)
