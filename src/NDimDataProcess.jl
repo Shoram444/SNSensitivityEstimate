@@ -179,7 +179,7 @@ end
     varIdxs::Vector{Int}
 )
     @inbounds for (r, i) in zip(1:2:length(roi)*2-1, varIdxs)
-        if !(roi[r] ≤ data[i] < roi[r+1])
+        if !(roi[r] ≤ abs(data[i]) < roi[r+1])
             return false
         end
     end
@@ -194,7 +194,7 @@ end
 )
     i = 0
     @inbounds for (i,d) in zip(1:2:length(roi), data)
-        if !(roi[i] ≤ d < roi[i+1])
+        if !(roi[i] ≤ abs(d) < roi[i+1])
             return false
         end
         i += 1
@@ -213,7 +213,7 @@ end
     @inbounds for n in varNames
         range = roi[Symbol(n)]
         d = data[Symbol(n)] 
-        if !(range[1] ≤ d < range[2])
+        if !(range[1] ≤ abs(d) < range[2])
             return false
         end
         i += 1

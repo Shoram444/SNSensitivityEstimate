@@ -20,6 +20,7 @@ BkgActivityParams = Dict( #activities from Table 1 from 10.1140/epjc/s10052-018-
     :Bi214_hall_surface => 0.5 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
     :Tl208_hall_surface => 2.4 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
     :K40_hall_surface => 1.2 ,                  # [μBq] Value is taken from Xalbat (flux) divided twice by 500 - for tof cut and for shielding effect 
+    :gamma_experimental_surface => 1 / 430,         # mock gammas for "somewhat flat" spectrum in nu0 ROI
     )
 
 

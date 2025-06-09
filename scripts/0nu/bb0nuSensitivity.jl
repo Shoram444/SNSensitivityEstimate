@@ -5,39 +5,40 @@ push!(LOAD_PATH, srcdir())
 using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, DataFramesMeta, LaTeXStrings, Revise, StatsBase, FHist, Distributions
 # Revise.track(SensitivityModule)
 
-include(scriptsdir("Params.jl"))
+include(srcdir("params/Params.jl"))
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 # 1. dir::String -> the name of the directory where the root files are stored
 # 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
-all_processes = load_data_processes("fal5_8perc_Boff_TIT_evis_bcu_J38", "sumE", fwhm = 0.0)
+all_processes = load_data_processes("fal5_8perc_Boff_TKrec_evis_bcu_J40", "sumE", fwhm = 0.0)
 
 # declare which process is signal
-signal = get_process("bb0nuM1_foil_bulk", all_processes)
-
+signal = get_process("bb0nu_foil_bulk", all_processes) |> first
 # declare background processes
 background = [
-    get_process("bb_foil_bulk", all_processes),
-    get_process("Bi214_foil_bulk", all_processes),
-    get_process("Bi214_wire_surface", all_processes),
-    get_process("Tl208_foil_bulk", all_processes),
-    get_process("K40_foil_bulk", all_processes),
-    get_process("Pa234m_foil_bulk", all_processes),
+    get_process("bb_foil_bulk", all_processes) |> first,
+    get_process("Bi214_foil_bulk", all_processes) |> first,
+    get_process("Bi214_wire_surface", all_processes) |> first,
+    get_process("Tl208_foil_bulk", all_processes) |> first,
+    get_process("K40_foil_bulk", all_processes) |> first,
+    get_process("Pa234m_foil_bulk", all_processes) |> first,
+    get_process("gamma_experimental_surface", all_processes) |> first,
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
 # set_nTotalSim!( signal, 0.98e8 )
-set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( signal, 0.1e8 )
 
 set_signal!(background[1], false)
 
 # set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 0.99e8   )
+set_nTotalSim!( background[1], 0.1e8)
 set_nTotalSim!( background[2], 1e8  )
 set_nTotalSim!( background[3], 1e8  )
 set_nTotalSim!( background[4], 1e8  )
 set_nTotalSim!( background[5], 1e8  )
 set_nTotalSim!( background[6], 1e8  )
+set_nTotalSim!( background[7], 5e8  )
 
 
 println("Processes initialized.")
@@ -97,9 +98,8 @@ sum(bkgs)
 using PrettyTables
 pretty_table(
     DataFrame(
-        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "total"],
+        process = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_radon", "Tl208_foil_bulk", "K40", "Pa234m", "gamma", "total"],
         counts = vcat(bkgs, sum(bkgs)),
-        activity_used = vcat([background[i].activity for i in 1:4], "--"),
     ),
     backend = Val(:markdown),
 )

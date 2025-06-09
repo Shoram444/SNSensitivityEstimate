@@ -219,6 +219,17 @@ sumEK40_PMT_glass_bulk_Params = Dict(
     :amount => SNparams["PMTGlassMass"]
 )
 
+sumEgamma_experimental_surface_Params = Dict(
+    :isotopeName => "gamma_experimental_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:gamma_experimental_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:gamma_experimental_surface],
+    :bins => binningDict[:SumE],
+    :vertexPosition => "experimental_surface",
+    :amount => 1.0
+)
+
 ### 2nubb
 
 sumEbbParams = Dict(
@@ -338,5 +349,6 @@ sumEParams = Dict(
     :bb0nuM1_foil_bulk => sumEbb0nuM1Params,
     :bb0nuM2_foil_bulk => sumEbb0nuM2Params,
     :bb0nuRHl_foil_bulk => sumEbb0nuRHlParams,
-    :neutron_external => sumNeutronParams
+    :neutron_external => sumNeutronParams,
+    :gamma_experimental_surface => sumEgamma_experimental_surface_Params
 )

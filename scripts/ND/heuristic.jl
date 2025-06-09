@@ -23,8 +23,8 @@ vars = [
     "dy", 
     "dz",
     # "sameSide"
-    "Pint",
-    "Pext"
+    "lPint",
+    "lPext"
     ]
 
 bins = (
@@ -36,9 +36,10 @@ bins = (
     dy = (0, 300),
     dz = (0, 300),
     # sameSide = (0, 1)
-    Pint = (0, 1),
-    Pext = (0, 1)
+    lPint = (0, 100),
+    lPext = (0, 100)
 )
+
 
 processes = load_ndim_processes("fal5_TKrec_J40", bins, vars)
 
@@ -54,7 +55,8 @@ background = [
     get_process("Tl208_foil_bulk", processes) |> first,
     get_process("K40_foil_bulk", processes) |> first,
     get_process("Pa234m_foil_bulk", processes) |> first,
-    get_process("Bi214_PMT_glass_bulk", processes) |> first,
+    get_process("gamma_experimental_surface", processes) |> first,
+    # get_process("Bi214_PMT_glass_bulk", processes) |> first,
 ]
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
@@ -71,7 +73,6 @@ set_nTotalSim!( background[5], 1e8 )
 set_nTotalSim!( background[6], 1e8 )
 set_nTotalSim!( background[7], 5e8 )
 
-# set_activity!(background[4], 140 / 286 * 0.004) 
 
 α= 1.64485362695147
 
@@ -103,11 +104,11 @@ options = Options(;
     f_tol = 1e-1,
     f_tol_rel = 1e-1,
     f_tol_abs = 1e-1,
-    time_limit = 60*60*1.0,
+    time_limit = 60*60*1.5,
     parallel_evaluation = true,
     verbose = true,
     # iterations = 15,
-    store_convergence = true
+    # store_convergence = true
 )
 
 bounds = boxconstraints(lb = lower_bound, ub = upper_bound)
@@ -121,7 +122,8 @@ function f_parallel(X)
 end
 
 # result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
-result = Metaheuristics.optimize(prob, bounds, SA(;options))
+result = Metaheuristics.optimize(f_parallel, bounds, PSO(;options))
+# result = Metaheuristics.optimize(prob, bounds, SA(;options))
 @show minimum(result)
 @show res=  minimizer(result)
 
@@ -150,8 +152,6 @@ get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="tab
 # best2 = get_best_ROI_ND(res2, signal)
 # get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=1.43)
 
-res
--1.5901e-03
 
 begin
     res2 = float.([
@@ -160,9 +160,9 @@ begin
         2700, 
         3100, 
         0, 
-        200, 
+        100, 
         0, 
-        200, 
+        100, 
         0.04, 
         1, 
         0, 
@@ -177,14 +177,34 @@ end
 # # f_calls, best_f_value = convergence(result)
 # # plot(f_calls, best_f_value,)
 using FHist
-let 
-    f = Figure()
-    a = Axis(f[1,1])
 
-    pint = getpropert.(signal, :Pint)
-    pext = getpropert.(signal, :Pext)
 
-    h2 = Hist2D((pint, pext); binedges = (0:0.01:1, 0:0.01:1))
-    plot!(a, h2, colormap = :viridis)
+pint = getproperty.(signal.data, :Pint) .|> log
+replace!(pint, -Inf32 => -100.0)  # replace -Inf32 with 0.0 for plotting
+pext = getproperty.(signal.data, :Pext) .|> log
+replace!(pext, -Inf32 => -100.0)  # replace -Inf32 with 0.0 for plotting
+
+pintb = getproperty.(background[1].data, :Pint) .|> log
+replace!(pintb, -Inf32 => -100.0)  # replace -Inf32 with 0.0 for plotting
+pextb = getproperty.(background[1].data, :Pext) .|> log
+replace!(pextb, -Inf32 => -100.0)  # replace -Inf32 with 0.0 for plotting
+
+begin
+    name = "2nubb"
+    f = Figure(size = (1800,800), fontsize = 25)
+    a = Axis(f[1,1], xlabel = "Pint", ylabel = "Pext", title = "signal: log(P_tof)")
+    a2 = Axis(f[1,3], xlabel = "Pint", ylabel = "Pext", title = "$name: log(P_tof)")
+
+    colorscale = cgrad(:plasma, 0.01, scale = :log10)
+    colorscaleb = cgrad(:plasma, 0.01, scale = :log10)
+
+    h2 = Hist2D((pint, pext); binedges = (-100:2:0.0, -100:2:0.0)) |> normalize
+    h2b = Hist2D((pintb, pextb); binedges = (-100:2:0.0, -100:2:0.0)) |> normalize
+    p = plot!(a, h2, colormap = colorscale)
+
+    p2 = plot!(a2, h2b, colormap = colorscaleb)
+    Colorbar(f[1,2], p, label = "normalized counts")
+    Colorbar(f[1,4], p2, label = "normalized counts")
+    save( "Pint_Pext_signal_$name.png", f, px_per_unit = 2)
     f
 end

@@ -226,6 +226,17 @@ singleEK40_PMT_glass_bulk_Params = Dict(
     :amount => SNparams["PMTGlassMass"]
 )
 
+singleEgamma_experimental_surface_Params = Dict(
+    :isotopeName => "gamma_experimental_surface", 
+    :signal => :false, 
+    :activity => BkgActivityParams[:gamma_experimental_surface], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:gamma_experimental_surface],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "experimental_surface",
+    :amount => 1.0
+)
+
 ### bb_foil_bulk
 
 singleEbbParams = Dict(
@@ -351,5 +362,6 @@ singleEParams = Dict(
     :bb0nuM1_foil_bulk => singleEbb0nuM1Params,
     :bb0nuM2_foil_bulk => singleEbb0nuM2Params,
     :bb0nuRHl_foil_bulk => singleEbb0nuRHlParams,
-    :neutron_external => singleNeutronParams
+    :neutron_external => singleNeutronParams,
+    :gamma_experimental_surface => singleEgamma_experimental_surface_Params
 )
