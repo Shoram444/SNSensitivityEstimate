@@ -36,8 +36,8 @@ bins = (
     dy = (0, 300),
     dz = (0, 300),
     # sameSide = (0, 1)
-    lPint = (0, 100),
-    lPext = (0, 100)
+    lPint = (0, 110),
+    lPext = (0, 110)
 )
 
 
@@ -104,7 +104,7 @@ options = Options(;
     f_tol = 1e-1,
     f_tol_rel = 1e-1,
     f_tol_abs = 1e-1,
-    time_limit = 60*60*1.5,
+    time_limit = 60*60*1.0,
     parallel_evaluation = true,
     verbose = true,
     # iterations = 15,
