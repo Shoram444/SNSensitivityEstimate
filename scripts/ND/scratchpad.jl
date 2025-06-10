@@ -5,7 +5,7 @@ println("loading pkgs")
 
 push!(LOAD_PATH, srcdir())
 using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta, LinearAlgebra
-using BlackBoxOptim
+using BlackBoxOptim, CSV
 Revise.track(SensitivityModule)
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
@@ -42,7 +42,8 @@ bins = (
 
 processes = load_ndim_processes("fal5_TKrec_J40", bins, vars)
 
-signal = get_process("bb0nu_foil_bulk", processes) |> first
+signal_name = "bb0nu_foil_bulk"
+signal = get_process(signal_name, processes) |> first
 # signal = get_process("RH037_foil_bulk", processes) |> first
 # signal = get_process("bb0nuM2_foil_bulk", processes)
 
@@ -172,7 +173,8 @@ best_sens = get_sensitivityND(
     α, 
     vcat(signal, background), 
     best_roi
-) |> println
+)
+println("Best sensitivity: ", best_sens)
 
 
 let
@@ -196,6 +198,14 @@ let
 
 end
 
+dff = DataFrame(
+    tHalf = best_sens.tHalf,
+    eff = best_sens.signalEff,
+    best_roi = best_sens.roi
+)
 
+open("$signal_name.csv", "w") do io
+    CSV.write(io, dff; header=true, delimiter=',')
+end
 
 # 3.46e24 with NEMO3 tof for 0nu
