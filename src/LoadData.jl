@@ -1,6 +1,6 @@
 using Distributions
 
-ffrf(file) = fill_from_root_file(file, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"])
+ffrf(file; roi = nothing) = fill_from_root_file(file, "tree", ["phi", "reconstructedEnergy1", "reconstructedEnergy2"], roi = roi)
 function smear_energy(E::Real, fwhm::Real) 
     if(fwhm == 0)
         return E
@@ -28,9 +28,9 @@ function load_files(dir::String)
     return filesDict
 end
 
-function load_data_processes(dir::String, mode::String; fwhm = 0.08)
+function load_data_processes(dir::String, mode::String; fwhm = 0.08, roi= nothing)
     include(srcdir("params/Params.jl"))
-    full_dir = datadir("sims", dir)
+    full_dir = datadir(dir)
     processes = DataProcess[]
 
     println("Loading files from: $full_dir ...")
@@ -49,11 +49,20 @@ function load_data_processes(dir::String, mode::String; fwhm = 0.08)
             continue
         end
 
-        df = ffrf(f)
-        fileName = split(file, ".")[1]  |> split |> first 
+        data = LazyTree(f, "tree", keys(f["tree"])) 
+
+        if roi !== nothing
+            for (field, (minVal, maxVal)) in pairs(roi)
+                data = filter(x -> getproperty(x, field) > minVal && getproperty(x, field) < maxVal, data)
+            end
+        end
+
+        df = DataFrame(data)
+
         
+        fileName = split(file, ".")[1]  |> split |> first 
         if mode == "sumE"
-            e = df.reconstructedEnergy1 .+ df.reconstructedEnergy2
+            e = df[:, Symbol(mode)] 
             push!(
                 processes,
                 DataProcess(
@@ -62,25 +71,31 @@ function load_data_processes(dir::String, mode::String; fwhm = 0.08)
                 )
             )
         elseif mode == "singleE"
-            e = vcat(df.reconstructedEnergy1, df.reconstructedEnergy2)
+            e1 = df[:, Symbol("reconstructedEnergy1")]
+            e2 = df[:, Symbol("reconstructedEnergy2")]
             push!(
                 processes,
                 DataProcess(
-                    ifelse.(fwhm > 0, smear_energy.(e, fwhm), e) ,
+                    vcat(
+                        ifelse.(fwhm > 0, smear_energy.(e1, fwhm), e1),
+                        ifelse.(fwhm > 0, smear_energy.(e2, fwhm), e2)
+                    ),
                     singleEParams[Symbol(fileName)]
                 )
             )
         elseif mode == "phi"
+            phi = df[:, Symbol("phi")]
             push!(
                 processes,
                 DataProcess(
-                    df.phi,
+                    ifelse.(fwhm > 0, smear_energy.(phi, fwhm), phi),
                     phiParams[Symbol(fileName)]
                 )
             )
         else
             @error "mode must be one of: sumE, singleE, phi. Chosen mode: $mode!"
         end
+
     end
     println("Loaded $nFiles files.")
 

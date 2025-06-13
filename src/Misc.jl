@@ -60,8 +60,15 @@ function generate_raw_plots(inDf::DataFrame, isotope; kwargs...)
 
 end
 
-function fill_from_root_file(inFile::ROOTFile, treeName::String, fieldNames)
-    df = LazyTree(inFile, treeName, [fieldNames...]) |> DataFrame
+function fill_from_root_file(inFile::ROOTFile, treeName::String, fieldNames; roi = nothing)
+    data = LazyTree(inFile, treeName, [fieldNames...]) 
+
+    if roi !== nothing
+        for (field, (minVal, maxVal)) in pairs(roi)
+            data = filter(x -> getproperty(x, field) > minVal && getproperty(x, field) < maxVal, data)
+        end
+    end
+    df = DataFrame(data)
 
     for k in fieldNames
         filter!(string(k) => x -> !(ismissing(x) || isnothing(x) || isnan(x)), df) # filter rows with missing values
