@@ -274,6 +274,85 @@ singleERH037Params = Dict(
     :amount => SNparams["foilMass"]
 )
 
+### RH020
+singleERH020Params = Dict(
+    :isotopeName => "RH020_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:RH020_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:RH020_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+### RH025
+singleERH025Params = Dict(
+    :isotopeName => "RH025_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:RH025_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:RH025_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+### RH030  
+singleERH030Params = Dict(
+    :isotopeName => "RH030_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:RH030_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:RH030_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+### RH035
+singleERH035Params = Dict(
+    :isotopeName => "RH035_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:RH035_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:RH035_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+### RH040
+singleERH040Params = Dict(
+    :isotopeName => "RH040_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:RH040_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:RH040_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+### RH045
+singleERH045Params = Dict(
+    :isotopeName => "RH045_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:RH045_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:RH045_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+### RH050
+singleERH050Params = Dict(
+    :isotopeName => "RH050_foil_bulk", 
+    :signal => :true, 
+    :activity => SigActivityParams[:RH050_foil_bulk], 
+    :timeMeas => SNparams["t"], 
+    :nTotalSim => SimulationParams[:RH050_foil_bulk],
+    :bins => binningDict[:SingleE],
+    :vertexPosition => "foil_bulk",
+    :amount => SNparams["foilMass"]
+)
+
+
 ### bb0nu_foil_bulk
 
 singleEbb0nuParams = Dict(
@@ -358,6 +437,13 @@ singleEParams = Dict(
     :bb_foil_bulk => singleEbbParams,
     :Xi037_foil_bulk => singleEXiParams,
     :RH037_foil_bulk => singleERH037Params,
+    :RH020_foil_bulk => singleERH020Params,
+    :RH025_foil_bulk => singleERH025Params,
+    :RH030_foil_bulk => singleERH030Params,
+    :RH035_foil_bulk => singleERH035Params,
+    :RH040_foil_bulk => singleERH040Params,
+    :RH045_foil_bulk => singleERH045Params,
+    :RH050_foil_bulk => singleERH050Params,
     :bb0nu_foil_bulk => singleEbb0nuParams,
     :bb0nuM1_foil_bulk => singleEbb0nuM1Params,
     :bb0nuM2_foil_bulk => singleEbb0nuM2Params,

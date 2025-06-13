@@ -40,7 +40,7 @@ bins = (
 
 processes = load_ndim_processes("fal5_TKrec_J40", bins, vars)
 
-signal_name = "%SIGNAL"
+signal_name = "bb0nuM1_foil_bulk"
 signal = get_process(signal_name, processes) |> first
 # signal = get_process("RH037_foil_bulk", processes) |> first
 # signal = get_process("bb0nuM2_foil_bulk", processes)
@@ -102,7 +102,7 @@ options = Options(;
     f_tol = 1e-5,
     f_tol_rel = 1e-5,
     f_tol_abs = 1e-5,
-    time_limit = 60*60*12.0,
+    time_limit = 60*60*24.0,
     # parallel_evaluation = true,
     # verbose = true,
     # iterations = 15,

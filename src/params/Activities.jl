@@ -29,8 +29,22 @@ SigActivityParams = Dict(
     :bb_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # activity calculated from 2nubb Half-life in [Bq/kg]
     :Xi037_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
     :RH037_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
+    :RH020_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
+    :RH025_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
+    :RH030_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
+    :RH035_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
+    :RH040_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
+    :RH045_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
+    :RH050_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
     :bb0nuRHl_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"]), # mock value
     :bb0nu_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf0nu"]), # mock value
     :bb0nuM1_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf0nu"]), # mock value
     :bb0nuM2_foil_bulk => halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf0nu"]), # mock value
 )
+
+
+
+
+
+
+
