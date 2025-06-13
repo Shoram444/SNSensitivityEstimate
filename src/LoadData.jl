@@ -153,7 +153,7 @@ end
 
 
 
-function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{String})
+function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{String}; roi = nothing)
     include(srcdir("params/Params.jl"))
     full_dir = datadir("mva", dir)
     processes = DataProcessND[]
@@ -174,6 +174,12 @@ function load_ndim_processes(dir::String, bins::NamedTuple, varNames::Vector{Str
         end
 
         data = LazyTree(f, "tree", varNames) 
+
+        if roi !== nothing
+            for (i,n) in enumerate(varNames)
+                data = filter(x -> getproperty(x, Symbol(n)) > roi[i][1] && getproperty(x, Symbol(n)) < roi[i][2], data)
+            end
+        end
 
         fileName = split(file, ".")[1]  |> split |> first 
 

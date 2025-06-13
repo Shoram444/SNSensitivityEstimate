@@ -64,7 +64,7 @@ analysisDict = Dict(
 )
 
 # files_directory = "fal5_$(analysisDict[:Eres])_$(analysisDict[:Bfield])_$(analysisDict[:trackAlgo])_twoDistinct_edep_bcu"
-files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J40"
+files_directory = "fal5_8perc_Boff_TKrec_evis_bcu_J38"
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 #  1. dir::String -> the name of the directory where the root files are stored
@@ -80,9 +80,9 @@ hist_processes = load_hist_processes(
     analysisDict[:mode]
 )
 
-# for c in ["current_shielding"]
-begin
-    # analysisDict[:neutron_config] = c
+for c in ["current_shielding"]
+# begin
+    analysisDict[:neutron_config] = c
     # declare which process is signal
     global signal = get_process("bb0nu_foil_bulk", data_processes) |> first
     # signal = get_process("bb0nuM1_foil_bulk", data_processes)
@@ -96,13 +96,13 @@ begin
         get_process("Tl208_foil_bulk", data_processes) |> first,
         # get_process("K40_foil_bulk", data_processes) |> first,
         # get_process("Pa234m_foil_bulk", data_processes) |> first,
-        # get_process("neutron_external", hist_processes, analysisDict[:neutron_config])
+        get_process("neutron_external", hist_processes, analysisDict[:neutron_config])
         # get_process("Bi214_PMT_glass_bulk", data_processes) |> first
     ]
 
-    # labels = [L"$2\nu\beta\beta$", L"Radon $$", L"$^{208}$Tl", "external"]
+    labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi",L"Radon $$", L"$^{208}$Tl", "external"]
     # labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl", L"$^{40}$K", L"$^{234m}$Pa", "neutrons (5-sided)"]
-    labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl"]
+    # labels = [L"$2\nu\beta\beta$", L"$^{214}$Bi", L"Radon $$", L"$^{208}$Tl"]
 
     # if(analysisDict[:neutron_config] == "full_shielding")
     #     labels[end] = "neutrons (6-sided)"
@@ -123,7 +123,7 @@ begin
 
     # set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
     # set_nTotalSim!( signal, 0.98e8 )
-    set_nTotalSim!( signal, 0.1e8 )
+    set_nTotalSim!( signal, 1e8 )
     # set_nTotalSim!( signal, 1e8 )
     # set_nTotalSim!( background[1], 0.99e8 )
     # set_nTotalSim!( background[2], 0.96e8 )
@@ -132,7 +132,7 @@ begin
     # set_nTotalSim!( background[5], 1e8 )
     # set_nTotalSim!( background[6], 1e8 )
 
-    set_nTotalSim!( background[1], 0.1e8 )
+    set_nTotalSim!( background[1], 1e8 )
     set_nTotalSim!( background[2], 1e8 )
     set_nTotalSim!( background[3], 1e8 )
     set_nTotalSim!( background[4], 1e8 )
@@ -939,7 +939,7 @@ open("sensitivities.csv", "w") do io
 end
 
 
-ROI_a, ROI_b = 300, 3500
+ROI_a, ROI_b = 2700, 3000
 
 bin_counts = [bincounts(restrict(b, ROI_a, ROI_b)) for b in get_bkg_counts_1D.(background)]
 bin_errs = [sqrt.(sumw2(restrict(b, ROI_a, ROI_b))) for b in get_bkg_counts_1D.(background)]
