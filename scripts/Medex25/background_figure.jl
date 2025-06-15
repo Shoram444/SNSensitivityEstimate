@@ -106,7 +106,7 @@ with_theme(theme_latexfonts()) do
     # text!(ax, 1900, 1.5e-1, text= "Preliminary", fontsize = 40, rotation = pi/6, align = (:center, :baseline), color = (:red, 0.8))
     ylims!(ax, min_cts, max_cts)
     xlims!(ax, 300, 3500)
-    ylims!(ax2, min_cts, 5e2)
+    ylims!(ax2, 0.4*min_cts, 5e2)
     xlims!(ax2, 2700, 3100)
     ax.xticks = (collect(500:500:3900), string.(collect(500:500:3900)))
     # ax.yticks = ([1e-5, 1e-3, 1e-1, 1e1, 1e3, 1e5], [L"10^{-5}",L"10^{-3}", L"10^{-1}", L"10^{1}", L"10^{3}", L"10^{5}"])       
