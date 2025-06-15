@@ -3,8 +3,8 @@ using DrWatson
 
 println("loading pkgs")
 
-push!(LOAD_PATH, srcdir())
-using SensitivityModule, CairoMakie, DataFramesMeta, CSV, Random
+# push!(LOAD_PATH, srcdir())
+using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 

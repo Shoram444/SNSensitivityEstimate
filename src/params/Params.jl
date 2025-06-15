@@ -1,4 +1,4 @@
-import SensitivityModule.halfLife_to_activity
+import SNSensitivityEstimate.halfLife_to_activity
 using Measurements
 
 include(srcdir("params/SNparams.jl")) 
