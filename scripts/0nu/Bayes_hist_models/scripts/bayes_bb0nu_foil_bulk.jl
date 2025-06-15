@@ -10,11 +10,11 @@ global t0 = time()
 
 
 analysisDict = Dict(
-    :signal => "%SIGNAL",
-    :bining => (%BINLOW, %BINHIGH),
-    :bin_width => %BINWIDTH,
-    :mode => "%MODE",
-    :prior => %PRIOR # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :signal => "bb0nu_foil_bulk",
+    :bining => (2700, 3100),
+    :bin_width => 50,
+    :mode => "sumE",
+    :prior => 1e-4 # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
 )
 
 Bin_low, Bin_high, bin_width = analysisDict[:bining][1],analysisDict[:bining][2], analysisDict[:bin_width]
@@ -49,8 +49,8 @@ background = [
     get_process("Bi214_foil_bulk", all_processes) |> first,
     get_process("Bi214_wire_surface", all_processes) |> first,
     get_process("Tl208_foil_bulk", all_processes) |> first,
-    get_process("K40_foil_bulk", all_processes) |> first,
-    get_process("Pa234m_foil_bulk", all_processes) |> first,
+    # get_process("K40_foil_bulk", all_processes) |> first,
+    # get_process("Pa234m_foil_bulk", all_processes) |> first,
     get_process("gamma_experimental_surface", all_processes) |> first,
 ]
 
@@ -62,9 +62,9 @@ set_signal!(background[1], false)
 
 # set_nTotalSim!( signal, 1e8 )
 set_nTotalSim!( background[1], 0.1e8)
-set_nTotalSim!( background[2], 1e8)
+set_nTotalSim!( background[2], 1e8  )
 set_nTotalSim!( background[3], 1e8  )
-set_nTotalSim!( background[4], 1e8)
+set_nTotalSim!( background[4], 1e8  )
 set_nTotalSim!( background[5], 1e8  )
 set_nTotalSim!( background[6], 1e8  )
 set_nTotalSim!( background[7], 5e8  )
