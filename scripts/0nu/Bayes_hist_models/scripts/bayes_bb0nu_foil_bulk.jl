@@ -11,7 +11,7 @@ global t0 = time()
 
 analysisDict = Dict(
     :signal => "bb0nu_foil_bulk",
-    :bining => (2700, 3100),
+    :bining => (300, 3500),
     :bin_width => 50,
     :mode => "sumE",
     :prior => 1e-4 # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
@@ -24,17 +24,14 @@ include(srcdir("params/Params.jl"))
 
 include(scriptsdir("ND/results/best_rois.jl"))
 
-if analysisDict[:signal] == "bb0nu_foil_bulk"
-    roi = bb0nu_roi
-elseif analysisDict[:signal] == "bb0nuM1_foil_bulk"
-    roi = bb0nuM1_roi
-elseif analysisDict[:signal] == "bb0nuM2_foil_bulk"
-    roi = bb0nuM2_roi
-else
-    error("Unknown signal process: $(analysisDict[:signal])")
-end
-
-
+roi = (
+    phi = (3, 180), 
+    sumE = (Bin_low, Bin_high), # (2700, 3100), 
+    dy = (0.0, 100.0), 
+    dz = (0.0, 105.0), 
+    lPint = (0, 4.0), # Pint > 0.01 
+    lPext = (0.325, 100), # Pext < 0.45
+)
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 # 1. dir::String -> the name of the directory where the root files are stored
 # 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
@@ -65,9 +62,9 @@ set_nTotalSim!( background[1], 0.1e8)
 set_nTotalSim!( background[2], 1e8  )
 set_nTotalSim!( background[3], 1e8  )
 set_nTotalSim!( background[4], 1e8  )
-set_nTotalSim!( background[5], 1e8  )
-set_nTotalSim!( background[6], 1e8  )
-set_nTotalSim!( background[7], 5e8  )
+set_nTotalSim!( background[5], 5e8  )
+# set_nTotalSim!( background[6], 1e8  )
+# set_nTotalSim!( background[7], 5e8  )
 
 @info "process initialized"
 println("Processes initialized.")
@@ -90,8 +87,8 @@ prior = NamedTupleDist(
 )   
 
 t = Float64[]
-# while(time() - t0 < 3600*36) # do this for n hours
-for _ in 1:1 # do this for n hours
+while(time() - t0 < 3600*22) # do this for n hours
+# for _ in 1:1 # do this for n hours
     GC.gc()
     t1 = time()
     try 
@@ -136,7 +133,7 @@ CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scri
 # signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), Bin_low, Bin_high), width = true)
 
 # data_hist = [get_pseudo_spectrum(b) for b in bkg_hist] |> sum 
-# data_hist = sample_histogram(bkg_hist) 
+# # data_hist = sample_histogram(bkg_hist) 
 
 # f2(pars::NamedTuple{(:As, :Ab)}, x::Real) = f_uniform_bkg(pars, x, signal_hist_normed, bkg_hist_normed)
 
