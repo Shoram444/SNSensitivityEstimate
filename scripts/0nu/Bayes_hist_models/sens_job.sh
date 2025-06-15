@@ -18,9 +18,9 @@ SCRIPTDIR="/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0
 
 SIGNAL="bb0nu_foil_bulk"
 echo "signal process: $SIGNAL"
-BINLOW=2700
+BINLOW=300
 echo "BINLOW: $BINLOW"
-BINHIGH=3100
+BINHIGH=3500
 echo "BINHIGH: $BINHIGH"
 BINWIDTH=50
 echo "BINWIDTH: $BINWIDTH"

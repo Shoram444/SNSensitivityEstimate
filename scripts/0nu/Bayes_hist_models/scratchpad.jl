@@ -26,14 +26,43 @@ include(scriptsdir("ND/results/best_rois.jl"))
 
 if analysisDict[:signal] == "bb0nu_foil_bulk"
     roi = bb0nu_roi
+    backgrounds = [
+        "bb_foil_bulk", 
+        "Bi214_foil_bulk", 
+        "Bi214_wire_surface", 
+        "Tl208_foil_bulk", 
+        "K40_foil_bulk",
+        "Pa234m_foil_bulk",
+        "gamma_experimental_surface"
+    ]
 elseif analysisDict[:signal] == "bb0nuM1_foil_bulk"
     roi = bb0nuM1_roi
+        backgrounds = [
+        "bb_foil_bulk", 
+        "Bi214_foil_bulk", 
+        "Bi214_wire_surface", 
+        "Tl208_foil_bulk", 
+        "K40_foil_bulk",
+        "Pa234m_foil_bulk",
+        "gamma_experimental_surface"
+    ]
 elseif analysisDict[:signal] == "bb0nuM2_foil_bulk"
     roi = bb0nuM2_roi
+    backgrounds = [
+        "bb_foil_bulk", 
+        "Bi214_foil_bulk", 
+        "Bi214_wire_surface", 
+        "Tl208_foil_bulk", 
+        "K40_foil_bulk",
+        "Pa234m_foil_bulk",
+        "gamma_experimental_surface"
+    ]
 else
     error("Unknown signal process: $(analysisDict[:signal])")
 end
 
+roi[:sumE] = (Bin_low, Bin_high) # update the sumE range to match the analysisDict
+@show roi
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 # 1. dir::String -> the name of the directory where the root files are stored
@@ -44,30 +73,9 @@ all_processes = load_data_processes("mva/fal5_TKrec_J40", analysisDict[:mode], f
 signal = get_process(analysisDict[:signal], all_processes) |> first
 
 # declare background processes
-background = [
-    get_process("bb_foil_bulk", all_processes) |> first, 
-    get_process("Bi214_foil_bulk", all_processes) |> first,
-    get_process("Bi214_wire_surface", all_processes) |> first,
-    get_process("Tl208_foil_bulk", all_processes) |> first,
-    get_process("K40_foil_bulk", all_processes) |> first,
-    get_process("Pa234m_foil_bulk", all_processes) |> first,
-    get_process("gamma_experimental_surface", all_processes) |> first,
-]
-
-# set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
-set_nTotalSim!( signal, 0.1e8 )
-# set_nTotalSim!( signal, 1e8 )
+background = [get_process(b, all_processes) |> first for b in backgrounds]
 
 set_signal!(background[1], false)
-
-# set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 0.1e8)
-set_nTotalSim!( background[2], 1e8)
-set_nTotalSim!( background[3], 1e8  )
-set_nTotalSim!( background[4], 1e8)
-set_nTotalSim!( background[5], 1e8  )
-set_nTotalSim!( background[6], 1e8  )
-set_nTotalSim!( background[7], 5e8  )
 
 @info "process initialized"
 println("Processes initialized.")
@@ -95,7 +103,7 @@ for _ in 1:1 # do this for n hours
     GC.gc()
     t1 = time()
     try 
-        sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; Bin_low = Bin_low, Bin_high = Bin_high, nsteps = 10^4, nchains = 4)
+        sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; Bin_low = Bin_low, Bin_high = Bin_high, nsteps = 5*10^4, nchains = 4)
         println("time to fit, t = $(time() - t1) s")
         println(sens)
         push!(t, sens)

@@ -24,14 +24,46 @@ include(srcdir("params/Params.jl"))
 
 include(scriptsdir("ND/results/best_rois.jl"))
 
-roi = (
-    phi = (3, 180), 
-    sumE = (Bin_low, Bin_high), # (2700, 3100), 
-    dy = (0.0, 100.0), 
-    dz = (0.0, 105.0), 
-    lPint = (0, 4.0), # Pint > 0.01 
-    lPext = (0.325, 100), # Pext < 0.45
-)
+if analysisDict[:signal] == "bb0nu_foil_bulk"
+    roi = bb0nu_roi
+    backgrounds = [
+        "bb_foil_bulk", 
+        "Bi214_foil_bulk", 
+        "Bi214_wire_surface", 
+        "Tl208_foil_bulk", 
+        "K40_foil_bulk",
+        "Pa234m_foil_bulk",
+        "gamma_experimental_surface"
+    ]
+elseif analysisDict[:signal] == "bb0nuM1_foil_bulk"
+    roi = bb0nuM1_roi
+        backgrounds = [
+        "bb_foil_bulk", 
+        "Bi214_foil_bulk", 
+        "Bi214_wire_surface", 
+        "Tl208_foil_bulk", 
+        "K40_foil_bulk",
+        "Pa234m_foil_bulk",
+        "gamma_experimental_surface"
+    ]
+elseif analysisDict[:signal] == "bb0nuM2_foil_bulk"
+    roi = bb0nuM2_roi
+    backgrounds = [
+        "bb_foil_bulk", 
+        "Bi214_foil_bulk", 
+        "Bi214_wire_surface", 
+        "Tl208_foil_bulk", 
+        "K40_foil_bulk",
+        "Pa234m_foil_bulk",
+        "gamma_experimental_surface"
+    ]
+else
+    error("Unknown signal process: $(analysisDict[:signal])")
+end
+
+roi[:sumE] = (Bin_low, Bin_high) # update the sumE range to match the analysisDict
+@show roi
+
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
 # 1. dir::String -> the name of the directory where the root files are stored
 # 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
@@ -41,30 +73,9 @@ all_processes = load_data_processes("mva/fal5_TKrec_J40", analysisDict[:mode], f
 signal = get_process(analysisDict[:signal], all_processes) |> first
 
 # declare background processes
-background = [
-    get_process("bb_foil_bulk", all_processes) |> first, 
-    get_process("Bi214_foil_bulk", all_processes) |> first,
-    get_process("Bi214_wire_surface", all_processes) |> first,
-    get_process("Tl208_foil_bulk", all_processes) |> first,
-    # get_process("K40_foil_bulk", all_processes) |> first,
-    # get_process("Pa234m_foil_bulk", all_processes) |> first,
-    get_process("gamma_experimental_surface", all_processes) |> first,
-]
-
-# set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
-set_nTotalSim!( signal, 0.1e8 )
-# set_nTotalSim!( signal, 1e8 )
+background = [get_process(b, all_processes) |> first for b in backgrounds]
 
 set_signal!(background[1], false)
-
-# set_nTotalSim!( signal, 1e8 )
-set_nTotalSim!( background[1], 0.1e8)
-set_nTotalSim!( background[2], 1e8  )
-set_nTotalSim!( background[3], 1e8  )
-set_nTotalSim!( background[4], 1e8  )
-set_nTotalSim!( background[5], 5e8  )
-# set_nTotalSim!( background[6], 1e8  )
-# set_nTotalSim!( background[7], 5e8  )
 
 @info "process initialized"
 println("Processes initialized.")
@@ -87,12 +98,12 @@ prior = NamedTupleDist(
 )   
 
 t = Float64[]
-while(time() - t0 < 3600*22) # do this for n hours
-# for _ in 1:1 # do this for n hours
+# while(time() - t0 < 3600*36) # do this for n hours
+for _ in 1:1 # do this for n hours
     GC.gc()
     t1 = time()
     try 
-        sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; Bin_low = Bin_low, Bin_high = Bin_high, nsteps = 10^4, nchains = 4)
+        sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; Bin_low = Bin_low, Bin_high = Bin_high, nsteps = 5*10^4, nchains = 4)
         println("time to fit, t = $(time() - t1) s")
         println(sens)
         push!(t, sens)
@@ -133,7 +144,7 @@ CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scri
 # signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), Bin_low, Bin_high), width = true)
 
 # data_hist = [get_pseudo_spectrum(b) for b in bkg_hist] |> sum 
-# # data_hist = sample_histogram(bkg_hist) 
+# data_hist = sample_histogram(bkg_hist) 
 
 # f2(pars::NamedTuple{(:As, :Ab)}, x::Real) = f_uniform_bkg(pars, x, signal_hist_normed, bkg_hist_normed)
 
