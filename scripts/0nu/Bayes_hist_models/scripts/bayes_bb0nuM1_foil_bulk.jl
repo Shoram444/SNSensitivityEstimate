@@ -11,11 +11,11 @@ global t0 = time()
 
 
 analysisDict = Dict(
-    :signal => "bb0nu_foil_bulk",
+    :signal => "bb0nuM1_foil_bulk",
     :bining => (300, 3500),
     :bin_width => 50,
     :mode => "sumE",
-    :prior => 1e-4 # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :prior => 1e-3 # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
 )
 
 Bin_low, Bin_high, bin_width = analysisDict[:bining][1],analysisDict[:bining][2], analysisDict[:bin_width]

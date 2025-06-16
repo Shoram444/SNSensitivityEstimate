@@ -5,6 +5,7 @@ push!(LOAD_PATH, srcdir())
 
 using SensitivityModule
 using Random, LinearAlgebra, Statistics, Distributions, Plots, BAT, BinnedModels, StatsBase, DensityInterface, IntervalSets, FHist, SpecialFunctions, ValueShapes
+using DataFramesMeta, CSV
 global t0 = time()
 
 
@@ -98,25 +99,24 @@ prior = NamedTupleDist(
 )   
 
 t = Float64[]
-# while(time() - t0 < 3600*36) # do this for n hours
-for _ in 1:1 # do this for n hours
+while(time() - t0 < 3600*22) # do this for n hours
+# for _ in 1:1 # do this for n hours
     GC.gc()
     t1 = time()
     try 
-        sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; Bin_low = Bin_low, Bin_high = Bin_high, nsteps = 5*10^4, nchains = 4)
+        sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; ROI_a = Bin_low, ROI_b = Bin_high, nsteps = 5*10^4, nchains = 4)
         println("time to fit, t = $(time() - t1) s")
         println(sens)
         push!(t, sens)
+        save_name = savename(analysisDict)
+        CSV.write(scriptsdir("0nu/Bayes_hist_models/informative_priors/Cimrman_J40_ND_cuts/sensitivities_$(save_name)_$(rand(1:100000)).csv"), DataFrame(thalf= t))
     catch
         @warn "failed fit" 
         continue
     end
 end
 
-save_name = savename(analysisDict)
 
-using DataFramesMeta, CSV
-CSV.write("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/0nu/Bayes_hist_models/informative_priors/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
 # CSV.write("scripts/0nu/Bayes_hist_models/sensitivities_$(save_name)_$(rand(1:100000)).csv", DataFrame(thalf= t))
 
 # plot(t, st=:histogram, nbins = 10, xlabel = "Bayes sensitivity (yr)", label = "sample sensitivity")
