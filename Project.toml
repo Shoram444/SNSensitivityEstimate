@@ -1,4 +1,8 @@
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
+DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 SNSensitivityEstimate = "4337d2dd-53cf-40a5-bc43-6e7cc5722bd2"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
