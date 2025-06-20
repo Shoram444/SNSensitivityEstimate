@@ -10,7 +10,7 @@ using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
 # dictionaries into this script, which uses their values. 
 println("loaded pkgs")
-include(srcdir("params/Params.jl"))
+# include(srcdir("params/Params.jl"))
 
 vars = [
     "phi", 
@@ -38,7 +38,7 @@ bins = (
     lPext = (0, 100)
 )
 
-processes = load_ndim_processes("fal5_TKrec_J40", bins, vars)
+processes = load_ndim_processes(datadir("mva/fal5_TKrec_J40"), bins, vars)
 
 signal_name = "%SIGNAL"
 signal = get_process(signal_name, processes) |> first

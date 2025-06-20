@@ -3,8 +3,7 @@ using DrWatson
 
 println("loading pkgs")
 
-push!(LOAD_PATH, srcdir())
-using SensitivityModule, CairoMakie, DataFramesMeta, CSV, Random
+using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -38,7 +37,7 @@ bins = (
     lPext = (0, 100)
 )
 
-processes = load_ndim_processes("fal5_TKrec_J40", bins, vars)
+processes = load_ndim_processes(datadir("mva/fal5_TKrec_J40"), bins, vars)
 
 signal_name = "bb0nu_foil_bulk"
 signal = get_process(signal_name, processes) |> first
@@ -76,7 +75,7 @@ set_nTotalSim!( background[7], 5e8 )
 println("loaded files, signal = $(signal.isotopeName)")
 
 
-prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x; approximate="formula")
+prob(x) = -SNSensitivityEstimate.get_s_to_b(SNparams, α, vcat(signal, background), x; approximate="formula")
 
 
 function make_stepRange(process)
@@ -98,16 +97,17 @@ upper_bound = [x[2] for x in searchRange] .|> float
 ############### Optimization
 using Metaheuristics
 options = Options(;
-    # x_tol = 1.0,
-    f_tol = 1e-5,
-    f_tol_rel = 1e-5,
-    f_tol_abs = 1e-5,
-    time_limit = 60*60*24.0,
-    # parallel_evaluation = true,
-    # verbose = true,
+    x_tol = 1e-5,
+    f_tol = 1e-9,
+    # f_tol_rel = 5e-6,
+    # f_tol_abs = 5e-6,
+    time_limit = 60*45.0,#60*60*24.0,
+    parallel_evaluation = false,
+    verbose = true,
     # iterations = 15,
     # store_convergence = true
 )
+
 
 bounds = boxconstraints(lb = lower_bound, ub = upper_bound)
 
@@ -119,9 +119,9 @@ function f_parallel(X)
     fitness
 end
 
-# result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
-# result = Metaheuristics.optimize(prob, bounds, PSO(;options))
+# result = Metaheuristics.optimize(prob, bounds, ECA(;options))
 result = Metaheuristics.optimize(prob, bounds, SA(;options))
+# result = Metaheuristics.optimize(f_parallel, bounds, ECA(;options))
 @show minimum(result)
 @show res=  minimizer(result)
 
@@ -185,32 +185,32 @@ end
 # using FHist
 
 
-# pint = getproperty.(signal.data, :lPint) 
-# # replace!(pint, -Inf32 => 110)
-# pext = getproperty.(signal.data, :lPext) 
-# # replace!(pext, -Inf32 => 110)
+pint = getproperty.(signal.data, :lPint) 
+# replace!(pint, -Inf32 => 110)
+pext = getproperty.(signal.data, :lPext) 
+# replace!(pext, -Inf32 => 110)
 
-# pintb = getproperty.(background[end].data, :lPint) 
-# # replace!(pintb, -Inf32 => 110)
-# pextb = getproperty.(background[end].data, :lPext) 
-# # replace!(pextb, -Inf32 => 110)
+pintb = getproperty.(background[end].data, :lPint) 
+# replace!(pintb, -Inf32 => 110)
+pextb = getproperty.(background[end].data, :lPext) 
+# replace!(pextb, -Inf32 => 110)
 
-# begin
-#     name = "gamma"
-#     f = Figure(size = (1800,800), fontsize = 25)
-#     a = Axis(f[1,1], xlabel = "Pint", ylabel = "Pext", title = "signal: -log(P_tof)")
-#     a2 = Axis(f[1,3], xlabel = "Pint", ylabel = "Pext", title = "$name: -log(P_tof)")
+begin
+    name = "gamma"
+    f = Figure(size = (1800,800), fontsize = 25)
+    a = Axis(f[1,1], xlabel = "Pint", ylabel = "Pext", title = "signal: -log(P_tof)")
+    a2 = Axis(f[1,3], xlabel = "Pint", ylabel = "Pext", title = "$name: -log(P_tof)")
 
-#     colorscale = cgrad(:plasma, 1, scale = :log10)
-#     colorscaleb = cgrad(:plasma, 1, scale = :log10)
+    colorscale = cgrad(:plasma, 1, scale = :log10)
+    colorscaleb = cgrad(:plasma, 1, scale = :log10)
 
-#     h2 = Hist2D((abs.(pint), abs.(pext)); binedges = (0:2:110, 0:2:110)) 
-#     h2b = Hist2D((abs.(pintb), abs.(pextb)); binedges = (0:2:110, 0:2:110)) 
-#     p = plot!(a, h2, colormap = colorscale)
+    h2 = Hist2D((abs.(pint), abs.(pext)); binedges = (0:2:50, 0:2:50)) 
+    h2b = Hist2D((abs.(pintb), abs.(pextb)); binedges = (0:2:50, 0:2:50)) 
+    p = plot!(a, h2, colormap = colorscale)
 
-#     p2 = plot!(a2, h2b, colormap = colorscaleb)
-#     Colorbar(f[1,2], p, label = "normalized counts")
-#     Colorbar(f[1,4], p2, label = "normalized counts")
-#     save( "Pint_Pext_signal_$name.png", f, px_per_unit = 2)
-#     f
-# end
+    p2 = plot!(a2, h2b, colormap = colorscaleb)
+    Colorbar(f[1,2], p, label = "normalized counts")
+    Colorbar(f[1,4], p2, label = "normalized counts")
+    save( "Pint_Pext_signal_$name.png", f, px_per_unit = 2)
+    f
+end

@@ -106,7 +106,7 @@ end
 
 function load_hist_processes(dir::String, mode::String)
     include(srcdir("params/Params.jl"))
-    full_dir = datadir("sims", dir)
+    full_dir = datadir(dir)
     processes = HistProcess[]
 
     println("Loading files from: $full_dir ...")

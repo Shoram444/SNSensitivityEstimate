@@ -3,10 +3,8 @@ using DrWatson
 
 println("loading pkgs")
 
-push!(LOAD_PATH, srcdir())
-using ColorSchemes,SensitivityModule, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta, LinearAlgebra
+using ColorSchemes,SNSensitivityEstimate, CairoMakie, UnROOT, LaTeXStrings, Revise, FHist, PrettyTables, DataFramesMeta, LinearAlgebra
 using BlackBoxOptim, CSV
-Revise.track(SensitivityModule)
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -78,7 +76,7 @@ set_nTotalSim!( background[7], 5e8 )
 println("loaded files, signal = $(signal.isotopeName)")
 
 
-prob(x) = - SensitivityModule.get_s_to_b(SNparams, α, vcat(signal, background), x; approximate="formula")
+prob(x) = - SNSensitivityEstimate.get_s_to_b(SNparams, α, vcat(signal, background), x; approximate="formula")
 
 
 function make_stepRange(process)
@@ -184,13 +182,13 @@ let
         2700, 
         3100, 
         0, 
-        80,
+        100,
         0, 
-        80, 
-        0, # pint max 
-        8.95, # pint min
-        0.7,  # pext min
-        100 # pext max
+        105, 
+        0, # pint max  = 100%
+        3., # pint min = 0.01%
+        1.045,  # pext max = 10%
+        100 # pext min = 0%
         ])
     best2 = get_best_ROI_ND(res2, signal)
     println(best2)
