@@ -20,6 +20,7 @@ notebooks/.ipynb_checkpoints
 /scripts/0nu/Bayes_hist_models/informative_priors/Cimrman_J40_ND_cuts/*.csv
 /scripts/0nu/Bayes_hist_models/informative_priors/Cimrman_J40_Nemo3_cuts/*.csv
 /scripts/slurm_jobs/bayes_logs/*.log
+/scripts/Medex25/theo_data
 
 ################################################################################
 #                                    Julia                                     #
