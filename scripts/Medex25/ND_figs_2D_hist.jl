@@ -12,6 +12,7 @@ include(srcdir("params/Params.jl"))
 vars = [
     "phi", 
     "sumE",
+    "singleE",
     "lPint",
     "lPext",
     "dy",
@@ -20,6 +21,7 @@ vars = [
 bins = (
     phi = (0,180),
     sumE = (0, 3500),
+    singleE = (0, 3500),
     lPint = (0,50),
     lPext = (0,50),
     dy = (0,250),
@@ -28,7 +30,7 @@ bins = (
 
 
 
-processesND = load_ndim_processes("mva/fal5_TKrec_J40", bins, vars)
+processesND = load_ndim_processes(datadir("mva/fal5_TKrec_J40"), bins, vars)
 
 
 signalNDM1 = get_process("bb0nu_foil_bulk", processesND) |> first

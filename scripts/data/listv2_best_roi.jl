@@ -1,0 +1,192 @@
+using DrWatson
+@quickactivate "SNSensitivityEstimate"
+
+using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random
+include("/home/maros/Work/Phd/SNSensitivityEstimate/src/params/Params.jl")
+
+vars = [
+    "phi", 
+    "sumE", 
+    "dy", 
+    "dz",
+    "trackLength1",
+    "trackLength2",
+    "tint",
+    "text"
+    ]
+
+bins = (
+    phi = (0,180),
+    sumE = (300, 3500),
+    dy = (0, 300),
+    dz = (0, 300),
+    trackLength1 = (0, 1000),
+    trackLength2 = (0, 1000),
+    tint = (0, 100),
+    text = (0, 100)
+)
+
+processes = load_ndim_processes("data/data/listv2_50keV/mva", bins, vars)
+
+signal_name = "bb_foil_bulk"
+signal = get_process(signal_name, processes) |> first
+
+# declare background processes
+background = [
+    get_process("Bi214_foil_bulk", processes) |> first,
+    get_process("Bi214_wire_surface", processes) |> first,
+    get_process("K40_foil_bulk", processes) |> first,
+    get_process("Pa234m_foil_bulk", processes) |> first,
+    get_process("gamma_experimental_surface", processes) |> first,
+    # get_process("Bi214_PMT_glass_bulk", processes) |> first,
+]
+
+# set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
+
+# set the number of total simulated events (there's a default in "scripts/Params.jl", but this is usecase dependend)
+set_nTotalSim!( signal, 10e6 )
+# set_nTotalSim!( signal, 1e8 )
+set_nTotalSim!( background[1], 10e6 )
+set_nTotalSim!( background[2], 9e6 )
+set_nTotalSim!( background[3], 10e6 )
+set_nTotalSim!( background[4], 10e6 )
+set_nTotalSim!( background[5], 50e6 )
+
+α= 1.64485362695147
+
+println("loaded files, signal = $(signal.isotopeName)")
+
+
+prob(x) = - get_s_to_b(SNparams, α, vcat(signal, background), x; approximate="formula")
+
+
+function make_stepRange(process)
+    stepRange = Tuple{Int64, Int64}[]
+    for k in keys(process.bins) 
+        push!(stepRange, (process.bins[k][1], process.bins[k][2]))
+        push!(stepRange, (process.bins[k][1], process.bins[k][2]))
+    end
+    return stepRange
+end
+
+
+searchRange = make_stepRange(signal)
+
+
+lower_bound = [x[1] for x in searchRange] .|> float
+upper_bound = [x[2] for x in searchRange] .|> float
+
+############### Optimization
+using Metaheuristics
+options = Options(;
+    f_tol = 1e-5,
+    f_tol_rel = 1e-5,
+    f_tol_abs = 1e-5,
+    time_limit = 60*60*1.0,
+    # parallel_evaluation = true,
+    verbose = true,
+)
+
+bounds = boxconstraints(lb = lower_bound, ub = upper_bound)
+
+function f_parallel(X)
+    fitness = zeros(size(X,1))
+    Threads.@threads for i in 1:size(X,1)
+        fitness[i] = prob(X[i,:])
+    end
+    fitness
+end
+
+result = Metaheuristics.optimize(prob, bounds, SA(;options))
+@show minimum(result)
+@show res=  minimizer(result)
+
+function get_best_ROI_ND(res, process)
+    best = best_candidate(res)
+    best_roi = NamedTuple(
+        k => (best[i], best[i+1]) 
+        for (i,k) in zip(1:2:length(process.bins)*2-1, keys(process.bins))
+    )
+    return best_roi
+end
+
+function get_best_ROI_ND(res::Vector{<:Real}, process)
+    best = res
+    best_roi = NamedTuple(
+        k => (best[i], best[i+1]) 
+        for (i,k) in zip(1:2:length(process.bins)*2-1, keys(process.bins))
+    )
+    return best_roi
+end
+
+best = get_best_ROI_ND(res, signal)
+best_sens = get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
+println("best sensitivity: $(best_sens)")
+best_sens.roi
+
+dff = DataFrame(
+    tHalf = best_sens.tHalf,
+    eff = best_sens.signalEff,
+    best_roi = best_sens.roi
+)
+
+open("/home/maros/Work/Phd/SNSensitivityEstimate/scripts/data/roi_$(signal_name)_$(rand(1:1000000)).csv", "w") do io
+    CSV.write(io, dff; header=true, delimiter=',')
+end
+
+
+# begin
+#     res2 = float.([
+#         0, 
+#         180, 
+#         2700, 
+#         3100, 
+#         0, 
+#         100, 
+#         0, 
+#         100, 
+#         0.0, 
+#         20, 
+#         -log(0.01), 
+#         100
+#         ])
+#     best2 = get_best_ROI_ND(res2, signal)
+#     get_sensitivityND(SNparams, α, vcat(signal, background), best2; approximate="table", add_mock_bkg=0.0)
+
+# end
+
+
+# # f_calls, best_f_value = convergence(result)
+# # plot(f_calls, best_f_value,)
+# using FHist
+
+
+pint = getproperty.(signal.data, :tint) 
+filter!(x -> 0 .< x .< 100, pint)
+pext = getproperty.(signal.data, :text) 
+filter!(x -> 0 .< x .< 100, pext)
+
+pintb = getproperty.(background[end].data, :tint) 
+filter!(x -> 0 .< x .< 100, pintb)
+pextb = getproperty.(background[end].data, :text) 
+filter!(x -> 0 .< x .< 100, pextb)
+
+begin
+    name = "gamma"
+    f = Figure(size = (1800,800), fontsize = 25)
+    a = Axis(f[1,1], xlabel = "tint", ylabel = "text", title = "signal: tof")
+    a2 = Axis(f[1,3], xlabel = "tint", ylabel = "text", title = "$name: tof")
+
+    colorscale = cgrad(:plasma, 1, scale = :log10)
+    colorscaleb = cgrad(:plasma, 1, scale = :log10)
+
+    h2 = Hist2D((abs.(pint), abs.(pext)); binedges = (0:1:40, 0:1:40)) |> normalize
+    h2b = Hist2D((abs.(pintb), abs.(pextb)); binedges = (0:1:40, 0:1:40)) |> normalize
+    p = plot!(a, h2, colormap = colorscale)
+
+    p2 = plot!(a2, h2b, colormap = colorscaleb)
+    Colorbar(f[1,2], p, label = "normalized counts")
+    Colorbar(f[1,4], p2, label = "normalized counts")
+    save( "/home/maros/Work/Phd/SNSensitivityEstimate/scripts/data/tint_text_$name.png", f, px_per_unit = 2)
+    f
+end

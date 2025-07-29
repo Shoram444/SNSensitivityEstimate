@@ -25,6 +25,7 @@ background      = [get_process(b, all_processes) |> first for b in backgrounds]
 set_nTotalSim!(signal, 0.1e8)
 set_nTotalSim!(background[1], 0.1e8)
 set_activity!(background[1], 0.0019235366786346892)
+set_activity!(background[end], 0.185)
 
 
 for b in background
