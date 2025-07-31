@@ -1,16 +1,12 @@
 using DrWatson
 @quickactivate("SNSensitivityEstimate")
-# import Pkg
-# Pkg.activate(".")
-using SNSensitivityEstimate, UnROOT, CairoMakie, LaTeXStrings, StatsBase
 
+using SNSensitivityEstimate, UnROOT, CairoMakie, LaTeXStrings, StatsBase
+using Measurements
 using FHist, DataFramesMeta
 
-f = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/phase1_50keV_Mathis_calibration/mva.root")
-
-
+f = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v2_phase1_50keV_Xalbat_calib/mva.root")
 d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
-
 first(select(d, [:reconstructedEnergy1, :reconstructedEnergy2]), 10)
 
 global new_c = 299.792458 # speed of light in mm/ns
@@ -20,7 +16,7 @@ begin
     pext_cut_low = 0.00 # ns
     pext_cut_high = .5 # ns
 
-    phi_low, phi_high = 5, 180 # degrees
+    phi_low, phi_high = 0, 180 # degrees
     E_cut = 300 # keV
     dy_cut = 180 # mm
     dz_cut = 180 # mm
@@ -72,7 +68,7 @@ begin
 
 
     d1_sim = let
-        f_sim = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/listv2_50keV_old_calibration/mva/bb_foil_bulk.root")
+        f_sim = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v0_phase1_50keV_old_calibration/mva/bb_foil_bulk.root")
         d_sim = LazyTree(f_sim, "tree", keys(f_sim["tree"])) |> DataFrame
 
         @chain d_sim begin
@@ -108,7 +104,7 @@ begin
     ### background processes
 
     d_K40 = let 
-        f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/listv2_50keV_old_calibration/mva/K40_foil_bulk.root"))
+        f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v0_phase1_50keV_old_calibration/mva/K40_foil_bulk.root"))
         d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
         @chain d begin
             @subset :reconstructedEnergy1 .> 0
@@ -141,7 +137,7 @@ begin
     end
 
     d_Pa234m = let 
-        f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/listv2_50keV_old_calibration/mva/Pa234m_foil_bulk.root"))
+        f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v0_phase1_50keV_old_calibration/mva/Pa234m_foil_bulk.root"))
         d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
         @chain d begin
             @subset :reconstructedEnergy1 .> 0
@@ -174,7 +170,7 @@ begin
     end
 
     d_radon = let 
-        f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/listv2_50keV_old_calibration/mva/Bi214_wire_surface.root"))
+        f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v0_phase1_50keV_old_calibration/mva/Bi214_wire_surface.root"))
         d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
         @chain d begin
             @subset :reconstructedEnergy1 .> 0
@@ -208,6 +204,13 @@ begin
 
 
     begin
+        fit_rates = [0.7194023684148142, 0.0005319732686368019, 0.003246943932229697, 0.2753713801588674]
+        std_rates = [0.023566868040843413, 0.000771064568315688, 0.0046650013773221, 0.022790061385081533]
+        
+        fit_n_std = [round(r*nrow(d5), digits = 1) for r in std_rates]
+        fit_n = [round(r*nrow(d5), digits = 1) for r in fit_rates]
+        fit_n_w_std = [measurement(fit_n[i], fit_n_std[i]) for i in 1:length(fit_n)]
+
         f = Figure(size = (1400,1000), fontsize = 20)
         h1 = Hist1D(d1.esum; binedges = 0:100:3500)
         h2 = Hist1D(d2.esum; binedges = 0:100:3500)
@@ -221,29 +224,29 @@ begin
         p1 = errorbars!(a, h1, color=:black, whiskerwidth=5,)
         stairs!(a, h1, color=:black, linewidth = 2, label = L"no cuts $$")
 
-        p2 =errorbars!(a, h2, color=Makie.wong_colors()[1], whiskerwidth=5,)
+        p2 =errorbars!(a, h2, color=Makie.wong_colors()[4], whiskerwidth=5,)
         stairs!(a, h2, color=Makie.wong_colors()[1], linewidth = 2, label = L"$\varepsilon_1: E_i >$ %$(E_cut) keV + $ \varphi \in (%$(phi_low), %$(phi_high)) {}^\circ$")
 
-        p3 = errorbars!(a, h3, color=Makie.wong_colors()[2], whiskerwidth=5,)
+        p3 = errorbars!(a, h3, color=Makie.wong_colors()[3], whiskerwidth=5,)
         stairs!(a, h3, color=Makie.wong_colors()[2], linewidth = 2, label = L"$\varepsilon_1 + \varepsilon_2: \Delta y < $(dy_cut) mm, \Delta z < $(dz_cut) mm$")
 
-        p4 = errorbars!(a, h4, color=Makie.wong_colors()[3], whiskerwidth=5,)
+        p4 = errorbars!(a, h4, color=Makie.wong_colors()[2], whiskerwidth=5,)
         stairs!(a, h4, color=Makie.wong_colors()[3], linewidth = 2, label = L"$\varepsilon_1 + \varepsilon_2 + \varepsilon_3: \Delta t_{int} <= $(pint_cut) ns^2$")
 
-        p5= errorbars!(a, h5, color=Makie.wong_colors()[4], whiskerwidth=5,)
-        stairs!(a, h5, color=Makie.wong_colors()[4], linewidth = 2, label = L"$\varepsilon_1 + \varepsilon_2 + \varepsilon_3 + \varepsilon_4: t_{ext} \in (%$(pext_cut_low), %$(pext_cut_high)) ns^2$")
+        p5= errorbars!(a, h5, color=Makie.wong_colors()[1], whiskerwidth=5,)
+        stairs!(a, h5, color=Makie.wong_colors()[4], linewidth = 4, label = L"$\varepsilon_1 + \varepsilon_2 + \varepsilon_3 + \varepsilon_4: t_{ext} \in (%$(pext_cut_low), %$(pext_cut_high)) ns^2$")
 
-        h6 = Hist1D(d1_sim.esum; binedges = 0:100:3500, weights = fill((nrow(d5)/nrow(d1_sim))*0.60, nrow(d1_sim)))
-        h7 = Hist1D(d_K40.esum; binedges = 0:100:3500, weights = fill((nrow(d5)/nrow(d_K40))*0.2, nrow(d_K40)))
-        h8 = Hist1D(d_Pa234m.esum; binedges = 0:100:3500, weights = fill((nrow(d5)/nrow(d_Pa234m))*0.1, nrow(d_Pa234m)))
-        h9 = Hist1D(d_radon.esum; binedges = 0:100:3500, weights = fill((nrow(d5)/nrow(d_radon))*0.1, nrow(d_radon)))
+        h6 = Hist1D(d1_sim.esum; binedges = 0:100:3500, weights = fill((nrow(d5)/nrow(d1_sim))*fit_rates[1], nrow(d1_sim)))
+        h7 = Hist1D(d_K40.esum; binedges = 0:100:3500, weights = fill((nrow(d5)/nrow(d_K40))*fit_rates[2], nrow(d_K40)))
+        h8 = Hist1D(d_Pa234m.esum; binedges = 0:100:3500, weights = fill((nrow(d5)/nrow(d_Pa234m))*fit_rates[3], nrow(d_Pa234m)))
+        h9 = Hist1D(d_radon.esum; binedges = 0:100:3500, weights = fill((nrow(d5)/nrow(d_radon))*fit_rates[4], nrow(d_radon)))
 
-        p6 = stairs!(a, h6, color = (Makie.wong_colors()[5],1 ), label = L"$2\nu\beta\beta$ simulation", linestyle = :dash, linewidth = 3)
-        p7 = stairs!(a, h7, color = (Makie.wong_colors()[6],1 ), label = L"${}^{40}$K simulation", linestyle = :dash, linewidth = 3)
+        p6 = stairs!(a, h6, color = (Makie.wong_colors()[2],1 ), label = L"$2\nu\beta\beta$ simulation", linestyle = :dash, linewidth = 3)
+        p7 = stairs!(a, h7, color = (Makie.wong_colors()[3],1 ), label = L"${}^{40}$K simulation", linestyle = :dash, linewidth = 3)
         p8 = stairs!(a, h8, color = (Makie.wong_colors()[4],1 ), label = L"${}^{234}$Pa simulation", linestyle = :dash, linewidth = 3)
-        p10 = stairs!(a, h9, color = (Makie.wong_colors()[5],1 ), label = L"$$ radon simulation", linestyle = :dash, linewidth = 3)
+        p10 = stairs!(a, h9, color = (Makie.wong_colors()[6],1 ), label = L"$$ radon simulation", linestyle = :dash, linewidth = 3)
 
-        p9 = plot!(a, h6+h7+h8+h9, color = (Makie.wong_colors()[7], 0.15), )
+        p9 = plot!(a, h6+h7+h8+h9, color = (Makie.wong_colors()[1], 0.05), )
 
 
         # axislegend(a, position = :rt, nbanks = 2)
@@ -257,7 +260,7 @@ begin
                 p5,
             ], 
             [
-                L"$\varepsilon_0:$ no cuts $$",
+                L"$\varepsilon_0:$ 2$e^-$ topology only",
                 L"$\varepsilon_0 + \varepsilon_1: E_i > %$(E_cut)$ keV + $\varphi \in (%$(phi_low), %$(phi_high)) {}^\circ$",
                 L"$\varepsilon_0 + \varepsilon_1 + \varepsilon_2: \Delta y < %$(dy_cut) mm,~ \Delta z < %$(dz_cut) mm$",
                 L"$\varepsilon_0 + \varepsilon_1 + \varepsilon_2 + \varepsilon_3: \Delta P_{int} >= %$(pint_cut)$",
@@ -265,20 +268,21 @@ begin
             ],
             nbanks = 1,
             tellheight = false,
-            tellwidth = true
+            tellwidth = true,
+            patchsize = (40, 30)
         )
 
-        a2 = Axis(f[2,1], xlabel = "E1 + E2", ylabel = "counts", title = "golden (?) events: $(nrow(d5))", limits = (0, 3500, nothing, nothing))
+        a2 = Axis(f[2,1], xlabel = "E1 + E2", ylabel = "counts", title = "golden events: $(nrow(d5))", limits = (0, 3500, nothing, nothing))
 
         # plot!(a2, p5)
+        plot!(a2, p9)
         plot!(a2, p6)
         plot!(a2, p7)
         plot!(a2, p8)
-        plot!(a2, p9)
         plot!(a2, p10)
 
-        errorbars!(a2, h5, color=Makie.wong_colors()[4], whiskerwidth=5,)
-        stairs!(a2, h5, color=Makie.wong_colors()[4], linewidth = 2, label = L"$\varepsilon_1 + \varepsilon_2 + \varepsilon_3 + \varepsilon_4: t_{ext} \in (%$(pext_cut_low), %$(pext_cut_high)) ns^2$")
+        errorbars!(a2, h5, color=Makie.wong_colors()[1], whiskerwidth=5,)
+        stairs!(a2, h5, color=Makie.wong_colors()[1], linewidth = 4, label = L"$\varepsilon_1 + \varepsilon_2 + \varepsilon_3 + \varepsilon_4: t_{ext} \in (%$(pext_cut_low), %$(pext_cut_high)) ns^2$")
 
 
         # stairs!(a2, h5, color=Makie.wong_colors()[4], linewidth = 2, label = L"$\varepsilon_1 + \varepsilon_2 + \varepsilon_3 + \varepsilon_4: \Delta t_{ext} \in (5, 30) ns^2$")
@@ -300,16 +304,18 @@ begin
                 
             ], 
             [
-                L"$\varepsilon_0 + \varepsilon_1 + \varepsilon_2 + \varepsilon_3 + \varepsilon_4$",
-                L"$2\nu\beta\beta$ simulation",
-                L"${}^{40}$K simulation",
-                L"${}^{234}$Pa simulation",
-                L"$$ radon simulation",
+                L"data: $\varepsilon_0 + \varepsilon_1 + \varepsilon_2 + \varepsilon_3 + \varepsilon_4$",
+                L"$2\nu\beta\beta$; n = %$(fit_n_w_std[1])",
+                L"${}^{40}$K; n = %$(fit_n_w_std[2])",
+                L"${}^{234}$Pa; n = %$(fit_n_w_std[3])",
+                L"$$ radon; n = %$(fit_n_w_std[4])",
                 L"$2\nu\beta\beta + {}^{40}$K + ${}^{234}$Pa + radon simulation"
             ],
             nbanks = 1,
             tellheight = false,
-            tellwidth = true
+            tellwidth = true,
+            patchsize = (40, 30)
+
         )
         safesave(joinpath(scriptsdir("data"), "sum_spectrum.png"), f, px_per_unit = 5)
         f

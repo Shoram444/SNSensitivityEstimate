@@ -1,11 +1,14 @@
 using DrWatson
 @quickactivate "SNSensitivityEstimate"
 
-using Turing
+using BAT
 using Random, Statistics, Distributions, StatsPlots
 using DataFramesMeta, CSV, UnROOT, FHist
 using StatsBase # For mean and std
-using KernelDensity # Crucial for KDEs
+using BinnedModels, ValueShapes
+using MeasureBase # Crucial for KDEs
+
+bin_low, bin_width, bin_high = 0, 50, 3500
 
 # --- Data Loading and Preprocessing (same as before) ---
 pint_cut = 0.02 # ns
@@ -18,7 +21,7 @@ dy_cut = 180 # mm
 dz_cut = 180 # mm
 
 d1 = let
-    f = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/phase1_50keV_Mathis_calibration/mva.root")
+    f = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v2_phase1_50keV_Xalbat_calib/mva.root")
     d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
     @chain d begin
         @subset :reconstructedEnergy1 .> 0
@@ -36,7 +39,7 @@ d1 = let
 end
 
 d1_sim = let
-    f_sim = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/listv2_50keV_old_calibration/mva/bb_foil_bulk.root")
+    f_sim = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v0_phase1_50keV_old_calibration/mva/bb_foil_bulk.root")
     d_sim = LazyTree(f_sim, "tree", keys(f_sim["tree"])) |> DataFrame
     @chain d_sim begin
         @subset :reconstructedEnergy1 .> 0
@@ -54,7 +57,7 @@ d1_sim = let
 end
 
 d_K40 = let
-    f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/listv2_50keV_old_calibration/mva/K40_foil_bulk.root"))
+    f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v0_phase1_50keV_old_calibration/mva/K40_foil_bulk.root"))
     d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
     @chain d begin
         @subset :reconstructedEnergy1 .> 0
@@ -72,7 +75,7 @@ d_K40 = let
 end
 
 d_Pa234m = let
-    f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/listv2_50keV_old_calibration/mva/Pa234m_foil_bulk.root"))
+    f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v0_phase1_50keV_old_calibration/mva/Pa234m_foil_bulk.root"))
     d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
     @chain d begin
         @subset :reconstructedEnergy1 .> 0
@@ -90,7 +93,7 @@ d_Pa234m = let
 end
 
 d_radon = let
-    f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/listv2_50keV_old_calibration/mva/Bi214_wire_surface.root"))
+    f = ROOTFile(datadir("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v0_phase1_50keV_old_calibration/mva/Bi214_wire_surface.root"))
     d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
     @chain d begin
         @subset :reconstructedEnergy1 .> 0
@@ -108,112 +111,120 @@ d_radon = let
 end
 
 
-# Observed data and its total count
-observed_events = d1.esum
-N_observed_total = length(observed_events)
+data_hist = fit(Histogram, d1.esum, bin_low:bin_width:bin_high)
 
-# --- Define component PDFs using Kernel Density Estimation (KDE) ---
-# It's good practice to set a range for KDE, especially for physical quantities
-# to avoid density estimates outside meaningful bounds.
-# A reasonable range would be the min/max of all your data combined, or physical limits.
-min_esum = min(minimum(d1.esum), minimum(d1_sim.esum), minimum(d_K40.esum), minimum(d_Pa234m.esum), minimum(d_radon.esum))
-max_esum = max(maximum(d1.esum), maximum(d1_sim.esum), maximum(d_K40.esum), maximum(d_Pa234m.esum), maximum(d_radon.esum))
+hist_sim = let
+    hists = FHist.Hist1D[]
+    push!(hists, normalize(Hist1D(d1_sim.esum; binedges= bin_low:bin_width:bin_high)))
+    push!(hists, normalize(Hist1D(d_K40.esum; binedges= bin_low:bin_width:bin_high)))
+    push!(hists, normalize(Hist1D(d_Pa234m.esum; binedges= bin_low:bin_width:bin_high)))
+    push!(hists, normalize(Hist1D(d_radon.esum; binedges= bin_low:bin_width:bin_high)))
+    hists
+end
 
-# Expand the range slightly to ensure coverage and avoid boundary issues for KDEs
-kde_range = range(floor(min_esum * 0.9), ceil(max_esum * 1.1), length=2048) # power of 2 for FFT in KernelDensity
 
-# Generate KDE objects for each component
-# You can optionally specify `kernel` (e.g., Normal, Epanechnikov) and `bandwidth`
-# If not specified, `KernelDensity.jl` uses a default bandwidth rule (Silverman's rule).
-component_kdes = [
-    kde(d1_sim.esum; boundary=(min_esum, max_esum), npoints=length(kde_range)), # Signal component
-    kde(d_K40.esum; boundary=(min_esum, max_esum), npoints=length(kde_range)),    # K40 component
-    kde(d_Pa234m.esum; boundary=(min_esum, max_esum), npoints=length(kde_range)),# Pa234m component
-    kde(d_radon.esum; boundary=(min_esum, max_esum), npoints=length(kde_range))  # Radon component
-]
-num_components = length(component_kdes)
+# Define the total observed events for the Poisson term
+N_observed_total = sum(data_hist.weights)
 
-# --- Define the Turing model ---
-@model function unbinned_extended_model_kde(observed_events, num_components, component_kdes, N_observed_total)
-    # Priors
-    total_rate ~ Uniform(N_observed_total * 0.5, N_observed_total * 1.5)
-    proportions ~ Dirichlet(ones(num_components))
 
-    # Likelihood for the total number of events (Extended Likelihood part)
-    N_observed_total ~ Poisson(total_rate)
+function f_expectation(par, hist_sim, epsilon_count = 1e-9) # A very small positive number
+    proportions = par.rate
+    num_sources = length(proportions)
 
-    # Unbinned Likelihood for the shape of the spectrum
-    for i in eachindex(observed_events)
-        x = observed_events[i]
-        
-        # Calculate the mixture PDF value for this event x using KDEs
-        mixture_pdf_val = 0.0
-        for j in 1:num_components
-            # pdf() is overloaded for KernelDensity.UnivariateKDE objects
-            mixture_pdf_val += proportions[j] * pdf(component_kdes[j], x)
+    @assert num_sources == length(hist_sim) "Number of proportions must match number of templates"
+
+    return x -> begin
+        pdf_value = 0.0
+        for i in 1:num_sources
+            pdf_value += proportions[i] * lookup(hist_sim[i], x)
         end
-        
-        # Add a small epsilon to avoid log(0) issues
-        Turing.@addlogprob! log(max(mixture_pdf_val, 1e-12))
+        # Add epsilon to prevent zero PDF values
+        return max(pdf_value, epsilon_count)
     end
 end
 
-# Instantiate the model with your data
-model_kde = unbinned_extended_model_kde(observed_events, num_components, component_kdes, N_observed_total)
+model = binned_model(par -> f_expectation(par, hist_sim), data_hist.edges)
+likelihood = Likelihood(model, data_hist.weights)
 
-# Sample from the posterior using NUTS
-sampler = NUTS(0.65)
-n_samples = 2_000
-n_chains = 4
-n_warmup = 1_000
+# prior = NamedTupleDist((
+#     rate = Dirichlet(ones(length(hist_sim))),  # Dirichlet over the N-simplex
+# ))
 
-chains_kde = Turing.sample(model_kde, sampler, MCMCThreads(), n_samples, n_chains; warmup_iterations = n_warmup)
+prior = distprod(
+    rate = Dirichlet(ones(length(hist_sim))),  # Dirichlet over the N-simplex
+)
 
-# --- Analysis of results ---
-println("\n--- Turing.jl Results (with KDEs) ---")
-display(chains_kde)
 
-mean_total_rate_kde = mean(chains_kde[:total_rate])
-mean_proportions_kde = mean(chains_kde[:proportions])
+posterior = PosteriorMeasure(likelihood, prior)
 
-println("\nMean total_rate (KDE): ", mean_total_rate_kde)
-println("Mean proportions (KDE): ", mean_proportions_kde)
+results = bat_sample(posterior, MCMCSampling(mcalg = MetropolisHastings(), nsteps = 5*10^4, nchains = 6))
+samples = results.result
 
-# --- Plotting the fit ---
-data_hist_plot = fit(Histogram, observed_events, 0:100:3500) # Choose appropriate bins for plotting
+println("Mode: $(mode(samples))")
+println("Mean: $(mean(samples))")
+println("Median: $(median(samples))")
+println("Stddev: $(std(samples))")
 
-plot(data_hist_plot; label = "Observed Data", xlabel = "Energy (keV)", ylabel = "Counts", title = "Unbinned Extended Likelihood Fit with Turing.jl (KDEs)")
+unshaped_samples, f_flatten = bat_transform(Vector, samples)
 
-# Define the fitted mixture PDF function based on the mean parameters from KDE fit
-fitted_mixture_pdf_turing_kde = x -> begin
-    pdf_val = 0.0
-    for j in 1:num_components
-        pdf_val += mean_proportions_kde[j] * pdf(component_kdes[j], x)
-    end
-    return pdf_val
+par_cov = cov(unshaped_samples)
+println("Covariance: $par_cov")
+
+plot(samples)
+
+function fit_function(p::NamedTuple{(:rate,), T}, x::Real, hist_sim::Vector{Hist1D}) where T
+    sum(p.rate[i] * lookup(hist_sim[i], x) for i in eachindex(hist_sim))
 end
 
-plot_bin_edges = data_hist_plot.edges[1]
-plot_bin_centers = [0.5 * (plot_bin_edges[i] + plot_bin_edges[i+1]) for i in 1:(length(plot_bin_edges)-1)]
-plot_bin_widths = [plot_bin_edges[i+1] - plot_bin_edges[i] for i in 1:(length(plot_bin_edges)-1)]
+fit_function(p::NamedTuple{(:rate,), T}, x::Real) where T = fit_function(p, x, hist_sim)
 
-# Calculate expected counts per bin
-expected_counts_per_bin_turing_kde = [fitted_mixture_pdf_turing_kde(bc) * mean_total_rate_kde * plot_bin_widths[i]
-                                      for (i, bc) in enumerate(plot_bin_centers)]
+mean_vals = mean(samples)
 
-plot!(plot_bin_centers, expected_counts_per_bin_turing_kde, seriestype = :steppre, label = "Turing Fit (KDEs)", color = :red, linewidth = 2)
+plot(normalize(data_hist) ; label = "Data", xlabel = "Energy (keV)", ylabel = "Counts", title = "Fit to Data")
+plot!(0:10:3490, x -> fit_function(mean_vals, x), label = "Fit", color = :red, linewidth = 4)
+# plot(0:10:3490, fit_function, samples)
 
-# Optional: Plot individual components (scaled by their fitted proportion and total rate)
-# for j in 1:num_components
-#     component_proportions = mean_proportions_kde[j]
-#     component_fitted_pdf_kde = x -> pdf(component_kdes[j], x)
-#     
-#     component_expected_count_density_func = x -> component_proportions * component_fitted_pdf_kde(x) * mean_total_rate_kde
-#     
-#     component_expected_counts_per_bin = [component_expected_count_density_func(bc) * plot_bin_widths[i]
-#                                           for (i, bc) in enumerate(plot_bin_centers)]
-#     
-#     plot!(plot_bin_centers, component_expected_counts_per_bin, seriestype = :steppre, label = "Component $(j) (KDE)", linewidth = 1, linestyle = :dash)
-# end
 
-# savefig(plotsdir("turing_unbinned_kde_fit.png"))
+# Reshape and collect samples
+shaped_samples = [x.v for x in collect(samples)]
+
+plot(0:10:3490, x -> fit_function(shaped_samples[1], x), label="Sample 1")
+
+for i in rand(1:length(shaped_samples), 50)
+    plot!(0:10:3490, x -> fit_function(shaped_samples[i], x), label="", alpha=0.2, color=:gray)
+end
+current()
+
+
+
+
+
+# Evaluate fit_function5 for many samples and many x
+xs = 0:10:3490
+n_x = length(xs)
+n_samples = length(shaped_samples)
+
+# Collect all predictions for each x
+ys = [fit_function(p, x) for p in shaped_samples, x in xs]  # size: (n_samples, n_x)
+
+# Transpose to get ys_per_x[i] = all sample predictions at x = xs[i]
+ys_per_x = eachcol(ys)
+
+# Compute stats for each x
+med = [median(y) for y in ys_per_x]
+low_1σ = [quantile(y, 0.16) for y in ys_per_x]
+high_1σ = [quantile(y, 0.84) for y in ys_per_x]
+low_2σ = [quantile(y, 0.025) for y in ys_per_x]
+high_2σ = [quantile(y, 0.975) for y in ys_per_x]
+
+# Plot!
+plot(xs, med; label="Median fit", lw=2, color=:red)
+plot!(xs, low_1σ, ribbon=(high_1σ .- low_1σ), fillalpha=0.4, label="68% band", color=:red)
+plot!(xs, low_2σ, ribbon=(high_2σ .- low_2σ), fillalpha=0.2, label="95% band", color=:red)
+
+# Optional: overlay normalized data histogram
+norm_data_hist = normalize(data_hist)
+bar!(norm_data_hist.edges[1][1:end-1], norm_data_hist.weights;
+     label="Data", legend=:topright, alpha=0.5, bar_width=100)
+
+current()
