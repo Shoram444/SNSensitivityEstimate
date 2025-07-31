@@ -5,21 +5,24 @@ using SNSensitivityEstimate, UnROOT, CairoMakie, LaTeXStrings, StatsBase
 using Measurements
 using FHist, DataFramesMeta
 
-f = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v2_phase1_50keV_Xalbat_calib/mva.root")
+include(srcdir("params/SNparams.jl"))
+
+
+f = ROOTFile("/home/maros/Work/Phd/SNSensitivityEstimate/data/data/v2_phase1_Xalbat_50keV/mva.root")
 d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
 first(select(d, [:reconstructedEnergy1, :reconstructedEnergy2]), 10)
 
 global new_c = 299.792458 # speed of light in mm/ns
 begin
     
-    pint_cut = 0.02 # ns
-    pext_cut_low = 0.00 # ns
-    pext_cut_high = .5 # ns
+    pint_cut = 0.0001
+    pext_cut_low = 0.00 
+    pext_cut_high = 0.4
 
-    phi_low, phi_high = 0, 180 # degrees
-    E_cut = 300 # keV
-    dy_cut = 180 # mm
-    dz_cut = 180 # mm
+    phi_low, phi_high = 5, 175 # degrees
+    E_cut = 150 # keV
+    dy_cut = 65 # mm
+    dz_cut = 75 # mm
 
     d1 = @chain d begin
         @subset :reconstructedEnergy1 .> 0
@@ -287,8 +290,15 @@ begin
 
         # stairs!(a2, h5, color=Makie.wong_colors()[4], linewidth = 2, label = L"$\varepsilon_1 + \varepsilon_2 + \varepsilon_3 + \varepsilon_4: \Delta t_{ext} \in (5, 30) ns^2$")
         hidexdecorations!(a2)
-        a3 = Axis(f[3,1], xlabel = "E1 + E2", ylabel = "data/MC", limits = (0, 3500, -2, 3))
-        ratiohist!(a3, (h5)/(h6+h7+h8+h9) , color = :black, linewidth = 2, )
+        a3 = Axis(f[3,1], xlabel = "E1 + E2", ylabel = "data/MC (%)", limits = (0, 3500, -100, 100))
+        toth = h6 + h7 + h8 + h9
+        h_data_bc_w_errors = measurement.(bincounts(h5), binerrors(h5))
+        h_sim_bc_w_errors =  measurement.(bincounts(toth), binerrors(toth))
+
+        ratio = (h_data_bc_w_errors .- h_sim_bc_w_errors) ./ h_sim_bc_w_errors .* 100
+        
+        CairoMakie.scatter!(a3, midpoints(binedges(toth)), ratio, color = :black, markersize = 10, )
+        CairoMakie.errorbars!(a3, midpoints(binedges(toth)), [r.val for r in ratio],[r.err for r in ratio], color = :black, whiskerwidth = 5, label = "(data-MC)/MC (%)")
         # stairs!(a3, midpoints(binedges(h5)), bincounts(h5) ./ bincounts(h6))
         rowsize!(f.layout, 3, Relative(0.15))
 
@@ -321,49 +331,27 @@ begin
         f
     end
 end
-# stairs(normalize(Hist1D(d5.esum; binedges = 0:100:E_cut0)), color = Makie.wong_colors()[3], linewidth = 2, label = L"$\varepsilon_1 + \varepsilon_2 + \Delta t < 130$ns")
-# stairs!(normalize(Hist1D(d1_sim.esum; binedges = 0:100:E_cut0)), color = Makie.wong_colors()[3], linewidth = 2, label = L"$\varepsilon_1 + \varepsilon_2 + \Delta t < 130$ns")
-# current_figure()
-# # stairs(Hist1D(d5.phi; binedges = 0:10:180), color = Makie.wong_colors()[2], linewidth = 2, label = L"$\varepsilon_1 + \varepsilon_2: \Delta y, \Delta z < 100$mm")
 
-# htime = Hist1D(abs.(d3.time1 .- d3.time2); binedges = 0:1:30)
-# stairs(htime)
+let
+    eff = nrow(d1_sim) / 1e7
+    act = halfLife_to_activity(SNparams["Nₐ"], SNparams["W"], SNparams["SeThalf2nu"])
+    m = 6.11
+    d_p1  = 3.3948001e6
+    n = eff * act * d_p1 * m # number of events in 1 year
+    f = Figure()
+    a= Axis(
+        f[1,1], 
+        xlabel = "E1 + E2", 
+        ylabel = "counts", 
+        title = L"data bb phase1; \\ aquisiton time $\approx$ %$(round(d_p1/3600/24, digits =1)) days", 
+        limits = (0, 3500, nothing, nothing)
+    )
+    stairs!(a, h5, label = "data\nn = $(Int(integral(h5)))", linewidth = 4)
 
-# stairs(Hist1D(d3.phi; binedges = 0:5:180))
-
-
-
-
-
-# let
-#     f = Figure(size = (800,1200))
-#     a = Axis(f[1,1], xlabel = "tint (ns)", ylabel = "counts", title = "2nu simulation tint distribution")
-#     h1 = Hist1D(d1_sim.tint; binedges = 0:0.1:10) |> normalize
-#     h2 = Hist1D(d1.tint; binedges = 0:0.1:10) |> normalize
-#     a1 = Axis(f[2,1], xlabel = "tint (ns)", ylabel = "sim/data")
-
-#     a2 = Axis(f[3,1], xlabel = "text (ns)", ylabel = "counts", title = "2nu simulation text distribution")
-#     h3 = Hist1D(d1_sim.text; binedges = 0:0.1:10) |> normalize
-#     h4 = Hist1D(d1.text; binedges = 0:0.1:10) |> normalize
-#     a3 = Axis(f[4,1], xlabel = "text (ns)", ylabel = "sim/data")
-
-#     stairs!(a, h1, color = Makie.wong_colors()[3], linewidth = 2, label = "2nu simulation")
-#     stairs!(a, h2, color = Makie.wong_colors()[1], linewidth = 2, label = "data")
-#     ratiohist!(a1, h1/h2)
-
-#     stairs!(a2, h3, color = Makie.wong_colors()[3], linewidth = 2, label = "2nu simulation")
-#     stairs!(a2, h4, color = Makie.wong_colors()[1], linewidth = 2, label = "data")
-#     ratiohist!(a3, h3/h4)
-#     a.xticks = 0:1:10
-#     a1.xticks = 0:1:10
-#     a2.xticks = 0:1:10
-#     a3.xticks = 0:1:10
-
-#     axislegend(a, position = :rt)
-#     axislegend(a2, position = :rt)
-#     save("tint_text_distributions.png", f, px_per_unit = 5)
-#     f
-# end
-
-
-
+    h6 = Hist1D(d1_sim.esum; binedges = 0:100:3500)
+    h6 = normalize(h6, width = :false)
+    plot!(a, h6 * n, label = "2nu; \nn = $(Int(round(n)))", color = (Makie.wong_colors()[2], 0.5),)
+    axislegend(a, position = :rt)
+    save(joinpath(scriptsdir("data/phase1"), "phase1_2e_spectrum_2nu.png"), f, px_per_unit = 5)
+    f 
+end

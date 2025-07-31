@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "805929ad9983641821294423b82c701be8f140f2"
+project_hash = "1483aa83a0210e4175acd21f11fa5f18dd51deb2"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "e2478490447631aedba0823d4d7a80b2cc8cdb32"
@@ -642,6 +642,12 @@ git-tree-sha1 = "d9d26935a0bcffc87d2613ce14c527c99fc543fd"
 uuid = "f0e56b4a-5159-44fe-b623-3e5288b988bb"
 version = "2.5.0"
 
+[[deps.Configurations]]
+deps = ["ExproniconLite", "OrderedCollections", "TOML"]
+git-tree-sha1 = "4358750bb58a3caefd5f37a4a0c5bfdbbf075252"
+uuid = "5218b696-f38b-4ac9-8b61-a12ec717816d"
+version = "0.17.6"
+
 [[deps.ConsoleProgressMonitor]]
 deps = ["Logging", "ProgressMeter"]
 git-tree-sha1 = "3ab7b2136722890b9af903859afcf457fa3059e8"
@@ -974,6 +980,11 @@ git-tree-sha1 = "27415f162e6028e81c72b82ef756bf321213b6ec"
 uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
 version = "0.1.10"
 
+[[deps.ExpressionExplorer]]
+git-tree-sha1 = "4a8c0a9eebf807ac42f0f6de758e60a20be25ffb"
+uuid = "21656369-7473-754a-2065-74616d696c43"
+version = "1.1.3"
+
 [[deps.ExproniconLite]]
 git-tree-sha1 = "c13f0b150373771b0fdc1713c97860f8df12e6c2"
 uuid = "55351af7-c7e9-48d6-89ff-24e801d99491"
@@ -1265,6 +1276,12 @@ git-tree-sha1 = "fee60557e4f19d0fe5cd169211fdda80e494f4e8"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
 version = "2.84.0+0"
 
+[[deps.GracefulPkg]]
+deps = ["Compat", "Pkg", "TOML"]
+git-tree-sha1 = "eee0ecee0391689c354c03aadc77018ee7bb85fc"
+uuid = "828d9ff0-206c-6161-646e-6576656f7244"
+version = "2.2.1"
+
 [[deps.Graphics]]
 deps = ["Colors", "LinearAlgebra", "NaNMath"]
 git-tree-sha1 = "a641238db938fff9b2f60d08ed9030387daf428c"
@@ -1324,6 +1341,12 @@ deps = ["LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
 git-tree-sha1 = "68c173f4f449de5b438ee67ed0c9c748dc31a2ec"
 uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 version = "0.3.28"
+
+[[deps.HypertextLiteral]]
+deps = ["Tricks"]
+git-tree-sha1 = "7134810b1afce04bbc1045ca1985fbe81ce17653"
+uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+version = "0.9.5"
 
 [[deps.HypothesisTests]]
 deps = ["Combinatorics", "Distributions", "LinearAlgebra", "Printf", "Random", "Roots", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
@@ -1894,6 +1917,12 @@ git-tree-sha1 = "c3159eb1e3aa3e409edbb71f4035ed8b1fc16e23"
 uuid = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
 version = "0.9.5"
 
+[[deps.Malt]]
+deps = ["Distributed", "Logging", "RelocatableFolders", "Serialization", "Sockets"]
+git-tree-sha1 = "636abf4fb184be05888dacc0b636fe0911d6d746"
+uuid = "36869731-bdee-424d-aa32-cab38c994e3b"
+version = "1.2.0"
+
 [[deps.MappedArrays]]
 git-tree-sha1 = "2dab0221fe2b0f2cb6754eaa743cc266339f527e"
 uuid = "dbb5928d-eab1-5f90-85c2-b9b0edb7c900"
@@ -2007,6 +2036,12 @@ version = "0.3.5"
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 version = "2023.1.10"
+
+[[deps.MsgPack]]
+deps = ["Serialization"]
+git-tree-sha1 = "f5db02ae992c260e4826fe78c942954b48e1d9c2"
+uuid = "99f44e22-a591-53d1-9472-aa23ef4bd671"
+version = "1.2.1"
 
 [[deps.MultivariateStats]]
 deps = ["Arpack", "Distributions", "LinearAlgebra", "SparseArrays", "Statistics", "StatsAPI", "StatsBase"]
@@ -2336,6 +2371,24 @@ version = "1.40.1"
     ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
     Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
+[[deps.Pluto]]
+deps = ["Base64", "Configurations", "Dates", "Downloads", "ExpressionExplorer", "FileWatching", "GracefulPkg", "HTTP", "HypertextLiteral", "InteractiveUtils", "LRUCache", "Logging", "LoggingExtras", "MIMEs", "Malt", "Markdown", "MsgPack", "Pkg", "PlutoDependencyExplorer", "PrecompileSignatures", "PrecompileTools", "REPL", "RegistryInstances", "RelocatableFolders", "Scratch", "Sockets", "TOML", "Tables", "URIs", "UUIDs"]
+git-tree-sha1 = "bafdc7b4c064d9a473b08e70085273061251b8dd"
+uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
+version = "0.20.13"
+
+[[deps.PlutoDependencyExplorer]]
+deps = ["ExpressionExplorer", "InteractiveUtils", "Markdown"]
+git-tree-sha1 = "9071bfe6d1c3c51f62918513e8dfa0705fbdef7e"
+uuid = "72656b73-756c-7461-726b-72656b6b696b"
+version = "1.2.1"
+
+[[deps.PlutoStyles]]
+deps = ["Pluto"]
+git-tree-sha1 = "d56c39facd567c61485eb995971dca4a28d02a48"
+uuid = "16e07271-a41c-4e3e-b73a-b807cf2ea0eb"
+version = "0.1.13"
+
 [[deps.PolygonOps]]
 git-tree-sha1 = "77b3d3605fc1cd0b42d95eba87dfcd2bf67d5ff6"
 uuid = "647866c9-e3ac-4575-94e7-e3d426903924"
@@ -2370,6 +2423,11 @@ deps = ["LinearAlgebra"]
 git-tree-sha1 = "17275485f373e6673f7e7f97051f703ed5b15b20"
 uuid = "85a6dd25-e78a-55b7-8502-1745935b8125"
 version = "0.2.4"
+
+[[deps.PrecompileSignatures]]
+git-tree-sha1 = "18ef344185f25ee9d51d80e179f8dad33dc48eb1"
+uuid = "91cefc8d-f054-46dc-8f8c-26e11d7c5411"
+version = "3.0.3"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
