@@ -5,24 +5,19 @@ using SNSensitivityEstimate, CairoMakie, FHist, ColorSchemes
 
 
 include(scriptsdir("ND/results/best_rois.jl"))
-include(srcdir("params/SNparams.jl"))
+include(srcdir("params/Params.jl"))
 
 analysisDict    = Dict(:signal => "bb0nu_foil_bulk", :bining => (300, 3500), :bin_width => 100, :mode => "sumE")
 
 roi             = bb0nu_roi
 roi[:sumE]      = (300, 3500)
-Bin_low, Bin_high, bin_width = analysisDict[:bining][1], analysisDict[:bining][2], analysisDict[:bin_width]
-backgrounds     = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_wire_surface", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "gamma_experimental_surface"]
 
-all_processes   = load_data_processes(datadir("mva/fal5_TKrec_J40"), analysisDict[:mode], fwhm=0.0, roi = roi)
+Bin_low, Bin_high, bin_width = analysisDict[:bining][1], analysisDict[:bining][2], analysisDict[:bin_width]
+
+
+all_processes   = load_data_processes(datadir("mva/fal5_TKrec_J40"), analysisDict[:mode], fwhm=0.0, roi = topology_roi)
 signal          = get_process(analysisDict[:signal], all_processes) |> first
 background      = [get_process(b, all_processes) |> first for b in backgrounds]
-
-set_nTotalSim!(signal, 0.1e8)
-set_nTotalSim!(background[1], 0.1e8)
-set_activity!(background[1], 0.0019235366786346892)
-set_activity!(background[end], 0.185)
-
 
 
 for b in background

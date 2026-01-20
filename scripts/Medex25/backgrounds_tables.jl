@@ -23,17 +23,37 @@ background      = [get_process(b, all_processes) |> first for b in backgrounds]
 
 
 set_nTotalSim!(signal, 0.1e8)
-set_nTotalSim!(background[1], 0.1e8)
-set_activity!(background[1], 0.0019235366786346892)
+set_nTotalSim!(background[1], 1e8)
+# set_activity!(background[1], 0.0019235366786346892)
 set_activity!(background[end], 0.185)
 
 
-for b in background
-    set_bins!(b, Bin_low:bin_width:Bin_high+bin_width)
-end
-set_bins!(signal, Bin_low:bin_width:Bin_high+bin_width)
+# for b in background
+#     set_bins!(b, Bin_low:bin_width:Bin_high+bin_width)
+# end
+# set_bins!(signal, Bin_low:bin_width:Bin_high+bin_width)
 
 set_signal!(background[1], false)
+
+bkgs = [get_bkg_counts_1D(b) for b in background]
+bkg_sums = round.(integral.(bkgs), digits = 3)
+activities = [b.activity for b in background]
+bkg_errs = [round(sum(sqrt.(sumw2(b))), digits=3) for b in get_bkg_counts_1D.(background)]
+
+using PrettyTables, DataFramesMeta, Measurements
+
+pretty_table(
+    DataFrame(
+        process = [L"$2\nu\beta\beta$", L"$^{214}$Bi",L"Radon $$", L"$^{208}$Tl", L"external $$", "total"],
+        exp_bkg = vcat(bkg_sums .± bkg_errs, [sum(bkg_sums .± bkg_errs)]),
+        activities = vcat(activities, [0.0]),
+    ),
+    header = ["source", "counts in ROI", "activitiies"],
+    backend = Val(:markdown)
+)
+
+
+set_activity!(background[end], 0.185/10)
 
 bkgs = [get_bkg_counts_1D(b) for b in background]
 bkg_sums = round.(integral.(bkgs), digits = 3)

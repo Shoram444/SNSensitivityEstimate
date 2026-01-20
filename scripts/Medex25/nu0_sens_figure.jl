@@ -13,7 +13,8 @@ analysisDict    = Dict(:signal => "bb0nu_foil_bulk", :bining => (300, 3500), :bi
 roi             = bb0nu_roi
 roi[:sumE]      = (300, 3500)
 Bin_low, Bin_high, bin_width = analysisDict[:bining][1], analysisDict[:bining][2], analysisDict[:bin_width]
-backgrounds     = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_wire_surface", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "gamma_experimental_surface"]
+# backgrounds     = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_wire_surface", "Tl208_foil_bulk", "K40_foil_bulk", "Pa234m_foil_bulk", "gamma_experimental_surface"]
+backgrounds     = ["bb_foil_bulk", "Bi214_foil_bulk", "Bi214_wire_surface", "Tl208_foil_bulk", "gamma_experimental_surface"]
 
 all_processes   = load_data_processes(datadir("mva/fal5_TKrec_J40"), analysisDict[:mode], fwhm=0.0, roi = roi)
 signal          = get_process(analysisDict[:signal], all_processes) |> first
@@ -22,9 +23,11 @@ background      = [get_process(b, all_processes) |> first for b in backgrounds]
 colors          = ["#003865", "#FFB948", "#52473B", "#9A3A06", ]
 
 set_nTotalSim!(signal, 0.1e8)
-set_nTotalSim!(background[1], 0.1e8)
+set_nTotalSim!(background[1], 1e8)
+set_activity!(background[end], 0.185)
 
-set_activity!(background[1], 0.0019235366786346892)
+
+# set_activity!(background[1], 0.0019235366786346892)
 for b in background
     set_bins!(b, Bin_low:bin_width:Bin_high+bin_width)
 end
@@ -65,6 +68,7 @@ function get_sensitivities_vs_time(
     return sensitivities
 end
 
+
 nu0_t_sens = get_sensitivities_vs_time(
     signal,
     background,
@@ -73,8 +77,9 @@ nu0_t_sens = get_sensitivities_vs_time(
     effFactor = 1.0
 )
 
+get_bkg_counts_ROI(best_t12ESum, background...)
 
-
+sum(get_bkg_counts_ROI(best_t12ESum, background[i]) for i in 1:length(background))
     
 let exp = t .* SNparams["foilMass"] |> collect
     f = Figure(size = (950, 600), fontsize = 22, fonts = (; regular = "TeX"), figure_padding = 20)

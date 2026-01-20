@@ -20,7 +20,7 @@ df_nu0 = LazyTree(f_nu0, "tree", keys(f_nu0["tree"])) |> DataFrame
 f_bb = ROOTFile("scripts/Medex25/theo_data/bb.root")
 df_bb = LazyTree(f_bb, "tree", keys(f_bb["tree"])) |> DataFrame
 
-bins = range(0, 1, 50)
+bins = range(0, 1, 80)
 bc = midpoints(bins) |> collect
 bc[end] = 1
 bc[1] = 0
@@ -83,9 +83,9 @@ end
 ## all
 with_theme(theme_latexfonts()) do
     f = Figure(
-        size = (1700, 600), 
-        fontsize = 42,  
-        figure_padding = 45,
+        size = (400, 200), 
+        fontsize = 12,  
+        figure_padding = 1,
     )
     a = Axis(
         f[1,1], 
@@ -97,19 +97,19 @@ with_theme(theme_latexfonts()) do
         yticks = (0:1, [L"0", L"1"]),
     )
 
-    p1 = lines!(a, [1, 1], [0, 0.3], label = L" $0\nu\beta\beta$", linewidth = 8, color = :black)
-    p2 = lines!(a, bc, bincountsbb, label = L" $2\nu\beta\beta$", linewidth = 8, color = colors[2], linestyle = (:dot, :dense))
-    p3 = lines!(a, bc, bincountsm1, label = L" $0\nu\beta\beta\chi^0, n=1$", linewidth = 8, color = colors[4], linestyle = (:dash, :dense))
-    p4 = lines!(a, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^0\chi^0, n=3$", linewidth = 8, color = colors[1], linestyle = (:dashdot, :dense))
+    p1 = lines!(a, [1, 1], [0, 0.3], label = L" $0\nu\beta\beta$", linewidth = 2, color = :black)
+    p2 = lines!(a, bc, bincountsbb, label = L" $2\nu\beta\beta$", linewidth = 2, color = colors[2], linestyle = (:dot, :dense))
+    p3 = lines!(a, bc, bincountsm1, label = L" $0\nu\beta\beta\chi^0, n=1$", linewidth = 2, color = colors[4], linestyle = (:dash, :dense))
+    p4 = lines!(a, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^0\chi^0, n=3$", linewidth = 2, color = colors[1], linestyle = (:dashdot, :dense))
     # lines!(a, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^2\chi^2$, n=3", linewidth = 8, color = colors[4])
     
     Legend(
         f[1,2], 
         [p1,p2, p3, p4], 
         [L" $0\nu\beta\beta$ ", L" $2\nu\beta\beta$ ", L" $0\nu\beta\beta\chi^0, n=1$ ", L" $0\nu\beta\beta\chi^0\chi^0, n=3$"], 
-        patchsize = (80, 50),
+        patchsize = (15, 10),
         valign = :top,
-        width = 400
+        # width = 400
     )
     # axislegend(a, patchsize = (40, 50), position = :cb, nbanks = 2)
     hidedecorations!(a, label = false,  ticklabels = false, ticks = false,)
@@ -134,10 +134,12 @@ hm2Single = Hist1D(df_m2.simuEnergy1 ./ 3000 ; binedges = bins) |> normalize
 hrhSingle = Hist1D(df_rh.simuEnergy1 ./ 3000 ; binedges = bins) |> normalize
 hnu0Single = Hist1D(df_nu0.simuEnergy1 ./ 3000 ; binedges = bins) |> normalize
 bb2Single = Hist1D(df_bb.simuEnergy1 ./ 3000 ; binedges = bins) |> normalize
+bb2Single = Hist1D(df_bb.simuEnergy1 ; binedges = 0:50:3050) |> normalize
+bb2Single.bincounts[1] = bb2Single.bincounts[1] * 0.965
 
-bincountsm1Single = bincounts(hm1Single) ./ maximum(bincounts(hm1Single))
-bincountsm2Single = bincounts(hm2Single) ./ maximum(bincounts(hm2Single))
-bincountsrhSingle = bincounts(hrhSingle) ./ maximum(bincounts(hrhSingle))
+# bincountsm1Single = bincounts(hm1Single) ./ maximum(bincounts(hm1Single))
+# bincountsm2Single = bincounts(hm2Single) ./ maximum(bincounts(hm2Single))
+# bincountsrhSingle = bincounts(hrhSingle) ./ maximum(bincounts(hrhSingle))
 bincountsbbSingle = bincounts(bb2Single) ./ maximum(bincounts(bb2Single))
 
 bincountsnu0Single = bincounts(hnu0Single) ./ maximum(bincounts(hnu0Single))
@@ -147,38 +149,45 @@ bincountsnu0Single = bincountsnu0Single ./ maximum(bincountsnu0Single)
 
 with_theme(theme_latexfonts()) do
     f = Figure(
-        size = (1700, 600), 
-        fontsize = 42,  
-        figure_padding = 45,
+        # size = (400, 200), 
+        size = (500, 200), 
+        fontsize = 16,  
+        figure_padding = 1,
     )
     a = Axis(
         f[1,1], 
-        xlabel = L"single electron energy $E_i$ ",
+        xlabel = L"electron kinetic energy $E_i$ (keV)",
         ylabel = L"rate (a.u.) $$",
-        title = L"theoretical spectra of double beta decay processes $$",
-        limits = (0,1.08,0,1.05),
-        xticks = (0:1, [L"0", L"Q"]),
+        # title = L"theoretical spectrum of double beta decay processes $$",
+        title = L"theoretical spectrum of $2\nu\beta\beta$ of $^{82}\mathrm{Se}$",
+        # limits = (0,1,0,1.08),
+        limits = (0,3100,0,1.08),
+        # xticks = (0:1, [L"0", L"Q"]),
+        xticks = (0:1000:3000, [L"0", L"1000", L"2000", L"Q"]),
         yticks = (0:1, [L"0", L"1"]),
     )
 
-    p1 = lines!(a, bbnu0.e, bbnu0.dg, label = L" $0\nu\beta\beta$", linewidth = 8, color = :black)
-    p2 = lines!(a, bc, bincountsbbSingle, label = L" $2\nu\beta\beta$", linewidth = 8, color = colors[2], linestyle = (:dot, :dense))
-    p3 = lines!(a, bc, bincountsm1Single, label = L" $0\nu\beta\beta\chi^0, n=1$", linewidth = 8, color = colors[4], linestyle = (:dash, :dense))
-    p4 = lines!(a, bc, bincountsm2Single, label = L" $0\nu\beta\beta\chi^0\chi^0, n=3$", linewidth = 8, color = colors[1], linestyle = (:dashdot, :dense))
-    p5 = lines!(a, bc, bincountsrhSingle, label = L" $0\nu\beta\beta$ RH", linewidth = 8, color = colors[5], linestyle = (:dashdotdot, :dense))
-    # lines!(a, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^2\chi^2$, n=3", linewidth = 8, color = colors[4])
+    # p1 = lines!(a, bbnu0.e, bbnu0.dg, label = L" $0\nu\beta\beta$", linewidth = 2, color = :black)
+    # p2 = lines!(a, bc, bincountsbbSingle, label = L" $2\nu\beta\beta$", linewidth = 2, color = colors[2], linestyle = (:dot, :dense))
+    p2 = lines!(a, midpoints(0:50:3050) .- 25, bincountsbbSingle, label = L" $2\nu\beta\beta$", linewidth = 4, color = :black, linestyle = (:solid, :dense))
+    # p3 = lines!(a, bc, bincountsm1Single, label = L" $0\nu\beta\beta\chi^0, n=1$", linewidth = 2, color = colors[4], linestyle = (:dash, :dense))
+    # p4 = lines!(a, bc, bincountsm2Single, label = L" $0\nu\beta\beta\chi^0\chi^0, n=3$", linewidth = 2, color = colors[1], linestyle = (:dashdot, :dense))
+    # p5 = lines!(a, bc, bincountsrhSingle, label = L" $0\nu\beta\beta$ RH", linewidth = 2, color = colors[5], linestyle = (:dashdotdot, :dense))
+    # lines!(a, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^2\chi^2$, n=3", linewidth = 2, color = colors[4])
     
-    Legend(
-        f[1,2], 
-        [p1,p2, p3, p4, p5], 
-        [L" $0\nu\beta\beta$ ", L" $2\nu\beta\beta$ ", L" $0\nu\beta\beta\chi^0, n=1$ ", L" $0\nu\beta\beta\chi^0\chi^0, n=3$", L" $0\nu\beta\beta$ RH"], 
-        patchsize = (80, 50),
-        valign = :top,
-        width = 400
-    )
-    # axislegend(a, patchsize = (40, 50), position = :cb, nbanks = 2)
+    # Legend(
+    #     f[1,2], 
+    #     [p1,p2, p3, p4, p5], 
+    #     [L" $0\nu\beta\beta$ ", L" $2\nu\beta\beta$ ", L" $0\nu\beta\beta\chi^0, n=1$ ", L" $0\nu\beta\beta\chi^0\chi^0, n=3$", L" $0\nu\beta\beta$ RH"], 
+    #     patchsize = (10, 10),
+    #     valign = :top,
+    #     width = 100
+    # )
+    axislegend(a, patchsize = (15, 10), position = :rt, nbanks = 2)
+    # axislegend(a, patchsize = (40, 50), position = :rt, nbanks = 2)
     hidedecorations!(a, label = false,  ticklabels = false, ticks = false,)
-    save("scripts/Medex25/figs/theo/esingle.png",f, px_per_unit = 5)
+    # save("scripts/Medex25/figs/theo/bb2nuesingle.png",f, px_per_unit = 5)
+    save("scripts/Medex25/figs/theo/bb2nuesingle.png",f, px_per_unit = 5)
     f
 end
 
@@ -215,9 +224,9 @@ bincountsnu0Phi = bincounts(hnu0Phi) ./ maximum(bincounts(hnu0Phi))
 
 with_theme(theme_latexfonts()) do
     f = Figure(
-        size = (1700, 600), 
-        fontsize = 42,  
-        figure_padding = 45,
+        size = (400, 200), 
+        fontsize = 12,  
+        figure_padding = 1,
     )
     a = Axis(
         f[1,1], 
@@ -229,23 +238,121 @@ with_theme(theme_latexfonts()) do
         yticks = (0:1, [L"0", L"1"]),
     )
 
-    p1 = lines!(a, bcPhi, bincountsnu0Phi, label = L" $0\nu\beta\beta$", linewidth = 8, color = :black)
-    p2 = lines!(a, bcPhi, bincountsbbPhi, label = L" $2\nu\beta\beta$", linewidth = 8, color = colors[2], linestyle = (:dot, :dense))
-    p3 = lines!(a, bcPhi, bincountsm1Phi, label = L" $0\nu\beta\beta\chi^0, n=1$", linewidth = 8, color = colors[4], linestyle = (:dash, :dense))
-    p4 = lines!(a, bcPhi, bincountsm2Phi, label = L" $0\nu\beta\beta\chi^0\chi^0, n=3$", linewidth = 8, color = colors[1], linestyle = (:dashdot, :dense))
-    p5 = lines!(a, bc_RH, ys_RH, label = L" $0\nu\beta\beta$ RH", linewidth = 8, color = colors[5], linestyle = (:dashdotdot, :dense))
-    # lines!(a, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^2\chi^2$, n=3", linewidth = 8, color = colors[4])
+    p1 = lines!(a, bcPhi, bincountsnu0Phi, label = L" $0\nu\beta\beta$", linewidth = 2, color = :black)
+    p2 = lines!(a, bcPhi, bincountsbbPhi, label = L" $2\nu\beta\beta$", linewidth = 2, color = colors[2], linestyle = (:dot, :dense))
+    p3 = lines!(a, bcPhi, bincountsm1Phi, label = L" $0\nu\beta\beta\chi^0, n=1$", linewidth = 2, color = colors[4], linestyle = (:dash, :dense))
+    p4 = lines!(a, bcPhi, bincountsm2Phi, label = L" $0\nu\beta\beta\chi^0\chi^0, n=3$", linewidth = 2, color = colors[1], linestyle = (:dashdot, :dense))
+    p5 = lines!(a, bc_RH, ys_RH, label = L" $0\nu\beta\beta$ RH", linewidth = 2, color = colors[5], linestyle = (:dashdotdot, :dense))
+    # lines!(a, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^2\chi^2$, n=3", linewidth = 2, color = colors[4])
     
     Legend(
         f[1,2], 
         [p1,p2, p3, p4, p5], 
         [L" $0\nu\beta\beta$ ", L" $2\nu\beta\beta$ ", L" $0\nu\beta\beta\chi^0, n=1$ ", L" $0\nu\beta\beta\chi^0\chi^0, n=3$", L" $0\nu\beta\beta$ RH"], 
-        patchsize = (80, 50),
+        patchsize = (10, 10),
         valign = :top,
-        width = 400
+        # width = 400
     )
     # axislegend(a, patchsize = (40, 50), position = :cb, nbanks = 2)
     hidedecorations!(a, label = false,  ticklabels = false, ticks = false,)
     save("scripts/Medex25/figs/theo/phi.png",f, px_per_unit = 5)
+    f
+end
+
+
+
+### all channels 
+with_theme(theme_latexfonts()) do
+    f = Figure(
+        size = (600, 280), 
+        fontsize = 14,  
+        figure_padding = (10, 15, -75, 5),
+    )
+    Label(f[0,1:3], "Spectra of various BSM processes")
+
+    a = Axis(
+        f[1,1], 
+        xlabel = L"$E_1 + E_2$ (a.u.)",
+        ylabel = L"rate (a.u.) $$",
+        title = L"sum of electron energies $$",
+        limits = (0,1.08,0,1.05),
+        xticks = (0:1, [L"0", L"Q"]),
+        yticks = (0:1, [L"0", L"1"]),
+        xticklabelspace=-2.5    )
+
+    p1 = lines!(a, [1, 1], [0, 0.3], label = L" $0\nu\beta\beta$", linewidth = 2, color = :black)
+    p2 = lines!(a, bc, bincountsbb, label = L" $2\nu\beta\beta$", linewidth = 2, color = colors[2], linestyle = (:dot, :dense))
+    p3 = lines!(a, bc, bincountsm1, label = L" $0\nu\beta\beta\chi^0, n=1$", linewidth = 2, color = colors[4], linestyle = (:dash, :dense))
+    p4 = lines!(a, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^0\chi^0, n=3$", linewidth = 2, color = colors[1], linestyle = (:dashdot, :dense))
+    # lines!(a, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^2\chi^2$, n=3", linewidth = 8, color = colors[4])
+    
+    # Legend(
+    #     f[1,2], 
+    #     [p1,p2, p3, p4], 
+    #     [L" $0\nu\beta\beta$ ", L" $2\nu\beta\beta$ ", L" $0\nu\beta\beta\chi^0, n=1$ ", L" $0\nu\beta\beta\chi^0\chi^0, n=3$"], 
+    #     patchsize = (15, 10),
+    #     valign = :top,
+    #     # width = 400
+    # )
+    # axislegend(a, patchsize = (40, 50), position = :cb, nbanks = 2)
+    hidedecorations!(a, label = false,  ticklabels = false, ticks = false,)
+    # save("scripts/Medex25/figs/theo/esum.png",f, px_per_unit = 5)
+
+    a2 = Axis(
+        f[1,2], 
+        xlabel = L"$E_i$ (a.u.) ",
+        # ylabel = L"rate (a.u.) $$",
+        title = L"single-electron energy $$",
+        # title = L"theoretical spectrum of $2\nu\beta\beta$ of $^{82}\mathrm{Se}$",
+        limits = (0,1,0,1.08),
+        xticks = (0:1, [L"0", L"Q"]),
+        # xticks = (0:1000:3000, [L"0", L"1000", L"2000", L"Q"]),
+        yticks = (0:1, [L"0", L"1"]),
+        xticklabelspace=-2.5
+    )
+
+    p1 = lines!(a2, bbnu0.e, bbnu0.dg, label = L" $0\nu\beta\beta$", linewidth = 2, color = :black)
+    p2 = lines!(a2, bc, bincountsbbSingle, label = L" $2\nu\beta\beta$", linewidth = 2, color = colors[2], linestyle = (:dot, :dense))
+    # p2 = lines!(a2, midpoints(0:50:3050) .- 25, bincountsbbSingle, label = L" $2\nu\beta\beta$", linewidth = 4, color = :black, linestyle = (:solid, :dense))
+    p3 = lines!(a2, bc, bincountsm1Single, label = L" $0\nu\beta\beta\chi^0, n=1$", linewidth = 2, color = colors[4], linestyle = (:dash, :dense))
+    p4 = lines!(a2, bc, bincountsm2Single, label = L" $0\nu\beta\beta\chi^0\chi^0, n=3$", linewidth = 2, color = colors[1], linestyle = (:dashdot, :dense))
+    p5 = lines!(a2, bc, bincountsrhSingle, label = L" $0\nu\beta\beta$ RH", linewidth = 2, color = colors[5], linestyle = (:dashdotdot, :dense))
+    # lines!(a2, bc, bincountsm2, label = L" $0\nu\beta\beta\chi^2\chi^2$, n=3", linewidth = 2, color = colors[4])
+    
+    Legend(
+        f[2,1:3], 
+        [p1,p2, p3, p4, p5], 
+        [L" $0\nu\beta\beta$ ", L" $2\nu\beta\beta$ ", L" $0\nu\beta\beta\chi^0, n=1$ ", L" $0\nu\beta\beta\chi^0\chi^0, n=3$", L" $0\nu\beta\beta$ RH"], 
+        patchsize = (20, 10),
+        valign = :top,
+        # width = ,
+        nbanks = 3,
+    )
+    rowgap!(f.layout, Relative(0.05))
+    # axislegend(a, patchsize = (40, 50), position = :rt, nbanks = 2)
+    hidedecorations!(a2, label = false,  ticklabels = false, ticks = false,)
+    hideydecorations!(a2,)
+
+    a3 = Axis(
+        f[1,3], 
+        xlabel = L"\vartheta $(^{\circ})$ ",
+        # ylabel = L"rate (a.u.) $$",
+        title = L"angular distribution $$",
+        limits = (0,180.0,0,1.05),
+        xticks = (0:180:180, [L"0", L"180"]),
+        yticks = (0:1, [L"0", L"1"]),
+        xticklabelspace=-2.5
+    )
+
+    p1 = lines!(a3, bcPhi, bincountsnu0Phi, label = L" $0\nu\beta\beta$", linewidth = 2, color = :black)
+    p2 = lines!(a3, bcPhi, bincountsbbPhi, label = L" $2\nu\beta\beta$", linewidth = 2, color = colors[2], linestyle = (:dot, :dense))
+    p3 = lines!(a3, bcPhi, bincountsm1Phi, label = L" $0\nu\beta\beta\chi^0, n=1$", linewidth = 2, color = colors[4], linestyle = (:dash, :dense))
+    p4 = lines!(a3, bcPhi, bincountsm2Phi, label = L" $0\nu\beta\beta\chi^0\chi^0, n=3$", linewidth = 2, color = colors[1], linestyle = (:dashdot, :dense))
+    p5 = lines!(a3, bc_RH, ys_RH, label = L" $0\nu\beta\beta$ RH", linewidth = 2, color = colors[5], linestyle = (:dashdotdot, :dense))
+
+    hidedecorations!(a3, label = false,  ticklabels = false, ticks = false,)
+    hideydecorations!(a3,)
+
+    save("scripts/Medex25/figs/theo/all_channels.png",f, px_per_unit = 5)
     f
 end
