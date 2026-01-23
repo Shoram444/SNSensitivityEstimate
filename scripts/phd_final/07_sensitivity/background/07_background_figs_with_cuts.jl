@@ -106,7 +106,6 @@ function load_background_hists(
         roi  = roi,
     )
 
-    bkgs = [get_process(b, all_processes) |> first for b in backgrounds]
 
     for b in bkgs
         set_bins!(b, bins)
@@ -171,21 +170,16 @@ function stacked_hist!(ax, hists; labels, colors, fill_area)
             color = colors[1],
             strokewidth = 2,
             strokecolor = :black)
+        errorbars!(ax, sum(hists); whiskerwidth=7, color = :black, clamp_bincounts=true)
+        
     else
         stephist!(ax, sum(hists),
             label = isnothing(labels) ? nothing : labels[1],
             color = colors[1],
-            linewidth = 2)        
-    end
-    # hist!(ax, sum(hists), color = (:black, 0.10), )
+            linewidth = 4)        
+        errorbars!(ax, sum(hists); whiskerwidth=7, color = colors[1], clamp_bincounts=true)
 
-    errorbars!(ax, sum(hists); whiskerwidth=7, color = colors[1], clamp_bincounts=true)
-    # edges = binedges(hists[1]) |> midpoints
-    # errs = binerrors(hists[1])
-    # replace!(errs, NaN => 0.0)
-    # replace!(errs, Inf => 0.0)
-    # bcs = FHist.bincounts(sum(hists))
-    # errorbars!(ax, edges, bcs, errs; whiskerwidth=7, color = colors[1])
+    end
 
     for i in 2:length(hists)
         if fill_area
@@ -194,23 +188,17 @@ function stacked_hist!(ax, hists; labels, colors, fill_area)
                 color = colors[i],
                 strokewidth = 2,
                 strokecolor = :black)
+            nonzero_hists = sum(filter(h -> maximum(bincounts(h)) > 0, hists[i:end])) # when histogram is empty gives NaN errors
+            errorbars!(ax, nonzero_hists; whiskerwidth=7, color = :black, clamp_bincounts=true)
+
         else
             stephist!(ax, sum(hists[i:end]),
                 label = isnothing(labels) ? nothing : labels[i],
                 color = colors[i],
-                linewidth = 2)
+                linewidth = 4)
+            nonzero_hists = sum(filter(h -> maximum(bincounts(h)) > 0, hists[i:end])) # when histogram is empty gives NaN errors
+            errorbars!(ax, nonzero_hists; whiskerwidth=7, color = colors[i], clamp_bincounts=true)
         end
-        nonzero_hists = sum(filter(h -> maximum(bincounts(h)) > 0, hists[i:end])) # when histogram is empty gives NaN errors
-        errorbars!(ax, nonzero_hists; whiskerwidth=7, color = colors[i], clamp_bincounts=true)
-        # errorbars!(ax, sum(hists[i:end]); whiskerwidth=7, color = colors[i], clamp_errors=false)
-        # edges = binedges(hists[i]) |> midpoints
-        # errs = abs.(binerrors(hists[i]))
-        # replace!(errs, NaN => 0.0)
-        # replace!(errs, Inf => 0.0)
-        # @show i, errs
-
-        # bcs = FHist.bincounts(sum(hists[i:end]))
-        # errorbars!(ax, edges, bcs, errs; whiskerwidth=7, color = colors[i])
 
     end
 end
@@ -436,7 +424,7 @@ backgrounds = [
 
 
 
-analysisDict    = Dict(:mode => "sumE", :cuts => "topology_roi")
+analysisDict    = Dict(:mode => "sumE", :cuts => "vertex_energy_tof_roi")
 
 if( analysisDict[:cuts] == "nemo3_roi" )
     roi = nemo3_roi
@@ -488,14 +476,20 @@ labels_latex = [
     L"^{208}\mathrm{Tl}",
     L"^{214}\mathrm{Bi}", 
     L"^{40}\mathrm{K}",
+
+    # neutrons
+    L"\mathrm{Neutrons}",
+    # L"\mathrm{Thermal~neutrons}"
 ]
 
 categories = [
     "source foil",
     "radon",
     "detector contamination",
-    "external gamma"
+    "external gamma",
+    "neutrons"
 ]
+
 
 # let 
 begin
@@ -506,25 +500,60 @@ begin
         simdir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41")
         mode = analysisDict[:mode] 
         fill_area = false
-        stacked = false
-        # roi = roi
+        stacked = true
+        roi = roi
         scale = :log10
-        cat_colors = ["#4E79A7","#C7E6E3","#9AD0CB","#76B7B2","#4E8F8B","#F28E2B","#C66A00","#E15759","#B22222", "#7BC36D", "#59A14F", "#3F7F3A"]
+        # cat_colors = ["#4E79A7","#C7E6E3","#9AD0CB","#76B7B2","#4E8F8B","#F28E2B","#C66A00","#E15759","#B22222", "#7BC36D", "#59A14F", "#3F7F3A", "#AA40FC"]
+        # cat_colors = [
+        #     "#041E42",
+        #     "#0B3A66",
+        #     "#005C8A",
+        #     "#2B7DAA",
+        #     "#006630",
+        #     "#2E8B57",
+        #     "#951272",
+        #     "#7A3B6E", 
+        #     "#BE4D00",
+        #     "#A65A3A", 
+        #     "#FFB948",
+        #     "#605643",
+        #     "#000000"
+        #     ]
         # cat_colors = [STACK_COLORS[1], STACK_COLORS[2], STACK_COLORS[3]]
+        cat_colors = ColorSchemes.tableau_20
     end
     
     low, high, bw = binning
     # low, high, bw = 2800:100:3200
     bins = make_bins(binning) # 0:100:3200
 
-    all_processes = load_data_processes(
-        simdir,
-        String(mode);
-        fwhm = 0.0,
-        roi  = roi,
-    )
+    # all_processes = load_data_processes(
+    #     simdir,
+    #     String(mode);
+    #     fwhm = 0.0,
+    #     roi  = roi,
+    # )
 
     bkgs = [get_process(b, all_processes) |> first for b in backgrounds]
+
+    # hack for neutrons
+    # hack for neutrons
+    # hack for neutrons
+    data_dir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41/neutrons_jan_2026")
+    include(joinpath(data_dir, "read_neutrons_1D.jl"))
+    bins = signal.bins
+    neutron_processes = load_neutron_process1D(data_dir, mode; roi=roi, isotopes=DEFAULT_ISOTOPES, bins = bins)
+    for p in neutron_processes
+        set_activity!(p, p.activity / 3) # activity is supposed to be 1/3 by Sam's measurements
+        println("Neutron process: ", p.isotopeName, " nTotalSim: ", p.nTotalSim, " activity: ", p.activity)
+    end
+    # hack for neutrons
+    # hack for neutrons
+
+
+
+    bkgs = [get_process(b, all_processes) |> first for b in backgrounds]
+    append!(bkgs, neutron_processes)
 
     for b in bkgs
         set_bins!(b, bins)
@@ -533,7 +562,7 @@ begin
     tot = 0
 
     
-    hists = get_bkg_counts_1D.(bkgs) .* inv(2.8)  # normalize to counts / yr
+    hists = get_bkg_counts_1D.(bkgs) # .* inv(2.8)  # normalize to counts / yr
     for (i,h) in enumerate(hists)
         if isnan(integral(h))
             replace!(hists[i].bincounts, NaN => 0.0)
@@ -549,8 +578,8 @@ begin
 
         
         measure_cts = measurement.(bincounts(h), binerrors(h))
-        println(backgrounds[i], ", eff = ", eff_err, ", counts = ", sum(measure_cts))
-        tot += sum(measure_cts)
+        # println(backgrounds[i], ", eff = ", eff_err, ", counts = ", sum(measure_cts))
+        # tot += sum(measure_cts)
     end
     println("Total cts = ", tot)
 
@@ -576,12 +605,13 @@ begin
         sum(hists[8:13]),  # detector contamination PMT
         sum(hists[14:15]),  # detector contamination Scintillator
         hists[16:18],  # external gamma
+        sum(hists[19:end]) # neutrons
     )
 
-    min_cts = max(1e-4,find_min_bincounts(sum_hists))
+    min_cts = max(1e-3,find_min_bincounts(sum_hists))
     max_cts = find_max_bincounts(sum(sum_hists))
 
-    f = Figure(size = (1400, 900), fontsize = 36, figure_padding = 16)
+    f = Figure(size = (1900, 1100), fontsize = 36, figure_padding = 16)
 
     legend_foil = [
         [
@@ -611,6 +641,13 @@ begin
         ] for i in 10:12
     ]
 
+    legend_neutrons = [
+        [
+            LineElement(color = cat_colors[i], linewidth = 3), 
+            LineElement(color = cat_colors[i], points = Point2f[(0.5, 0), (0.5, 1)],linewidth = 3) 
+        ] for i in 13:13
+    ]
+
 
 
     legend_master = Legend(
@@ -620,18 +657,21 @@ begin
             legend_radon,
             legend_detector,
             legend_gamma,
+            legend_neutrons,
         ],
         [
             labels_latex[1:5],
             labels_latex[6:7],
             labels_latex[8:9],
             labels_latex[10:12],
+            labels_latex[13:13],
         ],
         [
             "Source foil",
             "Radon",
             "Detector contamination",
             "External gamma",
+            "Neutrons",
         ],
         patchsize = (45, 35),
         rowgap = 20,
@@ -644,17 +684,17 @@ begin
     legend_master.tellwidth = true
 
     title = if analysisDict[:cuts] == "nemo3_roi"
-        "SuperNEMO: Simulated background for 1 yr of exposure \nNEMO-3 like cuts"
+        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \nNEMO-3 like cuts"
     elseif analysisDict[:cuts] == "topology_roi"
-        "SuperNEMO: Simulated background for 1 yr of exposure \ntopology only cuts"
+        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \ntopology only cuts"
     elseif analysisDict[:cuts] == "tof_roi"
-        "SuperNEMO: Simulated background for 1 yr of exposure \ntopology + ToF cuts"
+        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \ntopology + ToF cuts"
     elseif analysisDict[:cuts] == "vertex_tof_roi"
-        "SuperNEMO: Simulated background for 1 yr of exposure \nvertex + ToF cuts"
+        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \nvertex + ToF cuts"
     elseif analysisDict[:cuts] == "vertex_energy_tof_roi"
-        "SuperNEMO: Simulated background for 1 yr of exposure \ntopology + ToF + vertex + energy cuts"
+        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \ntopology + ToF + vertex + energy cuts"
     elseif analysisDict[:cuts] == "vertex_length_energy_tof_roi"
-        "SuperNEMO: Simulated background for 1 yr of exposure \nvertex + length + energy + ToF cuts"
+        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \nvertex + length + energy + ToF cuts"
     end
 
     ax = Axis(
@@ -679,11 +719,11 @@ begin
 
 
     if scale == :log10
-        ylims!(ax, 10^-4, 1e2 * max_cts)
-        decades = -4:ceil(log10(1e2*max_cts)) .|> Int
+        ylims!(ax, 10^-3, 1e2 * max_cts)
+        decades = -3:ceil(log10(1e2*max_cts)) .|> Int
         ticks   = 10.0 .^ decades 
-        labels  = [L"10^{%$d}" for d in decades]
-        ax.yticks = ( ticks,labels )
+        labels_  = [L"10^{%$d}" for d in decades]
+        ax.yticks = ( ticks,labels_ )
         
 
     else

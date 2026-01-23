@@ -7,7 +7,7 @@ lprob_to_prob(x) = abs(10^(-x))
 prob_to_lprob(x) = abs(log10(x))
 
 # push!(LOAD_PATH, srcdir())
-using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random
+using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random, FHist
 
 # File "scripts/Params.jl" contains the all (most) of the necessary parameters for the sensitivity estimation in one place
 # Information is placed in `Dict` (Dictionaries). Take a look inside for details, but the general idea is we export these 
@@ -15,45 +15,59 @@ using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random
 println("loaded pkgs")
 # include(srcdir("params/Params.jl"))
 
+
+## Helper functions
+# include(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/helper_functions.jl"))
+
 vars = [
     "phi", 
     "sumE", 
-    "maxE", 
-    "minE",
-    "avgE", 
+    # "maxE", 
+    # "minE",
+    # "avgE", 
     "r", 
-    "singleE",
+    # "singleE",
     "dy", 
     "dz",
-    "sameSide",
+    # "sameSide",
     "lPint",
     "lPext",
     "trackLength1",
     "trackLength2",
-    "caloTime1",
-    "caloTime2",
+    # "caloTime1",
+    # "caloTime2",
     ]
 
 bins = (
     phi = (0,180),
-    sumE = (2600, 3500),
-    minE = (0, 3500),
-    maxE = (0, 3500),
-    avgE = (0, 3500),
+    sumE = (0, 3500),
+    # minE = (0, 3500),
+    # maxE = (0, 3500),
+    # avgE = (0, 3500),
     r = (0, 200),
-    singleE = (0, 3500),
+    # singleE = (0, 3500),
     dy = (0, 200),
     dz = (0, 200),
-    sameSide = (0, 1),
-    lPint = (0, 100),
-    lPext = (0, 100),
-    trackLength1 = (0, 5000),
-    trackLength2 = (0, 5000),
-    caloTime1 = (0, 1000),
-    caloTime2 = (0, 1000),
+    # sameSide = (0, 1),
+    lPint = (0, 50),
+    lPext = (0, 50),
+    trackLength1 = (0, 3000),
+    trackLength2 = (0, 3000),
+    # caloTime1 = (0, 100),
+    # caloTime2 = (0, 100),
 )
 
 processes = load_ndim_processes(datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41"), bins, vars)
+
+data_dir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41/neutrons_jan_2026/")
+
+include(joinpath(data_dir, "read_neutrons_ND.jl"))
+neutron_processes = load_neutron_processes_ND(data_dir, vars, bins)
+for p in neutron_processes
+    set_activity!(p, p.activity / 3)
+    println("Neutron process: ", p.isotopeName, " nTotalSim: ", p.nTotalSim, " activity: ", p.activity)
+end
+
 
 # signal_name = "%SIGNAL"
 signal_name = "bb0nu_foil_bulk"
@@ -94,10 +108,20 @@ bkgs = [
 
 
 background = [get_process(bkg, processes) |> first for bkg in bkgs]
+background = vcat(background, neutron_processes)
 
 # set 2nubb to background process (initially it's signal for exotic 2nubb analyses)
 set_signal!(background[1], false)
-
+# set_activity!(background[7], 0.15/1e3) # radon to 0.15mBq/kg
+# set_activity!(background[7], 2/1e3) # radon to 2mBq/kg
+radon_tag = 1
+if radon_tag == 1
+    set_activity!(background[7], 150/1e6) # radon to 150 uBq/kg
+elseif radon_tag == 2
+    set_activity!(background[7], 2/1e3) # radon to 2 mBq/kg
+elseif radon_tag == 3
+    set_activity!(background[7], 0.6/1e3) # radon to 0.6 mBq/kg
+end
 
 α= 1.64485362695147
 
@@ -148,15 +172,18 @@ function f_parallel(X)
 end
 
 x0 = float.([
-    0, 180, # phi
-    2700, 3100, # sumE
-    0, 3500, # singleE
-    0, 100, # dy
-    0, 100, # dz
+    5, 180, # phi
+    2700, 3000, # sumE
+    # 0, 3500, # singleE
+    0,150, # r
+    0, 150, # dy
+    0, 150, # dz
     0, 3, # lPint
     1, 100, # lPext
-    0, 2000, # trackLength1
-    0, 2000, # trackLength2
+    0, 2500, # trackLength1
+    0, 2500, # trackLength2
+    # 0, 20, # caloTime1
+    # 0, 20, # caloTime2
 ])
 
 
@@ -204,22 +231,29 @@ function print(best_roi::SensitivityEstimateND)
 end
 
 print(best_sens)
+@info print("Best sensitivity found:", best_sens)
 
-let 
-    my_roi = (
-        phi= (5, 180),
-        sumE= (2700, 3100),
-        singleE= (0, 3500),
-        dy= (0, 100),
-        dz= (0, 100),
-        lPint= (0, 3.0), # 5.0),
-        lPext= (1.0, 100),
-        trackLength1= (0, 2000),
-        trackLength2= (0, 2000),
-    )
-    my_sens = get_sensitivityND(SNparams, α, vcat(signal, background), my_roi; approximate="table")
-    print(my_sens)
-end
+best = get_best_ROI_ND(res, signal)
+# h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external = get_background_counts_hists(background, best, 0:100:3500, :sumE)
+
+# @show integral.([ h_bb,h_internal, h_radon, h_Bi210, h_detector, h_external])
+
+# let 
+#     my_roi = (
+#         phi= (15, 180),
+#         sumE= (2700, 3000),
+#         singleE= (0, 3500),
+#         r= (0, 80),
+#         dy= (0, 70),
+#         dz= (0, 90),
+#         lPint= (0, 3.0), # 5.0),
+#         lPext= (1.0, 100),
+#         trackLength1= (0, 2000),
+#         trackLength2= (0, 2000),
+#     )
+#     my_sens = get_sensitivityND(SNparams, α, vcat(signal, background), my_roi; approximate="table")
+#     print(my_sens)
+# end
 
 
 dff = DataFrame(
@@ -228,9 +262,9 @@ dff = DataFrame(
     best_roi = best_sens.roi
 )
 
-open("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/ND/results/May25_tof_r/$(signal_name)_$(rand(1:1000000)).csv", "w") do io
-    CSV.write(io, dff; header=true, delimiter=',')
-end
+# open("/pbs/home/m/mpetro/sps_mpetro/Projects/PhD/SNSensitivityEstimate/scripts/ND/results/Jan26/$(signal_name)_$(rand(1:1000000)).csv", "w") do io
+#     CSV.write(io, dff; header=true, delimiter=',')
+# end
 
 
 using FHist
@@ -268,36 +302,192 @@ using FHist
 
 using ColorSchemes
 colors = ColorSchemes.tab20
+# colors = ColorSchemes.roma100
+
+
+
+
+
 
 begin
-    var = "log10((:caloTime2 - :caloTime1) / :sumE)"
-    binning = -5:0.01:5
-    f = Figure(size = (1200, 900), fontsize = 25)
-    a = Axis(f[1,1], xlabel = string(var), ylabel = "Normalized counts", title = "ND Backgrounds and Signal - variable: $var") 
-    ps = []
+    var = :lPext
+    binning = 0:0.1:50
+    roi = (
+        phi= (0, 180),
+        sumE= (0, 3500),
+        r= (0, 200),
+        dy= (0, 200),
+        dz= (0, 200),
+        lPint= (0.0, 50),
+        lPext= (0, 50.0),
+        trackLength1= (0, 5000),
+        trackLength2= (0, 5000),
+    )
 
-    d_signal = log10.(abs.((getproperty.(signal.data, :caloTime2) .- getproperty.(signal.data, :caloTime1))) ./ (getproperty.(signal.data, :sumE)))
-    # d_signal = getproperty.(signal.data, var) .- 
-    p = hist!(a, d_signal, bins=binning, label = "signal", color =colors[1], offset = length(background)+1, scale_to = 0.7)
+    h_internal, h_radon, h_Bi10, h_detector, h_external = get_background_counts_hists(background, roi, binning, var)
+
+    f = Figure(size = (1000, 1400), fontsize = 32)
+    a1 = Axis(f[1,1], title = "signal", tellwidth = false, width = 800) 
+    a2 = Axis(f[2,1], title = "internal", tellwidth = false, width = 800) 
+    a3 = Axis(f[3,1], title = "radon", tellwidth = false, width = 800, ) 
+    a4 = Axis(f[4,1], title = "Bi210", tellwidth = false, width = 800, ) 
+    a5 = Axis(f[5,1], title = "detector", tellwidth = false, width = 800) 
+    a6 = Axis(f[6,1], title = "external", tellwidth = false, width = 800, ) 
+    ps = []
+    Label(f[0,1], "distributions for variable: $var", fontsize = 36)
+
+    hidexdecorations!.([a1, a2, a3, a4, a5])
+
+    # d_signal = log10.(abs.((getproperty.(signal.data, :caloTime2) .- getproperty.(signal.data, :caloTime1))) ./ (getproperty.(signal.data, :sumE)))
+    d_signal = getproperty.(signal.data, var) 
+    # p = stephist!(a, d_signal, bins=binning, label = "signal", color =colors[1], offset = 0, scale_to = 0.7)
+    p = hist!(a1, d_signal, bins=binning,  color =colors[1])
     
     push!(ps, p)
     
-    labels = ["signal"]
-    labels = append!(labels, [b.isotopeName for b in background] )
+    labels = ["signal", "internal", "radon", "Bi210", "detector", "external"]
     
-    for (i, j) in zip(length(background):-1:1,1:length(background))
-        d = log10.(abs.((getproperty.(background[j].data, :caloTime2) .- getproperty.(background[j].data, :caloTime1))) ./ (getproperty.(background[j].data, :sumE)))
-        # d = getproperty.(background[j].data, var)
-        # h = normalize(Hist1D(d; binedges=binning))
-        p = hist!(a, d, bins=binning, color = colors[j+1], label = background[j].isotopeName,offset = i, scale_to = 0.7)
-        push!(ps, p)
-    end
-    # stephist!(a, normalize(Hist1D(getproperty.(background[1].data, :singleE); binedges=0:50:3500)), label = "2nubb", linewidth = 3)
-    # stephist!(a, normalize(Hist1D(getproperty.(background[2].data, :singleE); binedges=0:50:3500)), label = "Bi214", linewidth = 3)
-    # stephist!(a, normalize(Hist1D(getproperty.(background[5].data, :singleE); binedges=0:50:3500)), label = "Tl208", linewidth = 3)
-    # stephist!(a, normalize(Hist1D(getproperty.(background[10].data, :singleE); binedges=0:50:3500)), label = "K40 PMT", linewidth = 3)
-    # axislegend(a)
-    Legend(f[1,2], ps, labels)
+    push!(
+        ps,
+        stephist!(a2, h_internal; color = colors[3], linewidth = 4)
+    )
+    push!(
+        ps,
+        stephist!(a3, h_radon; color = colors[5], linewidth = 4)
+    )
+    push!(
+        ps,
+        stephist!(a4, h_Bi10; color = colors[7], linewidth = 4)
+    )
+    push!(
+        ps,
+        stephist!(a5, h_detector; color = colors[9], linewidth = 4)
+    )
+
+    push!(
+        ps,
+        stephist!(a6, h_external; color = colors[11], linewidth = 4)
+    )
+
+    vlines!.([a1, a2, a3, a4, a5, a6], [2.0],color = :black, linestyle = :solid, label = "data-cut line", linewidth = 5)
+    axislegend(a1, position = :rt, padding = (10,10,10,10))
+    # Legend(f[1:end,2], ps, labels, tellheight = true)
+    save(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/figs/ND_backgrounds_$(var).png"), f, px_per_unit = 2)
 
     f
 end
+
+
+colors = ["#041E42","#BE4D00","#951272","#006630","#005C8A","#FFB948","#605643","#302D23"]
+
+roi
+set_activity!(background[7], 2/1e3) # radon to 2mBq/kg
+
+begin
+    begin
+        binning = 300:100:3500
+        bw = step(binning)
+        var = :sumE
+        fill_area = true
+        stacked = true
+        roi = (
+            phi= (0, 180),
+            sumE= (300, 3500),
+            r= (0, 100),
+            dy= (0, 100),
+            dz= (0, 100),
+            lPint= (0.0, prob_to_lprob(0.04)),
+            lPext= (prob_to_lprob(0.01), 50.0),
+            trackLength1= (0, 2500),
+            trackLength2= (0, 2500),
+        )
+        scale = :identity
+        colors = colors
+    end
+
+    # h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external = get_background_counts_hists(background, roi, binning, var)
+
+    @show integral.([ h_bb,h_internal, h_radon, h_Bi210, h_detector, h_external])
+
+    f = Figure(size = (1900, 1100), fontsize = 36, figure_padding = 16)
+
+    sum_hists = [h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external]
+   
+    legend_elements = [PolyElement(polycolor = colors[i]) for i in 1:length(sum_hists)] 
+    legend_labels = [
+        L"2\nu\beta\beta",
+        "Internal contamination",
+        "Radon",
+        "Bi-210 wire surface",
+        "Detector contamination",
+        "External",
+    ]
+
+    legend_master = Legend(
+        f, legend_elements, legend_labels,
+        patchsize = (45, 35),
+        rowgap = 20,
+        tellheight = true,
+        padding = (10, 10, 10, 10),
+        nbanks = 1,
+    )
+
+    legend_master.nbanks = 1
+    legend_master.tellheight = false
+    legend_master.tellwidth = true
+
+    title = "Stacked histogram\nSuperNEMO expected background for 17.5kg.yr exposure\nvariable: $var"
+
+
+    ax = Axis(
+        f[1, 1];
+        xlabel = L"Summed 2-electron energy (keV)$$",
+        # xlabel = L"$\varphi$ (°)$$",
+        ylabel = L"Counts / (\mathrm{yr} \cdot %$bw \mathrm{keV})$$",
+        title  = title,
+        yscale = scale == :log10 ? log10 : identity,
+        yminorticks=IntervalsBetween(10), 
+        yminorticksvisible = true, 
+        yminorticksize = 4
+    )
+    hist!(ax, sum(sum_hists), color = (:black, 0.15), label = "Total background")
+    if !fill_area
+        axislegend(ax, position = :rt, padding = (20,20,20,20))
+    end
+
+    if stacked
+        stacked_hist!(ax, sum_hists; labels = nothing, colors = colors, fill_area = fill_area)
+    else
+        all_individual_hist!(ax, sum_hists; labels = nothing, colors = colors, fill_area = fill_area)
+    end
+
+    min_cts = max(1e-3,minimum(bincounts(sum(sum_hists))))
+    max_cts = find_max_bincounts(sum(sum_hists))
+
+    if scale == :log10
+        ylims!(ax, 10^-3, 1e2 * max_cts)
+        decades = -3:ceil(log10(1e2*max_cts)) .|> Int
+        ticks   = 10.0 .^ decades 
+        labels_  = [L"10^{%$d}" for d in decades]
+        ax.yticks = ( ticks,labels_ )
+        
+
+    else
+        ylims!(ax, 0, 1.2*max_cts)  
+    end
+
+    xlims!(ax, first(binning), last(binning))
+
+    f[1, 2] = legend_master
+
+    save(joinpath(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/figs"),
+        "bad_radon_mode_$(var)_background_categories_$(scale)_fill_$(fill_area)_stacked_$(stacked).png"), f)
+
+    f
+end
+
+
+
+
+
+

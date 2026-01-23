@@ -5,9 +5,9 @@ using SNSensitivityEstimate, UnROOT, CairoMakie, LaTeXStrings, StatsBase
 using Measurements
 using FHist, DataFramesMeta
 
-include(srcdir("params/Params.jl"))
+# include(srcdir("params/Params.jl"))
 
-begin
+# begin
     duration_p0 = 38.8*24*3600 # s
     duration_p1 =  26*24*3600 # s
     tot_dur = duration_p0 + duration_p1
@@ -33,7 +33,7 @@ begin
         l_min, l_max = 0, 5000
     end
 
-    params = Dict(
+    params_ = Dict(
         # "pint_cut" => 0.04,
         # "pext_cut_low" => 0.00,
         # "pext_cut_high" => 0.01,
@@ -536,7 +536,7 @@ begin
         axislegend(a; position = :rt)
         save("/home/maros/Work/Phd/SNSensitivityEstimate/scripts/data/combined_p0_p1/combined_p0_p1_data_vs_sim.png", f, px_per_unit = 5)
         
-        sname = savename("sim_vs_data__",params, "png")
+        sname = savename("sim_vs_data__",params_, "png")
         save("/home/maros/Work/Phd/SNSensitivityEstimate/scripts/data/combined_p0_p1/figs/" * sname, f, px_per_unit = 5)
 
         f
@@ -546,4 +546,4 @@ begin
     # plot(normalize(Hist1D(dsim1.phi; binedges=10:10:180)))
     # plot!(normalize(Hist1D(d04.phi; binedges=10:10:180)))
     # current_figure()
-end
+# end
