@@ -103,7 +103,7 @@ background = vcat(background, neutron_processes)
 set_signal!(background[1], false)
 # set_activity!(background[7], 0.15/1e3) # radon to 0.15mBq/kg
 # set_activity!(background[7], 2/1e3) # radon to 2mBq/kg
-radon_tag = 1
+radon_tag = 2
 if radon_tag == 1
     set_activity!(background[7], 150/1e6) # radon to 150 uBq/kg
 elseif radon_tag == 2

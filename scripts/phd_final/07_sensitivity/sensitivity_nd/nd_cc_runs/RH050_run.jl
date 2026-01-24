@@ -8,7 +8,7 @@ prob_to_lprob(x) = abs(log10(x))
 
 using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random, FHist, Dates
 now = Dates.now()
-const signal_name = "bb0nu_foil_bulk"
+const signal_name = "RH050_foil_bulk"
 
 println("loaded pkgs")
 
@@ -162,7 +162,7 @@ end
 
 x0 = float.([
     5, 180, # phi
-    2700, 3000, # sumE
+    1300, 3000, # sumE
     0, 3500, # singleE
     0,150, # r
     0, 150, # dy
