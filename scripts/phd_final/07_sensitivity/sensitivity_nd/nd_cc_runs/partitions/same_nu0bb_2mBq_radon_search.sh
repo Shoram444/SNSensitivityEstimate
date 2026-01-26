@@ -2,8 +2,8 @@
 
 # SLURM options:
 #SBATCH --partition=htc
-#SBATCH --array=0-1
-#SBATCH --job=2mBq0nu
+#SBATCH --array=0-4
+#SBATCH --job=same
 #SBATCH --licenses=sps
 #SBATCH --time=1-0
 #SBATCH --mem=24G
