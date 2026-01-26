@@ -43,7 +43,7 @@ bins = (
     singleE = (0, 3500),
     dy = (0, 200),
     dz = (0, 200),
-    sameSide = (0, 1),
+    sameSide = (0, 2),
     lPint = (0, 50),
     lPext = (0, 50),
     trackLength1 = (0, 3000),
@@ -156,7 +156,7 @@ options = Options(;
     # f_tol = 1e-5,
     # f_tol_rel = 1e-5,
     # f_tol_abs = 1e-5,
-    time_limit = 60*60*22.0,
+    time_limit = 60.0, #60*60*22.0,
     # parallel_evaluation = true,
     verbose = true,
     # iterations = 15,
@@ -180,7 +180,7 @@ x0 = float.([
     0,150, # r
     0, 150, # dy
     0, 150, # dz
-    0, 1, # sameSide
+    0, 2, # sameSide
     0, 3, # lPint
     1, 100, # lPext
     0, 2500, # trackLength1
