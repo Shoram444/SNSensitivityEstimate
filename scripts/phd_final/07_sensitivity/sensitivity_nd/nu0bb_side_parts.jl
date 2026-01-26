@@ -252,15 +252,15 @@ h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external = get_background_coun
 
 let 
     my_roi = (
-        phi= (0, 165),
+        phi= (0, 180),
         sumE= (2700, 3000),
         # singleE= (0, 2600),
-        r= (0, 150),
-        dy= (0, 60),
-        dz= (0, 40),
+        r= (0, 200),
+        dy= (0, 70),
+        dz= (0, 80),
         sameSide = (0.0, 2.0),
-        lPint= (0, 2.), # 5.0),
-        lPext= (1.0, 50),
+        lPint= (0, 3.), # 5.0),
+        lPext= (1., 50),
         trackLength1= (0, 3000),
         trackLength2= (0, 3000),
     )
