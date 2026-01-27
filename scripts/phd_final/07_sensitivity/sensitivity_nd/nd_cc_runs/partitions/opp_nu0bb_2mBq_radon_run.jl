@@ -218,7 +218,20 @@ function get_best_ROI_ND(res::Vector{<:Real}, process)
     return best_roi
 end
 
-best = get_best_ROI_ND(res, signal)
+# best = get_best_ROI_ND(res, signal)
+best = (
+    phi = (0.0, 180.0), 
+    sumE = (2700, 3000.0), 
+    r = (0.0, 200.0), 
+    singleE = (0.0, 2600), 
+    dy = (0.0, 70), 
+    dz = (0.0, 40), 
+    sameSide = (0.0, 1.0), 
+    lPint = (0.0, 2.1), 
+    lPext = (0.0, 50.0), 
+    trackLength1 = (0.0, 3000.0), 
+    trackLength2 = (0.0, 1850)
+)
 best_sens = get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
 
 import Base.print
@@ -232,7 +245,25 @@ function print(best_roi::SensitivityEstimateND)
     end
 end
 
-print(best_sens)
+begin
+    best = (
+        phi = (80, 175.0), 
+        sumE = (2700, 3000.0), 
+        r = (0.0, 200.0), 
+        singleE = (0.0, 2600), 
+        dy = (0.0, 70), 
+        dz = (0.0, 40), 
+        sameSide = (0.0, 1.0), 
+        lPint = (0.0, 2.1), 
+        lPext = (1.0, 50.0), 
+        trackLength1 = (0.0, 3000.0), 
+        trackLength2 = (0.0, 1850)
+    )
+    best_sens = get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
+
+    print(best_sens)
+
+end
 @info print("Best sensitivity found:", best_sens)
 
 best = get_best_ROI_ND(res, signal)
