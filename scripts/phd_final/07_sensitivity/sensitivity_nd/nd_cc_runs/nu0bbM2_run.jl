@@ -143,7 +143,7 @@ options = Options(;
     # f_tol = 1e-5,
     # f_tol_rel = 1e-5,
     # f_tol_abs = 1e-5,
-    time_limit = 60*60*22.0,
+    time_limit = 60*60*46.0,
     # parallel_evaluation = true,
     verbose = true,
     # iterations = 15,
@@ -161,7 +161,7 @@ function f_parallel(X)
 end
 
 x0 = float.([
-    5, 180, # phi
+    0, 180, # phi
     1300, 3000, # sumE
     0, 3500, # singleE
     0,150, # r

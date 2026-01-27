@@ -2,11 +2,11 @@
 
 # SLURM options:
 #SBATCH --partition=htc
-#SBATCH --array=0-1
+#SBATCH --array=0-4
 #SBATCH --job=M2
 #SBATCH --licenses=sps
-#SBATCH --time=1-0
-#SBATCH --mem=24G
+#SBATCH --time=2-0
+#SBATCH --mem=12G
 #SBATCH --cpus-per-task=1
 #SBATCH --output=logs/M2_nDim_%A_%a.log
 
