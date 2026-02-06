@@ -14,7 +14,16 @@ function get_roi_bkg_counts_hist(
     bins,
     mode
 )
-    d = getproperty.(p.data, mode)
+    data = p.data
+    varNames = keys(roi)
+    if roi !== nothing
+        for (i,n) in enumerate(varNames)
+            data = filter(x -> getproperty(x, Symbol(n)) > roi[i][1] && getproperty(x, Symbol(n)) < roi[i][2], data)
+        end
+    end
+    p.data = data
+    d = getproperty.(data, mode)
+
     bkg_hist = normalize(Hist1D(d;binedges = bins); width = false)
 
     ε = get_roi_effciencyND(p, roi).eff

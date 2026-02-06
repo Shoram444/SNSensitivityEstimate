@@ -107,7 +107,7 @@ let exp = t .* sn_params["foilMass"] |> collect
 
     Label(f[0,1], text = L"Simulated SuperNEMO sensitivity to $\textrm{$0\nu\beta\beta\chi^0$ }$ decay",)
 
-
+    # in https://journals.aps.org/prd/pdf/10.1103/PhysRevD.107.032006 abstract n=1 1.2e23 
     h1 = hlines!(ax, [1.2e23], color = colors[7], linestyle = :dash, label = L"best $^{82}$Se: $\langle \eta \rangle$", linewidth = 2)
 
     vlines!(ax, [17.5], linestyle = (:dash, :dense), color = (:black, 0.7), linewidth = 1.5)
@@ -171,7 +171,7 @@ let exp = t .* sn_params["foilMass"] |> collect
 
     Label(f[0,1], text = L"Simulated SuperNEMO sensitivity to $\textrm{$0\nu\beta\beta\chi^0\chi^0$ }$ decay",)
 
-
+    # in https://journals.aps.org/prd/pdf/10.1103/PhysRevD.107.032006 abstract n=3 1.4e22 
     h1 = hlines!(ax, [1.4e22], color = (:black, 0.7), linestyle = :dash, label = L"best $^{82}$Se: $\langle \eta \rangle$", linewidth = 2)
 
     vlines!(ax, [17.5], linestyle = (:dash, :dense), color = (:black, 0.7), linewidth = 1.5)
@@ -217,9 +217,9 @@ end
 df_nu0_nd = DataFrame(
     signal = [ L"0\nu\beta\beta", L"0\nu\beta\beta"],
     radon_level = [L"150 \muBq/m^3", L"2mBq/m^3"],
-    sens = [4.24e24, 3.51e24],
-    eff = [0.19, 0.19],
-    bkg = [1.81, 3.71]
+    sens = [4.59e24, 3.51e24],
+    eff = [0.178, 0.170],
+    bkg = [1.238, 2.80]
 )
 
 sens_radon_nd = [ map(x-> sensitivity_in_time(r.eff, r.bkg, x), t) for r in eachrow(df_nu0_nd) ]
@@ -268,20 +268,31 @@ let exp = t .* sn_params["foilMass"] |> collect
         [ p1, p2, p3, p4, h1], 
         [
             # L"$$  bayesian limit @ 90% CI",
-            L"$$ 1D ROI Rn @ 0.15~$\textrm{mBq/m^3}$", 
-            L"$$ 1D ROI Rn @ 2~$\textrm{mBq/m^3}$", 
-            L"$$ ND ROI Rn @ 0.15~$\textrm{mBq/m^3}$", 
-            L"$$ ND ROI Rn @ 2~$\textrm{mBq/m^3}$", 
+            L"$$ 1D ROI ($\textrm{a_{Rn}} = 0.15~\textrm{mBq/m^3}$)", 
+            L"$$ 1D ROI ($\textrm{a_{Rn}} = 2~\textrm{mBq/m^3}$)", 
+            L"$$ ND ROI ($\textrm{a_{Rn}} = 0.15~\textrm{mBq/m^3}$)", 
+            L"$$ ND ROI ($\textrm{a_{Rn}} = 2~\textrm{mBq/m^3}$)", 
             L"$$  CUPID-0 @ 90% CI\n bayesian limit"
         ], 
         patchsize = (60, 70),
-        L"SuperNEMO $$0\nu\beta\beta$$ sensitivity \\ frequentist limit @ 90% CL \\",
+        L"SuperNEMO $$0\nu\beta\beta$$ sensitivity \\ frequentist limit @ 90% CL",
         )
     save(scriptsdir("phd_final/collab2026/figs","nd_nu0_sens_figure.png"), f, px_per_unit = 5)
     f
     
 end
 
+
+df_compare = DataFrame(
+    radon_level = [0.15, 2, 0.15, 2],
+    method = ["1D", "1D", "ND", "ND"],
+    sens_3yr = [4.03e24, 2.88e24, 4.59e24, 3.51e24],
+    eff = [0.163, 0.163, 0.178, 0.171],
+    bkg = [1.46, 4.56, 1.238, 2.80]
+
+)
+
+sensitivity_in_time(3.25e24, 3.5, 2.86 )
 
 
 ### RH
