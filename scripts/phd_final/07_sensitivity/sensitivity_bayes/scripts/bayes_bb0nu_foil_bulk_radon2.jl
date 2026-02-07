@@ -77,16 +77,6 @@ roi[:sumE] = (Bin_low, Bin_high) # update the sumE range to match the analysisDi
 # 2. mode::String -> the "mode" means which, which dimension we want to investigate, three options (for now) are "sumE", "singleE", "phi"
 all_processes = load_data_processes(datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41"), analysisDict[:mode], fwhm=0.0, roi = roi)
 
-if analysisDict[:radon_tag] == 1
-    set_activity!(background[7], 150/1e6) # radon to 150 uBq/kg
-elseif analysisDict[:radon_tag] == 2
-    set_activity!(background[7], 2/1e3) # radon to 2 mBq/kg
-elseif analysisDict[:radon_tag] == 3
-    set_activity!(background[7], 0.6/1e3) # radon to 0.6 mBq/kg
-end
-
-
-
 neutron_data_dir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41/neutrons_jan_2026/")
 
 include(joinpath(neutron_data_dir, "read_neutrons_1D.jl"))
@@ -95,13 +85,24 @@ for p in neutron_processes
     set_activity!(p, p.activity / 3)
     println("Neutron process: ", p.isotopeName, " nTotalSim: ", p.nTotalSim, " activity: ", p.activity)
 end
-background = vcat(backgrounds, neutron_processes)
+# background = vcat(backgrounds, neutron_processes)
+
 
 # declare which process is signal
 signal = get_process(analysisDict[:signal], all_processes) |> first
 
 # declare background processes
 background = [get_process(b, all_processes) |> first for b in backgrounds]
+
+
+if analysisDict[:radon_tag] == 1
+    set_activity!(background[7], 150/1e6) # radon to 150 uBq/kg
+elseif analysisDict[:radon_tag] == 2
+    set_activity!(background[7], 2/1e3) # radon to 2 mBq/kg
+elseif analysisDict[:radon_tag] == 3
+    set_activity!(background[7], 0.6/1e3) # radon to 0.6 mBq/kg
+end
+
 
 set_signal!(background[1], false)
 
@@ -166,8 +167,8 @@ prior = NamedTupleDist(
 
 t_halfs = Float64[]
 # while(time() - t0 < 3600*22) # do this for n hours
-# for _ in 1:1 # do this for n hours
-while(time() - t0 < 3600*12) # do this for n hours
+for _ in 1:100 # do this for n hours
+# while(time() - t0 < 3600*12) # do this for n hours
 # for _ in 1:1 # do this for n hours
     # GC.gc()
     t1 = time()
@@ -176,7 +177,6 @@ while(time() - t0 < 3600*12) # do this for n hours
         println("time to fit, t = $(time() - t1) s")
         println(sens)
         push!(t_halfs, sens)
-        save_name = savename(analysisDict)
         # CSV.write(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/nu0bb/sensitivities_$(save_name)_$(rand(1:1000000)).csv"), DataFrame(thalf= t_halfs))
     catch
         @warn "failed fit" 
@@ -184,5 +184,6 @@ while(time() - t0 < 3600*12) # do this for n hours
     end
 end
 
-histogram(t_halfs, bins = 20, xlabel = "Sensitivity (years)", ylabel = "Frequency", title = "Bayesian Sensitivity Estimates for $(analysisDict[:signal]) with prior $(analysisDict[:prior]) and ROI [$(Bin_low), $(Bin_high)]")
+# histogram(t_halfs, bins = 20, xlabel = "Sensitivity (years)", ylabel = "Frequency", title = "Bayesian Sensitivity Estimates for $(analysisDict[:signal]) with prior $(analysisDict[:prior]) and ROI [$(Bin_low), $(Bin_high)]")
+save_name = savename(analysisDict)
 CSV.write(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/nu0bb/sensitivities_$(save_name)_$(rand(1:1000000)).csv"), DataFrame(thalf= t_halfs))
