@@ -11,7 +11,7 @@ global t0 = time()
 
 
 analysisDict = Dict(
-    :signal => "bb0nu_foil_bulk", #"%SIGNAL",
+    :signal => "bb0nuM1_foil_bulk", #"%SIGNAL",
     :bining => (300, 3500),#(%BINLOW, %BINHIGH),
     :bin_width => 100, #%BINWIDTH,
     :mode => "sumE", #"%MODE",
@@ -202,10 +202,14 @@ t = Float64[]
 data_hist = [get_pseudo_spectrum(b) for b in bkg_hist] |> sum 
 # data_hist = sample_histogram(bkg_hist) 
 
-f2(pars::NamedTuple{(:As, :Ab)}, x::Real) = f_uniform_bkg(pars, x, signal_hist_normed, bkg_hist_normed)
+# f2(pars::NamedTuple{(:As, :Ab)}, x::Real) = f_uniform_bkg(pars, x, signal_hist_normed, bkg_hist_normed)
 
 
-my_likelihood = make_hist_likelihood_uniform(data_hist, f2)
+my_likelihood = make_hist_likelihood_uniform(
+    data_hist,
+    signal_hist_normed,
+    bkg_hist_normed
+)
 
 # # # s_prior = 1e-5
 # # # # Define the concentration parameters (prior belief)
@@ -238,6 +242,9 @@ mcmcalgo = MetropolisHastings(
 
 
 posterior = PosteriorMeasure(my_likelihood, prior)
+
+@time logdensityof(my_likelihood, (As = 1e-5, Ab = fill(1e-5, length(bkg_hist))))
+
 samples, _ = bat_sample(
     posterior, 
     MCMCSampling(mcalg = mcmcalgo, burnin = burnin, nsteps = 5*10^4, nchains = 4),
@@ -265,17 +272,17 @@ xs = Bin_low:bin_width_new:Bin_high-bin_width_new/2
 # b_amps = [x for x in mean(samples)][2:end] 
 amps = mean(samples) 
 
-ys = [f2(amps, x) for x in xs]
-Plots.plot(data_hist, label = "data",fillrange = 1e-5, fillcolor = :match)
-Plots.plot!(xs, ys .* integral(data_hist) .* bin_width_new * bin_width, linewidth = 4,  label = "fit")
-# # Plots.plot!(xlims = (2000, 3200), ylims = (1e-5, 100))
+# ys = [f2(amps, x) for x in xs]
+# Plots.plot(data_hist, label = "data",fillrange = 1e-5, fillcolor = :match)
+# Plots.plot!(xs, ys .* integral(data_hist) .* bin_width_new * bin_width, linewidth = 4,  label = "fit")
+# # # Plots.plot!(xlims = (2000, 3200), ylims = (1e-5, 100))
 
 
-sig_amps = (As = quantile( muS,0.9), Ab = amps[2])
-ys_signal = [f2(sig_amps, x) for x in xs]
-Plots.plot!(xs, ys_signal .* integral(data_hist) .* bin_width_new * bin_width, linewidth = 4, label = "signal fit")
-Plots.plot!(yscale = :log10, ylims = (1.7e-2, 1e4))
-Plots.plot!(ylims = (0, 2))
+# sig_amps = (As = quantile( muS,0.9), Ab = amps[2])
+# ys_signal = [f2(sig_amps, x) for x in xs]
+# Plots.plot!(xs, ys_signal .* integral(data_hist) .* bin_width_new * bin_width, linewidth = 4, label = "signal fit")
+# Plots.plot!(yscale = :log10, ylims = (1.7e-2, 1e4))
+# Plots.plot!(ylims = (0, 2))
 # savefig("scripts/0nu/Bayes_hist_models/fit.svg")
 
 # # SensitivityModule.stackedhist(bkg_hist)

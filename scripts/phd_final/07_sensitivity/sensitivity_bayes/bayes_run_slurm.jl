@@ -146,7 +146,7 @@ bkg_hist = get_combined_bkg_hists(background, Bin_low, Bin_high, bin_width)
 
 bkg_hist_normed = normalize.(bkg_hist, width = true)
 signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), Bin_low, Bin_high+bin_width), width = true)
-f2(pars::NamedTuple{(:As, :Ab)}, x::Real) = f_uniform_bkg(pars, x, signal_hist_normed, bkg_hist_normed)
+# f2(pars::NamedTuple{(:As, :Ab)}, x::Real) = f_uniform_bkg(pars, x, signal_hist_normed, bkg_hist_normed)
 
 # uninformed prior for each activity
 prior = NamedTupleDist(
@@ -155,19 +155,21 @@ prior = NamedTupleDist(
 )   
 
 t_halfs = Float64[]
-while(time() - t0 < 3600*22) # do this for n hours
-# for _ in 1:1 # do this for n hours
-    GC.gc()
+# while(time() - t0 < 3600*22) # do this for n hours
+for _ in 1:1 # do this for n hours
+    # GC.gc()
     t1 = time()
     try 
-        sens = get_sens_bayes_uniform(bkg_hist, f2, signal, prior; ROI_a = Bin_low, ROI_b = Bin_high, nsteps = 5*10^4, nchains = 4)
+        sens = get_sens_bayes_uniform(bkg_hist, signal, prior; ROI_a = Bin_low, ROI_b = Bin_high, nsteps = 5*10^4, nchains = 4)
         println("time to fit, t = $(time() - t1) s")
         println(sens)
         push!(t_halfs, sens)
         save_name = savename(analysisDict)
-        CSV.write(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/nu0bb/sensitivities_$(save_name)_$(rand(1:1000000)).csv"), DataFrame(thalf= t_halfs))
+        # CSV.write(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/nu0bb/sensitivities_$(save_name)_$(rand(1:1000000)).csv"), DataFrame(thalf= t_halfs))
     catch
         @warn "failed fit" 
         continue
     end
 end
+
+histogram(t_halfs, bins = 20, xlabel = "Sensitivity (years)", ylabel = "Frequency", title = "Bayesian Sensitivity Estimates for $(analysisDict[:signal]) with prior $(analysisDict[:prior]) and ROI [$(Bin_low), $(Bin_high)]")
