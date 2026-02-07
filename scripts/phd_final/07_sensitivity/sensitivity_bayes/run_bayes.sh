@@ -2,10 +2,10 @@
 
 # SLURM options:
 #SBATCH --partition=htc
-#SBATCH --job=0nu
+#SBATCH --job=0nu2
 #SBATCH --licenses=sps
-#SBATCH --array=0-4
-#SBATCH --time=0-14 #1-6
+#SBATCH --array=0-9
+#SBATCH --time=0-2 #1-6
 #SBATCH --mem=24G
 #SBATCH --cpus-per-task=4
 #SBATCH --output=/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/phd_final/07_sensitivity/sensitivity_bayes/logs/bayes_%job_%A_%a.log
@@ -16,7 +16,7 @@ SCRIPTDIR="/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/p
 
 # bb0nu_foil_bulk, bb0nuM1_foil_bulk, bb0nuM2_foil_bulk, RH037_foil_bulk
 
-SIGNAL="bb0nuM2_foil_bulk"
+SIGNAL="bb0nu_foil_bulk"
 echo "signal process: $SIGNAL"
 BINLOW=300
 echo "BINLOW: $BINLOW"
@@ -28,7 +28,7 @@ MODE=sumE
 echo "MODE: $MODE"
 PRIOR=1e-3
 echo "PRIOR: $PRIOR"
-RADON_TAG=1
+RADON_TAG=2
 echo "RADON_TAG: $RADON_TAG"
 
 echo "sending job for signal: $SIGNAL"
