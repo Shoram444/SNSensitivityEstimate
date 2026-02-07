@@ -11,12 +11,12 @@ global t0 = time()
 
 
 analysisDict = Dict(
-    :signal => "%SIGNAL",
-    :bining => (%BINLOW, %BINHIGH),
-    :bin_width => %BINWIDTH,
-    :mode => "%MODE",
-    :prior => %PRIOR,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
-    :radon_tag => %RADON_TAG
+    :signal => "bb0nuM2_foil_bulk",
+    :bining => (300, 3500),
+    :bin_width => 100,
+    :mode => "sumE",
+    :prior => 1e-3,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :radon_tag => 1
 )
 
 Bin_low, Bin_high, bin_width = analysisDict[:bining][1],analysisDict[:bining][2], analysisDict[:bin_width]
@@ -155,13 +155,8 @@ prior = NamedTupleDist(
 )   
 
 t_halfs = Float64[]
-<<<<<<< HEAD
-# while(time() - t0 < 3600*22) # do this for n hours
-for _ in 1:1 # do this for n hours
-=======
 while(time() - t0 < 3600*12) # do this for n hours
 # for _ in 1:1 # do this for n hours
->>>>>>> refs/remotes/origin/main
     # GC.gc()
     t1 = time()
     try 
@@ -176,9 +171,4 @@ while(time() - t0 < 3600*12) # do this for n hours
         continue
     end
 end
-<<<<<<< HEAD
-
-histogram(t_halfs, bins = 20, xlabel = "Sensitivity (years)", ylabel = "Frequency", title = "Bayesian Sensitivity Estimates for $(analysisDict[:signal]) with prior $(analysisDict[:prior]) and ROI [$(Bin_low), $(Bin_high)]")
-=======
 CSV.write(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/nu0bb/sensitivities_$(save_name)_$(rand(1:1000000)).csv"), DataFrame(thalf= t_halfs))
->>>>>>> refs/remotes/origin/main
