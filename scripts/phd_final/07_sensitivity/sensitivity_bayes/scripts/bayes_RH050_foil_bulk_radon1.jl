@@ -11,7 +11,7 @@ global t0 = time()
 
 
 analysisDict = Dict(
-    :signal => "bb0nuM1_foil_bulk",
+    :signal => "RH050_foil_bulk",
     :bining => (300, 3500),
     :bin_width => 100,
     :mode => "sumE",

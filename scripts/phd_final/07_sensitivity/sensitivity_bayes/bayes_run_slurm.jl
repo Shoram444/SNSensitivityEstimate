@@ -93,7 +93,7 @@ signal = get_process(analysisDict[:signal], all_processes) |> first
 
 # declare background processes
 background = [get_process(b, all_processes) |> first for b in backgrounds]
-
+background = vcat(background, neutron_processes)
 
 if analysisDict[:radon_tag] == 1
     set_activity!(background[7], 150/1e6) # radon to 150 uBq/kg
@@ -166,8 +166,8 @@ prior = NamedTupleDist(
 )   
 
 t_halfs = Float64[]
-# while(time() - t0 < 3600*22) # do this for n hours
-for _ in 1:100 # do this for n hours
+while(time() - t0 < 3600*12) # do this for n hours
+# for _ in 1:100 # do this for n hours
 # while(time() - t0 < 3600*12) # do this for n hours
 # for _ in 1:1 # do this for n hours
     # GC.gc()
