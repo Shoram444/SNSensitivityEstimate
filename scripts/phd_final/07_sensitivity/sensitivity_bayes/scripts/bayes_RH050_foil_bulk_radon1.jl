@@ -12,10 +12,10 @@ global t0 = time()
 
 analysisDict = Dict(
     :signal => "RH050_foil_bulk",
-    :bining => (300, 3500),
-    :bin_width => 100,
-    :mode => "sumE",
-    :prior => 1e-3,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :bining => (0,180),
+    :bin_width => 5,
+    :mode => "phi",
+    :prior => 1e-1,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
     :radon_tag => 1
 )
 
@@ -35,6 +35,8 @@ elseif analysisDict[:signal] == "bb0nuM1_foil_bulk" && analysisDict[:radon_tag] 
 
 elseif analysisDict[:signal] == "bb0nuM2_foil_bulk" && analysisDict[:radon_tag] == 1
     roi = bb0nuM2_roi_radon1
+elseif analysisDict[:signal] == "RH050_foil_bulk" && analysisDict[:radon_tag] == 1
+    roi = RH050_roi_radon1
 else
     error("Unknown signal process: $(analysisDict[:signal])")
 end
@@ -69,7 +71,7 @@ backgrounds = [
     "K40_hall_bulk",
 ]
 
-roi[:sumE] = (Bin_low, Bin_high) # update the sumE range to match the analysisDict
+roi[Symbol(analysisDict[:mode])] = (Bin_low, Bin_high) # update the sumE range to match the analysisDict
 @show roi
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
@@ -166,10 +168,11 @@ prior = NamedTupleDist(
 )   
 
 t_halfs = Float64[]
-while(time() - t0 < 3600*12) # do this for n hours
+t0  = time()
+while(time() - t0 < 3600*1) # do this for n hours
 # for _ in 1:100 # do this for n hours
 # while(time() - t0 < 3600*12) # do this for n hours
-# for _ in 1:1 # do this for n hours
+# for _ in 1:5 # do this for n hours
     # GC.gc()
     t1 = time()
     try 

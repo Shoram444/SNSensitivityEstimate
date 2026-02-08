@@ -19,6 +19,7 @@ analysisDict = Dict(
     :radon_tag => %RADON_TAG
 )
 
+
 Bin_low, Bin_high, bin_width = analysisDict[:bining][1],analysisDict[:bining][2], analysisDict[:bin_width]
 
 ###################################
@@ -35,6 +36,9 @@ elseif analysisDict[:signal] == "bb0nuM1_foil_bulk" && analysisDict[:radon_tag] 
 
 elseif analysisDict[:signal] == "bb0nuM2_foil_bulk" && analysisDict[:radon_tag] == 1
     roi = bb0nuM2_roi_radon1
+
+elseif analysisDict[:signal] == "RH050_foil_bulk" && analysisDict[:radon_tag] == 1
+    roi = RH050_roi_radon1
 else
     error("Unknown signal process: $(analysisDict[:signal])")
 end
@@ -166,10 +170,10 @@ prior = NamedTupleDist(
 )   
 
 t_halfs = Float64[]
-while(time() - t0 < 3600*12) # do this for n hours
+# while(time() - t0 < 3600*12) # do this for n hours
 # for _ in 1:100 # do this for n hours
 # while(time() - t0 < 3600*12) # do this for n hours
-# for _ in 1:1 # do this for n hours
+for _ in 1:1 # do this for n hours
     # GC.gc()
     t1 = time()
     try 

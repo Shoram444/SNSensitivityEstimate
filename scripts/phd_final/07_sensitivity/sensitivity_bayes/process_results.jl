@@ -3,40 +3,44 @@ using DrWatson
 
 using DataFramesMeta, CSV, CairoMakie, PrettyTables, LaTeXStrings, StatsBase
 
-resultsdir = scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/")
+resultsdir = scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/nu0bb")
 
 d_nu0bb_tag1 = DataFrame()
 for f in readdir(resultsdir)
-    if occursin("bb0nu_tag_1", f)
+    if occursin("tag=1_signal=bb0nu_foil_bulk", f)
         @show joinpath(resultsdir, f)
-        d_nu0bb_tag1 = vcat(d_nu0bb_tag1, CSV.File(joinpath(resultsdir, f), header = ["thalf"]) |> DataFrame)
+        d_nu0bb_tag1 = vcat(d_nu0bb_tag1, CSV.File(joinpath(resultsdir, f)) |> DataFrame)
     end
 end
+d_nu0bb_tag1 = d_nu0bb_tag1[1:10_000, :]
 
 
 d_nu0bb_tag2 = DataFrame()
 for f in readdir(resultsdir)
-    if occursin("bb0nu_tag_2", f)
+    if occursin("tag=2_signal=bb0nu_foil_bulk", f)
         @show joinpath(resultsdir, f)
-        d_nu0bb_tag2 = vcat(d_nu0bb_tag2, CSV.File(joinpath(resultsdir, f), header = ["thalf"]) |> DataFrame)
+        d_nu0bb_tag2 = vcat(d_nu0bb_tag2, CSV.File(joinpath(resultsdir, f)) |> DataFrame)
     end
 end
-
+d_nu0bb_tag2 = d_nu0bb_tag2[1:10_000, :]
+    
 d_nu0bbM1_tag1 = DataFrame()
 for f in readdir(resultsdir)
-    if occursin("bb0nuM1_tag_1", f)
+    if occursin("tag=1_signal=bb0nuM1_foil_bulk", f)
         @show joinpath(resultsdir, f)
-        d_nu0bbM1_tag1 = vcat(d_nu0bbM1_tag1, CSV.File(joinpath(resultsdir, f), header = ["thalf"]) |> DataFrame)
+        d_nu0bbM1_tag1 = vcat(d_nu0bbM1_tag1, CSV.File(joinpath(resultsdir, f)) |> DataFrame)
     end
 end
+d_nu0bbM1_tag1 = d_nu0bbM1_tag1[1:10_000, :]
 
 d_nu0bbM2_tag1 = DataFrame()
 for f in readdir(resultsdir)
-    if occursin("bb0nuM2_tag_1", f)
+    if occursin("tag=1_signal=bb0nuM2_foil_bulk", f)
         @show joinpath(resultsdir, f)
-        d_nu0bbM2_tag1 = vcat(d_nu0bbM2_tag1, CSV.File(joinpath(resultsdir, f), header = ["thalf"]) |> DataFrame)
+        d_nu0bbM2_tag1 = vcat(d_nu0bbM2_tag1, CSV.File(joinpath(resultsdir, f)) |> DataFrame)
     end
 end
+d_nu0bbM2_tag1 = d_nu0bbM2_tag1[1:10_000, :]
 
 
 d_total = DataFrame(
@@ -68,7 +72,21 @@ end
 
 with_theme(theme_latexfonts()) do
     f = Figure(size = (1200, 800), fontsize = 34,)
-    a = Axis(f[1, 1], title = L"$0\nu\beta\beta M1$", xlabel = L"90% C.I. sensitivity (yr)$$", ylabel = L"number of pseudo-experiments $$", limits=(nothing, nothing, 0, nothing))
+    a = Axis(f[1, 1], title = L"Bayesian sensitivity to $0\nu\beta\beta$", xlabel = L"90% C.I. sensitivity (yr)$$", ylabel = L"number of pseudo-experiments $$", limits=(nothing, maximum(vcat(d_nu0bb_tag1.thalf, d_nu0bb_tag2.thalf))*1.3, 0, nothing))
+    stephist!(a, d_nu0bb_tag1.thalf, bins = 100, color = colors[1], linewidth = 4)
+    vlines!(a, [median(d_nu0bb_tag1.thalf)], color = :red, linewidth = 4, linestyle = :dash, label = L"median $T^{0\nu} \geq %$(round(median(d_nu0bb_tag1.thalf), sigdigits = 3)) \, \mathrm{yr}$ \n $(a_{Rn}=150 \, \mathrm{\mu Bq/m^3} )$")
+    stephist!(a, d_nu0bb_tag2.thalf, bins = 100, color = colors[2], linewidth = 4)
+    vlines!(a, [median(d_nu0bb_tag2.thalf)], color = :black, linewidth = 4, linestyle = :dash, label = L"median $T^{0\nu} \geq %$(round(median(d_nu0bb_tag2.thalf), sigdigits = 3)) \, \mathrm{yr}$ \n $(a_{Rn}=2 \, \mathrm{mBq/m^3} )$")
+    axislegend(a, position = :rt, patchsize = (45, 35))
+
+    
+    save(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/figs/nu0bb_sensitivities_together.png"), f, px_per_unit = 2)
+    f
+end
+
+with_theme(theme_latexfonts()) do
+    f = Figure(size = (1200, 800), fontsize = 34,)
+    a = Axis(f[1, 1], title = L"Bayesian sensitivity to $0\nu\beta\beta\chi^0$", xlabel = L"90% C.I. sensitivity (yr)$$", ylabel = L"number of pseudo-experiments $$", limits=(nothing, nothing, 0, nothing))
     stephist!(a, d_nu0bbM1_tag1.thalf, bins = 100, color = colors[3], linewidth = 4)
     vlines!(a, [median(d_nu0bbM1_tag1.thalf)], color = :red, linewidth = 4, linestyle = :dash, label = L"median sensitivity \n %$(round(median(d_nu0bbM1_tag1.thalf), sigdigits = 3))yr $$")
     axislegend(a, position = :rt, patchsize = (45, 35))
@@ -78,10 +96,11 @@ end
 
 with_theme(theme_latexfonts()) do
     f = Figure(size = (1200, 800), fontsize = 34,)
-    a = Axis(f[1, 1], title = L"$0\nu\beta\beta M2$", xlabel = L"90% C.I. sensitivity (yr)$$", ylabel = L"number of pseudo-experiments $$", limits=(nothing, nothing, 0, nothing))
+    a = Axis(f[1, 1], title = L"Bayesian sensitivity to $0\nu\beta\beta\chi^0\chi^0$", xlabel = L"90% C.I. sensitivity (yr)$$", ylabel = L"number of pseudo-experiments $$", limits=(nothing, nothing, 0, nothing))
     stephist!(a, d_nu0bbM2_tag1.thalf, bins = 100, color = colors[4], linewidth = 4)
     vlines!(a, [median(d_nu0bbM2_tag1.thalf)], color = :red, linewidth = 4, linestyle = :dash, label = L"median sensitivity \n %$(round(median(d_nu0bbM2_tag1.thalf), sigdigits = 3))yr $$")
     axislegend(a, position = :rt, patchsize = (45, 35))
     save(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/figs/bb0nuM2_tag_1_median_sensitivity.png"), f, px_per_unit = 2)
     f
 end
+

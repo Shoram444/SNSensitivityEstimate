@@ -11,11 +11,11 @@ global t0 = time()
 
 
 analysisDict = Dict(
-    :signal => "bb0nuM1_foil_bulk", #"%SIGNAL",
-    :bining => (300, 3500),#(%BINLOW, %BINHIGH),
-    :bin_width => 100, #%BINWIDTH,
-    :mode => "sumE", #"%MODE",
-    :prior => 1e-3,#%PRIOR # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :signal => "RH050_foil_bulk", #"%SIGNAL",
+    :bining => (0, 180),#(%BINLOW, %BINHIGH),
+    :bin_width => 2, #%BINWIDTH,
+    :mode => "phi", #"%MODE",
+    :prior => 1e-1,#%PRIOR # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
     :radon_tag => 1
 )
 
@@ -35,6 +35,8 @@ elseif analysisDict[:signal] == "bb0nuM1_foil_bulk" && analysisDict[:radon_tag] 
 
 elseif analysisDict[:signal] == "bb0nuM2_foil_bulk" && analysisDict[:radon_tag] == 1
     roi = bb0nuM2_roi_radon1
+elseif analysisDict[:signal] == "RH050_foil_bulk" && analysisDict[:radon_tag] == 1
+    roi = RH050_roi_radon1
 else
     error("Unknown signal process: $(analysisDict[:signal])")
 end
@@ -69,7 +71,7 @@ backgrounds = [
     "K40_hall_bulk",
 ]
 
-roi[:sumE] = (Bin_low, Bin_high) # update the sumE range to match the analysisDict
+roi[Symbol(analysisDict[:mode])] = (Bin_low, Bin_high) # update the sumE range to match the analysisDict
 @show roi
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
@@ -150,7 +152,7 @@ f2(pars::NamedTuple{(:As, :Ab)}, x::Real) = f_uniform_bkg(pars, x, signal_hist_n
 
 # uninformed prior for each activity
 prior = NamedTupleDist(
-    As = Uniform(1e-20, analysisDict[:prior]), # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    As = Uniform(1e-20, 1), #analysisDict[:prior]), # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
     Ab = [Uniform(1e-20,1) for _ in 1:length(bkg_hist)] 
 )   
 
@@ -243,8 +245,6 @@ mcmcalgo = MetropolisHastings(
 
 posterior = PosteriorMeasure(my_likelihood, prior)
 
-@time logdensityof(my_likelihood, (As = 1e-5, Ab = fill(1e-5, length(bkg_hist))))
-
 samples, _ = bat_sample(
     posterior, 
     MCMCSampling(mcalg = mcmcalgo, burnin = burnin, nsteps = 5*10^4, nchains = 4),
@@ -260,10 +260,10 @@ Na = SNparams["Nₐ"]
 m = SNparams["foilMass"] * SNparams["a"]
 t = SNparams["tYear"]
 W = SNparams["W"]
-eff= lookup(signal, Bin_low, Bin_high-50)
+eff= lookup(signal, Bin_low, Bin_high)
 Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
 
-Plots.plot(samples, size = (2000, 1600))
+# Plots.plot(samples, size = (2000, 1600))
 Plots.plot(samples, :As)
 # savefig("notebooks/Sensitivity_exotic_Bayes_nDim/samples_As.png")
 
