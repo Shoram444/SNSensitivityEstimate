@@ -38,7 +38,7 @@ const VARS_ = [
 
 const BOUNDS_ = (
     phi = (0,180),
-    sumE = (2400, 3500),
+    sumE = (300, 3000),
     # minE = (0, 3500),
     # maxE = (0, 3500),
     # avgE = (0, 3500),
@@ -57,15 +57,6 @@ const BOUNDS_ = (
     # caloTime2 = (0, 100),
 )
 
-rr = (
-            phi = (0, 180), 
-        sumE = (0, 3500), 
-        dy = (0, 135), 
-        dz = (0, 140), 
-        lPint = (0.0, 4.5), 
-        lPext = (2.4, 50.0)
-)
-
 processes = load_ndim_processes(datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41"), BOUNDS_, VARS_)
 
 data_dir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41/neutrons_jan_2026/")
@@ -79,7 +70,7 @@ end
 
 
 # signal_name = "%SIGNAL"
-signal_name = "bb0nu_foil_bulk"
+signal_name = "RH050_foil_bulk"
 signal = get_process(signal_name, processes) |> first
 # signal = get_process("RH037_foil_bulk", processes) |> first
 # signal = get_process("bb0nuM2_foil_bulk", processes)
@@ -123,7 +114,7 @@ background = vcat(background, neutron_processes)
 set_signal!(background[1], false)
 # set_activity!(background[7], 0.15/1e3) # radon to 0.15mBq/kg
 # set_activity!(background[7], 2/1e3) # radon to 2mBq/kg
-radon_tag = 2
+radon_tag = 1
 if radon_tag == 1
     set_activity!(background[7], 150/1e6) # radon to 150 uBq/kg
 elseif radon_tag == 2
@@ -132,10 +123,9 @@ elseif radon_tag == 3
     set_activity!(background[7], 0.6/1e3) # radon to 0.6 mBq/kg
 end
 
-α= 1.64485362695147
+const α_ = 1.64485362695147
 
 println("loaded files, signal = $(signal.isotopeName)")
-
 
 
 function roi_vector_to_normalized(roi::AbstractVector)
@@ -192,33 +182,35 @@ lb = first.(searchRange)
 ub = last.(searchRange)
 
 # manual lower upper bounds
-lb = [0, 140, 2400, 2600, 0, 50, 0, 50, 0, 0, 0, 50 ]
-ub = [50, 180, 2800, 3300, 10, 150, 10, 150, 0, 10, 10, 50]
+lb = float.([0, 140, 300, 2000, 0, 50, 0, 50, 0, 0, 0, 50 ])
+ub = float.([80, 180, 1600, 2800, 10, 150, 10, 150, 0, 10, 10, 50])
 
 LB = roi_vector_to_normalized(lb)
 UB = roi_vector_to_normalized(ub)
+# UB = ones(length(LB))
 
-x = Surrogates.sample(n, LB, UB, SobolSample())
+const PROCESSES = vcat(signal, background)
+const SNparams_ = SNparams
 
-
-function prob(x)
-    xs = normalized_to_roi_vector(collect(x))
-    return - get_s_to_b(SNparams, α, vcat(signal, background), xs; approximate="formula")
+function prob(x::Vector{Float64})
+    # xs = normalized_to_roi_vector(collect(x))
+    return - get_s_to_b(SNparams_, α_, PROCESSES, x; approximate="formula")
 end
 
 function prob_parallel(X)
     xs = [ normalized_to_roi_vector(collect(x)) for x in eachrow(X) ]
     fitness = zeros(size(X,1))
     Threads.@threads for i in 1:size(X,1)
-        fitness[i] = prob(xs[i,:])
+        fitness[i] = prob(xs[i])
     end
     fitness
 end
 
 
+
 options = Options(;
-    x_tol = 1.0,
-    f_tol = 1e-5,
+    x_tol = 1e-2,
+    f_tol = 1e-4,
     f_tol_rel = 1e-5,
     f_tol_abs = 1e-5,
     time_limit = 2*60*60.0, #60*60*12.0,
@@ -228,11 +220,15 @@ options = Options(;
     # store_convergence = true
 )
 
-bounds = boxconstraints(lb = LB, ub = UB)
 
+# bounds = boxconstraints(lb = LB, ub = UB)
+bounds = boxconstraints(lb = lb, ub = ub)
 
-algo = ECA(N=50, K=5, ;options)
-# set_user_solutions!(algo, X0, prob_parallel)
+algo = ECA(N=20, K=3, ;options)
+
+# x0 = roi_vector_to_normalized( float.( [0, 180, 400, 2400, 0, 120, 0, 120, 0, 4, 1, 50] ) )
+x0 = ( float.( [0, 180, 400, 2400, 0, 120, 0, 120, 0, 4, 1, 50] ) )
+set_user_solutions!(algo, x0, prob)
 
 
 # result = Metaheuristics.optimize(f_parallel, bounds, algo)
