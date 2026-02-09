@@ -101,23 +101,41 @@ best ROI:
 
 # 2nu RH 050 tag1 radon
 
-tHalf: 1.5208203460103364e22
-signalEff: 0.1245681
-bkg count: 196603.1879756776
+tHalf: 1.5238547925234648e22
+signalEff: 0.1228176
+bkg count: 190356.07687586214
 best ROI:
-  phi : (0.0, 180.0)
+  phi : (10, 180)
   sumE : (400, 2700)
-  r : (0.0, 200.0)
-  singleE : (0.0, 2700)
-  dy : (0.0, 200.0)
-  dz : (0.0, 200.0)
+  dy : (0, 135)
+  dz : (0, 145)
+  lPint : (0.0, 4)
+  lPext : (1.3, 50.0)
+
+# RH020
+
+tHalf: 1.5269358234557567e22
+signalEff: 0.1240719
+bkg count: 193480.85620783508
+best ROI:
+  phi : (15, 180)
+  sumE : (300, 2700)
+  dy : (0, 135)
+  dz : (0, 145)
   lPint : (0.0, 3)
-  lPext : (1.0, 50.0) 
-  trackLength1 : (0.0, 3000.0)
-  trackLength2 : (0.0, 3000.0)
+  lPext : (1.0, 50.0)
 
-
-
+# RH040
+tHalf: 1.525970035947891e22
+signalEff: 0.1246952
+bkg count: 195677.17222946716
+best ROI:
+  phi : (10, 180)
+  sumE : (300, 2700)
+  dy : (0, 135)
+  dz : (0, 145)
+  lPint : (0.0, 3)
+  lPext : (1.0, 50.0)
 
 # bayes
 | **Process**                         | **Radon level**    | **Median sensitivity (yr)** |

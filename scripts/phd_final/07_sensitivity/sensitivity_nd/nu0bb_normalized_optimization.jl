@@ -70,7 +70,7 @@ end
 
 
 # signal_name = "%SIGNAL"
-signal_name = "RH050_foil_bulk"
+signal_name = "RH020_foil_bulk"
 signal = get_process(signal_name, processes) |> first
 # signal = get_process("RH037_foil_bulk", processes) |> first
 # signal = get_process("bb0nuM2_foil_bulk", processes)
@@ -235,21 +235,9 @@ set_user_solutions!(algo, x0, prob)
 # result = Metaheuristics.optimize(prob, bounds, PSO(;options))
 result = Metaheuristics.optimize(prob, bounds, algo)
 @show minimum(result)
-@show res=  normalized_to_roi_vector(minimizer(result))
+@show res=  minimizer(result)
 
 best = get_best_ROI_ND(res, signal)
-best_sens = get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
-
+best_sens = get_sensitivityND(SNparams, α_, PROCESSES, best; approximate="table")
 print(best_sens)
-
-
-thalf = log(2) * (Nₐ / W) * (foilMass * a * tYear) * efficiency / b
-
-Nₐ = SNparams["Nₐ"]
-W = SNparams["W"]
-foilMass = SNparams["foilMass"]
-a = SNparams["a"]
-tYear = SNparams["tYear"]
-4.6e24 /(log(2) * (Nₐ / W) * (foilMass * a * tYear) )
-
 
