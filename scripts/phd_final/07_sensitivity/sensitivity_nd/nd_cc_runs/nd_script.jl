@@ -6,7 +6,6 @@ println("loading pkgs")
 lprob_to_prob(x) = abs(10^(-x))
 prob_to_lprob(x) = abs(log10(x))
 
-using Revise
 using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random, FHist, Metaheuristics
 
 println("loaded pkgs")
@@ -16,60 +15,65 @@ println("loaded pkgs")
 include(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/helper_functions.jl"))
 
 
+# analysisDict = Dict(
+#     :signal => "%SIGNAL",
+#     :radon_tag => %RADON_TAG,
+#     :hours => %HOURS,
+#     :side => %SIDE,
+# )
 analysisDict = Dict(
-    :signal => "%SIGNAL",
-    :radon_tag => %RADON_TAG,
-    :hours => %HOURS
+    :signal => "Nnubb500keV_foil_bulk",
+    :radon_tag => 1,
+    :hours => 0.001,
+    :side => "sameSide",
 )
 
-const VARS_ = [
-    "phi", 
-    "sumE", 
-    # "maxE", 
-    # "minE",
-    # "avgE", 
-    # "r", 
-    # "singleE",
-    "dy", 
-    "dz",
-    # "sameSide",
-    # "Pint",
-    # "Pext",
-    "lPint",
-    "lPext",
-    # "trackLength1",
-    # "trackLength2",
-    # "caloTime1",
-    # "caloTime2",
-    ]
+if analysisDict[:side] == "both"
+    vars = [
+        "phi", 
+        "sumE", 
+        "dy", 
+        "dz",
+        "lPint",
+        "lPext",
+        ]
 
-const BOUNDS_ = (
-    phi = (0,180),
-    sumE = (300, 3000),
-    # minE = (0, 3500),
-    # maxE = (0, 3500),
-    # avgE = (0, 3500),
-    # r = (0, 200),
-    # singleE = (0, 3500),
-    dy = (0, 150),
-    dz = (0, 150),
-    # sameSide = (0, 1),
-    # Pint = (0, 1),
-    # Pext = (0, 1),
-    lPint = (0, 10),
-    lPext = (0, 50),
-    # trackLength1 = (0, 3000),
-    # trackLength2 = (0, 3000),
-    # caloTime1 = (0, 100),
-    # caloTime2 = (0, 100),
-)
+    bin_bounds = (
+        phi = (0,180),
+        sumE = (300, 3000),
+        dy = (0, 150),
+        dz = (0, 150),
+        lPint = (0, 10),
+        lPext = (0, 50),
+    )
+else 
+    vars = [
+        "phi", 
+        "sumE", 
+        "dy", 
+        "dz",
+        "sameSide",
+        "lPint",
+        "lPext",
+        ]
 
-processes = load_ndim_processes(datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41"), BOUNDS_, VARS_)
+    bin_bounds = (
+        phi = (0,180),
+        sumE = (300, 3000),
+        dy = (0, 150),
+        dz = (0, 150),
+        sameSide = (0, 1),
+        lPint = (0, 10),
+        lPext = (0, 50),
+    )
+end
+
+processes = load_ndim_processes(datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41"), bin_bounds, vars)
 
 data_dir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41/neutrons_jan_2026/")
 
 include(joinpath(data_dir, "read_neutrons_ND.jl"))
-neutron_processes = load_neutron_processes_ND(data_dir, VARS_, BOUNDS_)
+neutron_processes = load_neutron_processes_ND(data_dir, vars, bin_bounds)
 for p in neutron_processes
     set_activity!(p, p.activity / 3)
     println("Neutron process: ", p.isotopeName, " nTotalSim: ", p.nTotalSim, " activity: ", p.activity)
@@ -135,70 +139,46 @@ const α_ = 1.64485362695147
 println("loaded files, signal = $(signal.isotopeName)")
 
 
-function roi_vector_to_normalized(roi::AbstractVector)
-
-    x̂ = Vector{Float64}(undef, length(roi))
-    WMIN = 0.05   # minimum width fraction
-
-    for (i, var) in enumerate(VARS_)
-        L, U = BOUNDS_[Symbol(var)]
-        R = U - L
-
-        minv = roi[2i-1]
-        maxv = roi[2i]
-
-        s = (minv - L) / R
-        w = (maxv - minv) / (U - minv)
-
-        x̂[2i-1] = clamp(s, 0.0, 1.0)
-        x̂[2i]   = clamp((w - WMIN) / (1 - WMIN), 0.0, 1.0)
-    end
-
-    return x̂
+function filter_process!(process::DataProcessND, var_name::Symbol, range::Tuple{Real, Real})
+    process.data = filter(x -> getproperty(x, var_name) >= range[1] && getproperty(x, var_name) <= range[2], process.data)
+    @info "filtered process $(process.isotopeName) on $var_name in range $range, new nEvents: $(length(process.data))"
+    return process;
 end
 
-function normalized_to_roi_vector(x̂::AbstractVector)
-    roi = Vector{Float64}(undef, length(x̂))
-    WMIN = 0.05   # minimum width fraction
+if (analysisDict[:side] == "sameSide") 
+    side_range = (1., 1.) 
+    filter_process!(signal, :sameSide, side_range);
+    map( x-> filter_process!(x, :sameSide, side_range), background);
 
-    for (i, var) in enumerate(VARS_)
-        L, U = BOUNDS_[Symbol(var)]
-        R = U - L
-
-        ŝ = clamp(x̂[2i-1], 0.0, 1.0)   # start fraction
-        ŵ = clamp(x̂[2i],   0.0, 1.0)   # width fraction
-
-        w = WMIN + (1 - WMIN) * ŵ       # enforce minimum width
-
-        minv = L + ŝ * R
-        maxv = minv + w * (U - minv)
-
-        roi[2i-1] = minv
-        roi[2i]   = maxv
-    end
-
-    return roi
+elseif (analysisDict[:side] == "oppositeSide") 
+    side_range = (0., 0.) 
+    filter_process!(signal, :sameSide, side_range);
+    map( x-> filter_process!(x, :sameSide, side_range), background);
 end
 
 
 
 searchRange = make_stepRange(signal)
 
-# n = 100
-# lb = first.(searchRange)
-# ub = last.(searchRange)
 
-# manual lower upper bounds
-lb = float.([0, 140, 300, 2000, 0, 50, 0, 50, 0, 0, 0, 50 ])
-ub = float.([80, 180, 1600, 2800, 10, 150, 10, 150, 0, 10, 10, 50])
+# manual bounds
+if analysisDict[:side] == "both"
+    lb = float.([0, 140, 300, 2000, 0, 50, 0, 50, 0, 0, 0, 50 ])
+    ub = float.([80, 180, 1600, 2800, 10, 150, 10, 150, 0, 10, 10, 50])
+elseif analysisDict[:side] == "sameSide"
+    lb = float.([0, 0, 300, 2000, 0, 50, 0, 50, 0,2, 0, 0, 0, 50 ])
+    ub = float.([180, 180, 1600, 2800, 10, 150, 10, 150,  0,2,0, 10, 10, 50])
+else 
+    lb = float.([0, 0, 300, 2000, 0, 50, 0, 50, 0,1, 0, 0, 0, 50 ])
+    ub = float.([180, 180, 1600, 2800, 10, 150, 10, 150,  0,1,0, 10, 10, 50])    
+end
 
+PROCESSES = vcat(signal, background)
 
-const PROCESSES = vcat(signal, background)
-const SNparams_ = SNparams
 
 function prob(x::Vector{Float64})
     # xs = normalized_to_roi_vector(collect(x))
-    return - get_s_to_b(SNparams_, α_, PROCESSES, x; approximate="formula")
+    return - get_s_to_b(SNparams, α_, PROCESSES, x; approximate="formula")
 end
 
 
@@ -214,21 +194,28 @@ options = Options(;
 )
 
 
-bounds = boxconstraints(lb = lb, ub = ub)
+box_bounds = boxconstraints(lb = lb, ub = ub)
 
 algo = ECA(N=20, K=3, ;options)
 
-x0 = ( float.( [0, 180, 400, 2400, 0, 120, 0, 120, 0, 4, 1, 50] ) )
-set_user_solutions!(algo, x0, prob)
+if analysisDict[:side] == "both"
+    x0 = ( float.( [0, 180, 400, 2400, 0, 120, 0, 120, 0, 4, 1, 50] ) )
+    set_user_solutions!(algo, x0, prob)
+elseif analysisDict[:side] == "sameSide"
+    x0 = ( float.( [0, 180, 400, 2400, 0, 120, 0, 120, 0,2, 0,3, 1, 50] ) )
+    set_user_solutions!(algo, x0, prob)
+elseif analysisDict[:side] == "oppositeSide"
+    x0 = ( float.( [0, 180, 400, 2400, 0, 120, 0, 120, 0,1, 0,3, 1, 50] ) )
+    set_user_solutions!(algo, x0, prob)
+end
 
 
-result = Metaheuristics.optimize(prob, bounds, algo)
+result = Metaheuristics.optimize(prob, box_bounds, algo)
 @show minimum(result)
 @show res=  minimizer(result)
 
 best = get_best_ROI_ND(res, signal)
-best_sens = get_sensitivityND(SNparams, α, vcat(signal, background), best; approximate="table")
-
+best_sens = get_sensitivityND(SNparams, α_, PROCESSES, best; approximate="table")
 print(best_sens)
 
 

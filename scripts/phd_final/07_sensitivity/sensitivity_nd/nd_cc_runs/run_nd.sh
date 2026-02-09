@@ -22,6 +22,7 @@ HOURS=22
 echo "HOURS: $HOURS"
 RADON_TAG=1
 echo "RADON_TAG: $RADON_TAG"
+SIDE="sameSide" # "both" or "sameSide", "oppositeSide" 
 
 echo "sending job for signal: $SIGNAL"
 
