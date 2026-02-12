@@ -15,18 +15,18 @@ println("loaded pkgs")
 include(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/helper_functions.jl"))
 
 
-# analysisDict = Dict(
-#     :signal => "%SIGNAL",
-#     :radon_tag => %RADON_TAG,
-#     :hours => %HOURS,
-#     :side => %SIDE,
-# )
 analysisDict = Dict(
-    :signal => "Nnubb500keV_foil_bulk",
-    :radon_tag => 1,
-    :hours => 0.001,
-    :side => "sameSide",
+    :signal => "%SIGNAL",
+    :radon_tag => %RADON_TAG,
+    :hours => %HOURS,
+    :side => "%SIDE",
 )
+# analysisDict = Dict(
+#     :signal => "Nnubb500keV_foil_bulk",
+#     :radon_tag => 1,
+#     :hours => 0.001,
+#     :side => "sameSide",
+# )
 
 if analysisDict[:side] == "both"
     vars = [

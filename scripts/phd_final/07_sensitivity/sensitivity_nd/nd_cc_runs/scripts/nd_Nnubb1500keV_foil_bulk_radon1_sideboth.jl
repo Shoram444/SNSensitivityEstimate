@@ -19,7 +19,7 @@ analysisDict = Dict(
     :signal => "Nnubb1500keV_foil_bulk",
     :radon_tag => 1,
     :hours => 22,
-    :side => %SIDE,
+    :side => "both",
 )
 # analysisDict = Dict(
 #     :signal => "Nnubb500keV_foil_bulk",
