@@ -15,7 +15,7 @@ analysisDict = Dict(
     :bining => (0, 180),#(%BINLOW, %BINHIGH),
     :bin_width => 2, #%BINWIDTH,
     :mode => "phi", #"%MODE",
-    :prior => 1e-1,#%PRIOR # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :prior => 1,#%PRIOR # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
     :radon_tag => 1
 )
 
