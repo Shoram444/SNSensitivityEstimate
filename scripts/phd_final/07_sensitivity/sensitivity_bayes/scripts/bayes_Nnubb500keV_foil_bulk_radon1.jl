@@ -175,7 +175,7 @@ prior = NamedTupleDist(
 )   
 
 t_halfs = Float64[]
-while(time() - t0 < 3600* 2) # do this for n hours
+while(time() - t0 < 3600* 0.85) # do this for n hours
 # for _ in 1:100 # do this for n hours
 # while(time() - t0 < 3600*12) # do this for n hours
 # for _ in 1:1 # do this for n hours

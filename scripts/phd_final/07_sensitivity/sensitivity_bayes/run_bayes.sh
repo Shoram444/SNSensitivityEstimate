@@ -4,8 +4,8 @@
 #SBATCH --partition=htc
 #SBATCH --job=sterlie500
 #SBATCH --licenses=sps
-#SBATCH --array=0-3
-#SBATCH --time=0-3 #1-6
+#SBATCH --array=0-9
+#SBATCH --time=0-1 #1-6
 #SBATCH --mem=24G
 #SBATCH --cpus-per-task=4
 #SBATCH --output=/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/phd_final/07_sensitivity/sensitivity_bayes/logs/bayes_%job_%A_%a.log
@@ -30,7 +30,7 @@ PRIOR=1e-1
 echo "PRIOR: $PRIOR"
 RADON_TAG=1
 echo "RADON_TAG: $RADON_TAG"
-HOUR=2
+HOUR=0.85
 echo "HOUR: $HOUR"
 
 echo "sending job for signal: $SIGNAL"
