@@ -11,12 +11,12 @@ global t0 = time()
 
 
 analysisDict = Dict(
-    :signal => "%SIGNAL",
-    :bining => (%BINLOW, %BINHIGH),
-    :bin_width => %BINWIDTH,
-    :mode => "%MODE",
-    :prior => %PRIOR,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
-    :radon_tag => %RADON_TAG
+    :signal => "Nnubb1500keV_foil_bulk",
+    :bining => (300, 3500),
+    :bin_width => 100,
+    :mode => "sumE",
+    :prior => 1e-1,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :radon_tag => 1
 )
 
 
@@ -173,7 +173,7 @@ prior = NamedTupleDist(
 )   
 
 t_halfs = Float64[]
-while(time() - t0 < 3600* %HOUR) # do this for n hours
+while(time() - t0 < 3600* 2) # do this for n hours
 # for _ in 1:100 # do this for n hours
 # while(time() - t0 < 3600*12) # do this for n hours
 # for _ in 1:1 # do this for n hours
