@@ -16,10 +16,10 @@ include(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/helper_functions.jl"
 
 
 analysisDict = Dict(
-    :signal => "Nnubb500keV_foil_bulk",
+    :signal => "Nnubb1500keV_foil_bulk",
     :radon_tag => 1,
     :hours => 22,
-    :side => %SIDE,
+    :side => "both",
 )
 # analysisDict = Dict(
 #     :signal => "Nnubb500keV_foil_bulk",
@@ -219,3 +219,33 @@ best_sens = get_sensitivityND(SNparams, α_, PROCESSES, best; approximate="table
 print(best_sens)
 
 
+
+signal1500 = get_process("Nnubb1500keV_foil_bulk", processes) |> first
+
+begin
+    my_roi1500 = (
+        phi = (15, 180),
+        sumE = (400, 1400),
+        dy = (0, 120),
+        dz = (0, 145),
+        lPint = (0.0, 2.0),
+        lPext = (1.0, 50.0),
+    )
+    my_sens1500 = get_sensitivityND(SNparams, α_, vcat(background, signal1500), my_roi1500; approximate="table")
+    print(my_sens1500)
+end
+
+signal500 = get_process("Nnubb500keV_foil_bulk", processes) |> first
+
+begin
+    my_roi500 = (
+        phi = (15, 180),
+        sumE = (1000, 2300),
+        dy = (0, 130),
+        dz = (0, 150),
+        lPint = (0.0, 3.0),
+        lPext = (1.0, 50.0),
+    )
+    my_sens500 = get_sensitivityND(SNparams, α_, vcat(background, signal500), my_roi500; approximate="table")
+    print(my_sens500)
+end

@@ -59,3 +59,20 @@ RH050_roi_radon1 = Dict(
   :trackLength2 => (0.0, 3000.0),
 )
 
+Nnubb1500keV_roi_radon1 = Dict(
+  :phi => (15, 180),
+  :sumE => (300, 1400),
+  :dy => (0, 150),
+  :dz => (0, 150),
+  :lPint => (0.0, 2.2),
+  :lPext => (0.5, 50.0),
+)
+
+Nnubb500keV_roi_radon1 = Dict(
+  :phi => (15, 180),
+  :sumE => (300, 2300),
+  :dy => (0, 130),
+  :dz => (0, 150),
+  :lPint => (0.0, 3.0),
+  :lPext => (1.0, 50.0),
+)

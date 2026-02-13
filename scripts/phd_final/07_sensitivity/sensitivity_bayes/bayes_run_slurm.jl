@@ -39,6 +39,9 @@ elseif analysisDict[:signal] == "bb0nuM2_foil_bulk" && analysisDict[:radon_tag] 
 
 elseif analysisDict[:signal] == "RH050_foil_bulk" && analysisDict[:radon_tag] == 1
     roi = RH050_roi_radon1
+elseif analysisDict[:signal] == "Nnubb1500keV_foil_bulk" && analysisDict[:radon_tag] == 1
+    roi = Nnubb1500keV_roi_radon1
+
 else
     error("Unknown signal process: $(analysisDict[:signal])")
 end
