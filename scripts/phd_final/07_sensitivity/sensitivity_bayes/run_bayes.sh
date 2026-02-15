@@ -2,7 +2,7 @@
 
 # SLURM options:
 #SBATCH --partition=htc
-#SBATCH --job=sterlie500
+#SBATCH --job=rh050
 #SBATCH --licenses=sps
 #SBATCH --array=0-9
 #SBATCH --time=0-1 #1-6
@@ -16,7 +16,7 @@ SCRIPTDIR="/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/p
 
 # bb0nu_foil_bulk, bb0nuM1_foil_bulk, bb0nuM2_foil_bulk, RH050_foil_bulk, Nnubb1500keV_foil_bulk
 
-SIGNAL="Nnubb500keV_foil_bulk"
+SIGNAL="RH050_foil_bulk"
 echo "signal process: $SIGNAL"
 BINLOW=300
 echo "BINLOW: $BINLOW"
@@ -24,9 +24,9 @@ BINHIGH=3500
 echo "BINHIGH: $BINHIGH"
 BINWIDTH=100
 echo "BINWIDTH: $BINWIDTH"
-MODE=sumE
+MODE=phi
 echo "MODE: $MODE"
-PRIOR=1e-1
+PRIOR=1e-3
 echo "PRIOR: $PRIOR"
 RADON_TAG=1
 echo "RADON_TAG: $RADON_TAG"

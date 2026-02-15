@@ -12,12 +12,13 @@ global t0 = time()
 
 analysisDict = Dict(
     :signal => "RH050_foil_bulk",
-    :bining => (0,180),
-    :bin_width => 5,
+    :bining => (300, 3500),
+    :bin_width => 100,
     :mode => "phi",
-    :prior => 1e-1,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :prior => 1e-3,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
     :radon_tag => 1
 )
+
 
 Bin_low, Bin_high, bin_width = analysisDict[:bining][1],analysisDict[:bining][2], analysisDict[:bin_width]
 
@@ -35,8 +36,14 @@ elseif analysisDict[:signal] == "bb0nuM1_foil_bulk" && analysisDict[:radon_tag] 
 
 elseif analysisDict[:signal] == "bb0nuM2_foil_bulk" && analysisDict[:radon_tag] == 1
     roi = bb0nuM2_roi_radon1
+
 elseif analysisDict[:signal] == "RH050_foil_bulk" && analysisDict[:radon_tag] == 1
     roi = RH050_roi_radon1
+elseif analysisDict[:signal] == "Nnubb1500keV_foil_bulk" && analysisDict[:radon_tag] == 1
+    roi = Nnubb1500keV_roi_radon1
+elseif analysisDict[:signal] == "Nnubb500keV_foil_bulk" && analysisDict[:radon_tag] == 1
+    roi = Nnubb500keV_roi_radon1
+
 else
     error("Unknown signal process: $(analysisDict[:signal])")
 end
@@ -71,7 +78,7 @@ backgrounds = [
     "K40_hall_bulk",
 ]
 
-roi[Symbol(analysisDict[:mode])] = (Bin_low, Bin_high) # update the sumE range to match the analysisDict
+roi[:sumE] = (Bin_low, Bin_high) # update the sumE range to match the analysisDict
 @show roi
 
 # Load all the processes in the directory. Function `load_processes` takes two arguments:
@@ -168,11 +175,10 @@ prior = NamedTupleDist(
 )   
 
 t_halfs = Float64[]
-t0  = time()
-while(time() - t0 < 3600*1) # do this for n hours
+while(time() - t0 < 3600* 0.85) # do this for n hours
 # for _ in 1:100 # do this for n hours
 # while(time() - t0 < 3600*12) # do this for n hours
-# for _ in 1:5 # do this for n hours
+# for _ in 1:1 # do this for n hours
     # GC.gc()
     t1 = time()
     try 
@@ -190,5 +196,3 @@ end
 # histogram(t_halfs, bins = 20, xlabel = "Sensitivity (years)", ylabel = "Frequency", title = "Bayesian Sensitivity Estimates for $(analysisDict[:signal]) with prior $(analysisDict[:prior]) and ROI [$(Bin_low), $(Bin_high)]")
 save_name = savename(analysisDict)
 CSV.write(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/nu0bb/sensitivities_$(save_name)_$(rand(1:1000000)).csv"), DataFrame(thalf= t_halfs))
-
-median(t_halfs)
