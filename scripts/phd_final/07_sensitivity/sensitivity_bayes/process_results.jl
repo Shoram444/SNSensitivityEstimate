@@ -50,12 +50,29 @@ for f in readdir(resultsdir)
     end
 end
 
+d_Nnubb1500keV_tag1 = DataFrame()
+for f in readdir(resultsdir)
+    if occursin("tag=1_signal=Nnubb1500keV_foil_bulk", f)
+        @show joinpath(resultsdir, f)
+        d_Nnubb1500keV_tag1 = vcat(d_Nnubb1500keV_tag1, CSV.File(joinpath(resultsdir, f)) |> DataFrame)
+    end
+end
+d_Nnubb1500keV_tag1 = d_Nnubb1500keV_tag1[1:10_000, :]
+
+d_Nnubb500keV_tag1 = DataFrame()
+for f in readdir(resultsdir)
+    if occursin("tag=1_signal=Nnubb500keV_foil_bulk", f)
+        @show joinpath(resultsdir, f)
+        d_Nnubb500keV_tag1 = vcat(d_Nnubb500keV_tag1, CSV.File(joinpath(resultsdir, f)) |> DataFrame)
+    end
+end
+d_Nnubb500keV_tag1 = d_Nnubb500keV_tag1[1:10_000, :]
 
 
 d_total = DataFrame(
-    process = [L"0\nu\beta\beta", L"0\nu\beta\beta", L"0\nu\beta\beta M1", L"0\nu\beta\beta M2", L"$\nu_R\nu_L\beta\beta \, (K=0.5)$"],
-    radon_level = [L"150\,$\mu$Bq/m$^3$", L"2\,$m$Bq/m$^3$", L"150\,$\mu$Bq/m$^3$", L"150\,$\mu$Bq/m$^3$", L"150\,$\mu$Bq/m$^3$"],
-    sensitivity = [median(d_nu0bb_tag1.thalf), median(d_nu0bb_tag2.thalf), median(d_nu0bbM1_tag1.thalf), median(d_nu0bbM2_tag1.thalf), median(d_RH050_tag1.thalf)],
+    process = [L"0\nu\beta\beta", L"0\nu\beta\beta", L"0\nu\beta\beta M1", L"0\nu\beta\beta M2", L"$\nu_R\nu_L\beta\beta \, (K=0.5)$", L"$N\nu\beta\beta \, (m_N=1500~\text{keV})$", L"$N\nu\beta\beta \, (m_N=500~\text{keV})$"],
+    radon_level = [L"150\,$\mu$Bq/m$^3$", L"2\,$m$Bq/m$^3$", L"150\,$\mu$Bq/m$^3$", L"150\,$\mu$Bq/m$^3$", L"150\,$\mu$Bq/m$^3$", L"150\,$\mu$Bq/m$^3$", L"150\,$\mu$Bq/m$^3$"],
+    sensitivity = [median(d_nu0bb_tag1.thalf), median(d_nu0bb_tag2.thalf), median(d_nu0bbM1_tag1.thalf), median(d_nu0bbM2_tag1.thalf), median(d_RH050_tag1.thalf), median(d_Nnubb1500keV_tag1.thalf), median(d_Nnubb500keV_tag1.thalf)],
 )
 
 colors = Makie.wong_colors()
@@ -122,6 +139,27 @@ with_theme(theme_latexfonts()) do
     save(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/figs/RH050_tag_1_median_sensitivity.png"), f, px_per_unit = 2)
     f
 end
+
+with_theme(theme_latexfonts()) do
+    f = Figure(size = (1200, 800), fontsize = 34,)
+    a = Axis(f[1, 1], title = L"Bayesian sensitivity to $N\nu\beta\beta \, (m_N=1500~keV)$", xlabel = L"90% C.I. sensitivity (yr)$$", ylabel = L"number of pseudo-experiments $$", limits=(nothing, nothing, 0, nothing))
+    stephist!(a, d_Nnubb1500keV_tag1.thalf, bins = 100, color = colors[5], linewidth = 4)
+    vlines!(a, [median(d_Nnubb1500keV_tag1.thalf)], color = :red, linewidth = 4, linestyle = :dash, label = L"median sensitivity \n %$(round(median(d_Nnubb1500keV_tag1.thalf), sigdigits = 3))yr $$")
+    axislegend(a, position = :rt, patchsize = (45, 35))
+    save(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/figs/Nnubb1500keV_tag_1_median_sensitivity.png"), f, px_per_unit = 2)
+    f
+end
+
+with_theme(theme_latexfonts()) do
+    f = Figure(size = (1200, 800), fontsize = 34,)
+    a = Axis(f[1, 1], title = L"Bayesian sensitivity to $N\nu\beta\beta \, (m_N=500~keV)$", xlabel = L"90% C.I. sensitivity (yr)$$", ylabel = L"number of pseudo-experiments $$", limits=(nothing, nothing, 0, nothing))
+    stephist!(a, d_Nnubb500keV_tag1.thalf, bins = 100, color = colors[5], linewidth = 4)
+    vlines!(a, [median(d_Nnubb500keV_tag1.thalf)], color = :red, linewidth = 4, linestyle = :dash, label = L"median sensitivity \n %$(round(median(d_Nnubb500keV_tag1.thalf), sigdigits = 3))yr $$")
+    axislegend(a, position = :rt, patchsize = (45, 35))
+    save(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/figs/Nnubb500keV_tag_1_median_sensitivity.png"), f, px_per_unit = 2)
+    f
+end
+
 
 begin
     open(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results_summary.tex"), "w") do io

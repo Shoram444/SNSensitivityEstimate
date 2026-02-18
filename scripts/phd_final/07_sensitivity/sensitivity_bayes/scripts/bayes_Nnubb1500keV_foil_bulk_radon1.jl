@@ -15,7 +15,7 @@ analysisDict = Dict(
     :bining => (300, 3500),
     :bin_width => 100,
     :mode => "sumE",
-    :prior => 1e-1,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :prior => 1,# 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
     :radon_tag => 1
 )
 
@@ -168,9 +168,11 @@ signal_hist_normed = normalize(restrict(get_bkg_counts_1D(signal), Bin_low, Bin_
 
 # uninformed prior for each activity
 prior = NamedTupleDist(
-    As = Uniform(1e-20, analysisDict[:prior]), # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    As = Uniform(1e-20, 0.0005), # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
     Ab = [Uniform(1e-20,1) for _ in 1:length(bkg_hist)] 
 )   
+
+sens = get_sens_bayes_uniform(bkg_hist, signal, prior; ROI_a = Bin_low, ROI_b = Bin_high, nsteps = 5*10^4, nchains = 4)
 
 t_halfs = Float64[]
 while(time() - t0 < 3600* 2) # do this for n hours

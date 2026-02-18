@@ -25,7 +25,7 @@ analysisDict = Dict(
 #     :signal => "Nnubb500keV_foil_bulk",
 #     :radon_tag => 1,
 #     :hours => 0.001,
-#     :side => "sameSide",
+#     :side => "both",
 # )
 
 if analysisDict[:side] == "both"

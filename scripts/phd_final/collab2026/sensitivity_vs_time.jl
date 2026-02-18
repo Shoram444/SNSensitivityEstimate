@@ -318,9 +318,9 @@ sens_RH = [ map(x-> sensitivity_in_time(r.eff, r.bkg, x), t) for r in eachrow(df
 
 let exp = t .* sn_params["foilMass"] |> collect
     f = Figure(size = (950, 600), fontsize = 22, fonts = (; regular = "TeX"), figure_padding = 20)
-    ax = Axis(f[1, 1], xlabel = L"$$ exposure ($\text{kg}\cdot\text{yr}$)",  ylabel = L"Simulated sensitivity (yr) $$",yscale = log10, limits = (0, maximum(exp), 1e21, 0.5e23), yminorticks=IntervalsBetween(10), yminorticksvisible = true, yminorticksize = 4)
+    ax = Axis(f[1, 1], xlabel = L"$$ exposure ($\text{kg}\cdot\text{yr}$)",  ylabel = L"Simulated sensitivity (yr) $$",yscale = log10, limits = (0, maximum(exp), 1e21, 1e23), yminorticks=IntervalsBetween(10), yminorticksvisible = true, yminorticksize = 4)
     # ax = Axis(f[1, 1], xlabel = L"$$ exposure ($\text{kg}\cdot\text{yr}$)",  ylabel = L"Simulated $T^{0\nu\beta\beta}_{1/2}$ sensitivity @ 90% CL (yr)",yscale = log10, limits = (0, maximum(exp), 1e23, 1e25), yminorticks=IntervalsBetween(10), yminorticksvisible = true, yminorticksize = 4)
-    ax2 = Axis(f[1, 1], xlabel = L"$$time (yr)", yscale = log10, xaxisposition = :top, limits = (0, 5, 1e21, 0.5e23))
+    ax2 = Axis(f[1, 1], xlabel = L"$$time (yr)", yscale = log10, xaxisposition = :top, limits = (0, 5, 1e21, 1e23))
 
     Label(f[0,1], text = L"Simulated SuperNEMO sensitivity to $\textrm{$\nu_R\nu_L\beta\beta$ }$ decay",)
 
@@ -332,7 +332,7 @@ let exp = t .* sn_params["foilMass"] |> collect
     p1 = lines!(ax, exp, sens_RH[1], color = :black, linewidth = 5.5)
     lines!(ax2, t |> collect, sens_RH[1], color = :black, linewidth = 5.5)
 
-    # s1 = scatter!(ax, [17.5], [7.87e20], markersize = 6, color=:black)
+    s1 = scatter!(ax, [17.5], [6.265e22], markersize = 15, color=:black)
     
 
     text!(17.5/6.25, 0.2e22, text = L"17.5 $\text{kg}\cdot\text{yr}$", align = (:center, :top), rotation = pi/2, fontsize = 20, color = (:black, 0.3))
@@ -346,11 +346,11 @@ let exp = t .* sn_params["foilMass"] |> collect
 
     Legend(
         f[1,2], 
-        [ p1], 
+        [ p1, s1], 
         [
             # L"$$  bayesian limit @ 90% CI",
             L"freq: $\nu_R\nu_L\beta\beta$ (K=-0.50)", 
-            # L"bayes: $\nu_R\nu_L\beta\beta$ (K=-0.50)", 
+            L"bayes: $\nu_R\nu_L\beta\beta$ (K=-0.50)", 
             # L"$$  Rn @ 2~$\textrm{mBq/m^3}$", 
             # L"$$  Rn @ 0.6~$\textrm{mBq/m^3}$", 
             # L"$$  CUPID-0 @ 90% CI\n bayesian limit"
@@ -368,7 +368,7 @@ end
 df_Nnu = DataFrame(
     signal = [ L"$\N\nu\beta\beta$ ($m_N$=500keV)", L"$\N\nu\beta\beta$ ($m_N$=1500keV)" ],
     sens = [1.5e22, 5.6e21],
-    eff = [0.122, 0.104],
+    eff = [0.122, 0.040],
     bkg = [193000, 153000]
 )
 
@@ -378,9 +378,9 @@ sens_Nnu = [ map(x-> sensitivity_in_time(r.eff, r.bkg, x), t) for r in eachrow(d
 
 let exp = t .* sn_params["foilMass"] |> collect
     f = Figure(size = (950, 600), fontsize = 22, fonts = (; regular = "TeX"), figure_padding = 20)
-    ax = Axis(f[1, 1], xlabel = L"$$ exposure ($\text{kg}\cdot\text{yr}$)",  ylabel = L"Simulated sensitivity (yr) $$",yscale = log10, limits = (0, maximum(exp), 2e21, 4e22), yminorticks=IntervalsBetween(10), yminorticksvisible = true, yminorticksize = 4)
-    # ax = Axis(f[1, 1], xlabel = L"$$ exposure ($\text{kg}\cdot\text{yr}$)",  ylabel = L"Simulated $T^{0\nu\beta\beta}_{1/2}$ sensitivity @ 90% CL (yr)",yscale = log10, limits = (0, maximum(exp), 1e23, 1e25), yminorticks=IntervalsBetween(10), yminorticksvisible = true, yminorticksize = 4)
-    ax2 = Axis(f[1, 1], xlabel = L"$$time (yr)", yscale = log10, xaxisposition = :top, limits = (0, 5, 2e21, 4e22))
+    ax = Axis(f[1, 1], xlabel = L"$$ exposure ($\text{kg}\cdot\text{yr}$)",  ylabel = L"Simulated sensitivity (yr) $$",yscale = log10, limits = (0, maximum(exp), 1e21, 0.3e23), yminorticks=IntervalsBetween(10), yminorticksvisible = true, yminorticksize = 4)
+    # ax = Axis(f[1, 1], xlabel = L"$$ exposure ($\text{kg}\cdot\text{yr}$)",  ylabel = L"Simulated $T^{0\nu\beta\beta}_{1/2}$ sensitivity @ 90% CL (yr)",yscale = log10, limits = (0, maximum(exp), 0.5e22, 1e25), yminorticks=IntervalsBetween(10), yminorticksvisible = true, yminorticksize = 4)
+    ax2 = Axis(f[1, 1], xlabel = L"$$time (yr)", yscale = log10, xaxisposition = :top, limits = (0, 5, 1e21, 0.3e23))
 
     Label(f[0,1], text = L"Simulated SuperNEMO sensitivity to $N\nu\beta\beta$ decay",)
 
@@ -390,10 +390,12 @@ let exp = t .* sn_params["foilMass"] |> collect
     
     p1 = lines!(ax, exp, sens_Nnu[1], color = colors[2], linewidth = 5.5)
     lines!(ax2, t |> collect, sens_Nnu[1], color = colors[2], linewidth = 5.5)
+    s1 = scatter!(ax, [17.5], [1.22e22], markersize = 15, color=colors[2])
 
-    p2 = lines!(ax, exp, sens_Nnu[2], color = colors[3], linewidth = 5.5)
-    lines!(ax2, t |> collect, sens_Nnu[2], color = colors[3], linewidth = 5.5)
-    
+    p2 = lines!(ax, exp, sens_Nnu[2], color = colors[5], linewidth = 5.5)
+    lines!(ax2, t |> collect, sens_Nnu[2], color = colors[5], linewidth = 5.5)
+    s2 = scatter!(ax, [17.5], [4.028e21], markersize = 15, color=colors[5])
+
 
     text!(17.5/6.25, 0.2e22, text = L"17.5 $\text{kg}\cdot\text{yr}$", align = (:center, :top), rotation = pi/2, fontsize = 20, color = (:black, 0.3))
     text!(1.0, 0.2e22, text = L"6.25 $\text{kg}\cdot\text{yr}$", align = (:center, :top), rotation = pi/2, fontsize = 20, color = (:black, 0.3))
@@ -406,13 +408,15 @@ let exp = t .* sn_params["foilMass"] |> collect
 
     Legend(
         f[1,2], 
-        [ p1, p2], 
+        [ p1, s1, p2, s2], 
         [
-            L"$m_N = 500$~keV", 
-            L"$m_N = 1500$~keV", 
+            L"$m_N = 500$~keV (frequentist)", 
+            L"$m_N = 500$~keV (bayes)", 
+            L"$m_N = 1500$~keV (frequentist)", 
+            L"$m_N = 1500$~keV (bayes)", 
         ], 
         patchsize = (40, 30),
-        L"SuperNEMO $N\nu\beta\beta$ sensitivity \\ frequentist limit @ 90% CL",
+        L"sensitivities @ 90% CL, 90% C.I.$$",
         )
     save(scriptsdir("phd_final/collab2026/figs","sterile_sens_figure.png"), f, px_per_unit = 5)
     f
@@ -440,9 +444,9 @@ end
 ## bad
 
 let 
-    name = "majoron_efficiencies"
-    s1 = get_process("bb0nuM1_foil_bulk", processes) |> first 
-    s2 = get_process("bb0nuM2_foil_bulk", processes) |> first
+    name = "sterile_efficiencies"
+    s1 = get_process("Nnubb500keV_foil_bulk", processes) |> first 
+    s2 = get_process("Nnubb1500keV_foil_bulk", processes) |> first
     d1 = getproperty.(s1.data, :sumE)
     d2 = getproperty.(s2.data, :sumE)
 
@@ -451,8 +455,10 @@ let
 
     f = Figure(size=(600,400), fontsize = 14)
     a = Axis(f[1,1], xlabel = L"$E_{sum}$ (keV)", ylabel = L"$\varepsilon$ (%)", title= L"efficiency $$")
-    p1 = stephist!(a, h1, linewidth =3,color = colors[1], label = L"$0\nu\beta\beta\chi^0$")
-    p2 = stephist!(a, h2, linewidth =3,color = colors[3], label = L"$0\nu\beta\beta\chi^0\chi^0$")
+    # a = Axis(f[1,1], xlabel = L"$\varphi$ ($^{\circ}$)", ylabel = L"$\varepsilon$ (%)", title= L"efficiency $$")
+    # p1 = stephist!(a, h1, linewidth =3,color = :black, label = L"$\nu_R\nu_L\beta\beta$")
+    p1 = stephist!(a, h1, linewidth =3,color = colors[2], label = L"$m_N = 500$~keV")
+    p2 = stephist!(a, h2, linewidth =3,color = colors[5], label = L"$m_N = 1500$~keV")
     axislegend(a)
     save(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/figs/figs_compare_all_bsm", "$(name).png"), f, px_per_unit = 5)
     f
