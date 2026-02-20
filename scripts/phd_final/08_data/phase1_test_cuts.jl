@@ -37,10 +37,10 @@ function get_smeared_energy(p, var, fwhm)
     end
 end
 
-function get_expected_simu_counts(p, var, fwhm; bins = (0:100:4000))
+function get_expected_simu_counts(p, var, fwhm; bins = (0:100:4000), timeMeas = p.timeMeas)
     smeared_energy = fwhm == 0 ? getproperty.(p.data, var) : get_smeared_energy(p, var, fwhm)
     h = normalize(Hist1D(smeared_energy; binedges = bins), width = false)
-    n_exp = p.activity * p.timeMeas * p.amount * (length(p.data) / p.nTotalSim)
+    n_exp = p.activity * timeMeas * p.amount * (length(p.data) / p.nTotalSim)
     return h .* n_exp
 end
 
