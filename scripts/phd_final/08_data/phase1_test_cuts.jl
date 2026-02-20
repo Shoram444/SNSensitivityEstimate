@@ -12,6 +12,10 @@ d = LazyTree(f, "tree", keys(f["tree"])) |> DataFrame
 
 d.deltaCaloTime = abs.(d.caloTime1 .- d.caloTime2)
 
+bb_process = DataProcessND(
+    
+)
+
 my_roi_1 = (
     sumE = (300, 2700),
     reconstructedEnergy1 = (350, 5000),
