@@ -165,7 +165,7 @@ options = Options(;
     # f_tol = 1e-5,
     # f_tol_rel = 1e-5,
     # f_tol_abs = 1e-5,
-    time_limit = 1*20.0, #60*60*12.0,
+    time_limit = 10*60.0, #60*60*12.0,
     # parallel_evaluation = true,
     verbose = true,
     # iterations = 15,
@@ -184,13 +184,13 @@ end
 
 x0 = float.([
     5, 180, # phi
-    2700, 3000, # sumE
+    500, 3000, # sumE
     # 0, 3500, # singleE
     0,150, # r
     0, 150, # dy
     0, 150, # dz
-    0,1, # sameSide
-    0, 3, # lPint
+    0,2, # sameSide
+    0, 1, # lPint
     1, 100, # lPext
     0, 2500, # trackLength1
     0, 2500, # trackLength2

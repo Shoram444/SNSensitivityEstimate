@@ -188,7 +188,7 @@ options = Options(;
     f_tol = 1e-4,
     f_tol_rel = 1e-5,
     f_tol_abs = 1e-5,
-    time_limit = analysisDict[:hours]*60*60.0, #60*60*12.0,
+    time_limit = 60.0*10, #analysisDict[:hours]*60*60.0, #60*60*12.0,
     parallel_evaluation = false,
     verbose = true,
 )
