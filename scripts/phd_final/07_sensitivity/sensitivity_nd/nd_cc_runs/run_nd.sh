@@ -11,18 +11,18 @@
 #SBATCH --output=/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/phd_final/07_sensitivity/sensitivity_nd/nd_cc_runs/logs/nd_%job_%A_%a.log
 
 
-PROJECT=/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate
-SCRIPTDIR="/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/phd_final/07_sensitivity/sensitivity_nd/nd_cc_runs/"
+PROJECT=/Users/maros.petro/Work/Phd/SNSensitivityEstimate #/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate
+SCRIPTDIR=/Users/maros.petro/Work/Phd/SNSensitivityEstimate/scripts/phd_final/07_sensitivity/sensitivity_nd/nd_cc_runs/ #"/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/phd_final/07_sensitivity/sensitivity_nd/nd_cc_runs/"
 
 # bb0nu_foil_bulk, bb0nuM1_foil_bulk, bb0nuM2_foil_bulk, RH050_foil_bulk, _foil_bulk, Nnubb1500keV_foil_bulk
 
-SIGNAL="RH050_foil_bulk"
+SIGNAL="bb0nu_foil_bulk"
 echo "signal process: $SIGNAL"
-HOURS=22
+HOURS=2
 echo "HOURS: $HOURS"
-RADON_TAG=1
+RADON_TAG=2
 echo "RADON_TAG: $RADON_TAG"
-SIDE="oppositeSide" # "both" or "sameSide", "oppositeSide" 
+SIDE="sameSide" # "both" or "sameSide", "oppositeSide" 
 
 echo "sending job for signal: $SIGNAL"
 
@@ -36,8 +36,8 @@ sed -e "s|%SIGNAL|$SIGNAL|" \
 cd $PROJECT
 
 SCRIPT="$SCRIPTDIR/scripts/nd_${SIGNAL}_radon${RADON_TAG}_side${SIDE}.jl"
-module load julia
-export JULIA_NUM_THREADS=4
+# module load julia
+# export JULIA_NUM_THREADS=4
 
-julia --threads=4 --project=$PROJECT -e "include(\"$SCRIPT\")"
+# julia --threads=4 --project=$PROJECT -e "include(\"$SCRIPT\")"
 

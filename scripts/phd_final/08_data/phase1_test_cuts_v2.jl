@@ -37,11 +37,13 @@ free_roi = (
 
 my_roi_1 = (
     sumE = (300, 2700),
-    reconstructedEnergy1 = (350, 5000),
-    reconstructedEnergy2 = (350, 5000),
-    dy = (0, 100),
-    dz = (0,100),
-    deltaCaloTime = (0, 1.5)
+    reconstructedEnergy1 = (50, 5000),
+    reconstructedEnergy2 = (50, 5000),
+    trackLength1 = (400, 1000),
+    trackLength2 = (400, 1000),
+    dy = (0, 40),
+    dz = (0,80),
+    deltaCaloTime = (0, 2.5)
 )
 
 

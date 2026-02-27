@@ -44,27 +44,55 @@ function get_expected_simu_counts(p, var, fwhm; bins = (0:100:4000), timeMeas = 
     return h .* n_exp
 end
 
+function get_chi2_ndf(data, fit, nparams)
+    bincount_data = bincounts(data)
+    bincount_fit = bincounts(fit)
 
-f1 = ROOTFile(datadir("data/final_phd/phase1_data.root"))
+    binerrors_data = binerrors(data)
+    binerrors_fit = binerrors(fit)
+
+    chi2 = 0.0
+    ndf = 0
+
+    for i in eachindex(bincount_data)
+        O = bincount_data[i]
+        E = bincount_fit[i]
+
+        s = binerrors_data[i]^2 + binerrors_fit[i]^2
+
+        if E > 0          # avoid division by zero
+            chi2 += (O - E)^2 / s
+            ndf += 1
+        end
+    end
+
+    ndf = ndf - nparams
+    return chi2 / ndf, chi2, ndf
+end
+
+
+f1 = ROOTFile(datadir("data/final_phd/official_cuts/phase1_data.root"))
 d1 = LazyTree(f1, "tree", keys(f1["tree"])) |> DataFrame
 
-f2 = ROOTFile(datadir("data/final_phd/phase2_data.root"))
+f2 = ROOTFile(datadir("data/final_phd/official_cuts/phase2_data.root"))
 d2 = LazyTree(f2, "tree", keys(f2["tree"])) |> DataFrame
 
-f3 = ROOTFile(datadir("data/final_phd/phase3_data.root"))
+f3 = ROOTFile(datadir("data/final_phd/official_cuts/phase3_data.root"))
 d3 = LazyTree(f3, "tree", keys(f3["tree"])) |> DataFrame
 
 begin
-
+    var_data = :sumE
+    var_simu = :sumEsimu
+    binning = (0:100:4000)
     data_cuts = Dict(
         :sumE => (0, 3500),
-        :e1 => (350, 5000),
-        :e2 => (350, 5000),
+        :e1 => (250, 5000),
+        :e2 => (250, 5000),
         :dy => (0, 100),
         :dz => (0, 100),
-        :trackLength1 => (400, 1000),
-        :trackLength2 => (400, 1000),
-        :deltaCaloTime => (0, 1.5),
+        :trackLength1 => (300, 1000),
+        :trackLength2 => (300, 1000),
+        :deltaCaloTime => (0, 2.0),
         :phi => (0,180)
     )
 
@@ -105,37 +133,79 @@ begin
     d3_roi_1 = filter_data!(d3, data_roi_1)
     
 
-    h1_data_p1 = Hist1D(d1_roi_1.sumE; binedges = (0:100:4000))
-    h1_data_p2 = Hist1D(d2_roi_1.sumE; binedges = (0:100:4000))
-    h1_data_p3 = Hist1D(d3_roi_1.sumE; binedges = (0:100:4000))
+    h1_data_p1 = Hist1D(getproperty(d1_roi_1, var_data); binedges = binning) * inv(p1_duration_days)
+    h1_data_p2 = Hist1D(getproperty(d2_roi_1, var_data); binedges = binning) * inv(p2_duration_days)
+    h1_data_p3 = Hist1D(getproperty(d3_roi_1, var_data); binedges = binning) * inv(p3_duration_days)
 
     # h_data_tot = h1_data_p1 + h1_data_p2 + h1_data_p3
-    h_data_tot = h1_data_p2 + h1_data_p3
+    h_data_tot = h1_data_p1
 
-    h2_simu_bb_roi_1_p1 = get_expected_simu_counts(simu_p1_processes_roi_1[1], :sumEsimu, 0.12)
-    h2_simu_bb_roi_1_p2 = get_expected_simu_counts(simu_p2_processes_roi_1[1], :sumEsimu, 0.12)
-    h2_simu_bb_roi_1_p3 = get_expected_simu_counts(simu_p3_processes_roi_1[1], :sumEsimu, 0.12)
 
-    h2_simu_bb_roi_1 = h2_simu_bb_roi_1_p2 + h2_simu_bb_roi_1_p3
-    # h2_simu_bb_roi_1 = h2_simu_bb_roi_1_p1 + h2_simu_bb_roi_1_p2 + h2_simu_bb_roi_1_p3
+    p1_K40_process = get_process("K40_foil_bulk", simu_p1_processes_roi_1) |> first
+    p1_Pa234m_process = get_process("Pa234m_foil_bulk", simu_p1_processes_roi_1) |> first
+    p1_bb_process = get_process("bb_foil_bulk", simu_p1_processes_roi_1) |> first
+    p1_radon_process = get_process("Bi214_wire_surface", simu_p1_processes_roi_1) |> first
+    # p1_K40_PMT_process = get_process("K40_PMT_glass_bulk", simu_p1_processes_roi_1) |> first
+
+    set_activity!(p1_radon_process, 0.0625)
+    set_activity!(p1_Pa234m_process, 2.85e-3)
+
+    simu_h_p1_K40 = get_expected_simu_counts(p1_K40_process, var_simu, 0.12, bins = binning, timeMeas = (24*3600)) * 0.8
+    simu_h_p1_Pa234m = get_expected_simu_counts(p1_Pa234m_process, var_simu, 0.12, bins = binning, timeMeas = (24*3600)) * 0.8
+    simu_h_p1_bb = get_expected_simu_counts(p1_bb_process, var_simu, 0.12, bins = binning, timeMeas = (24*3600)) * 0.8
+    # simu_h_p1_K40_PMT = get_expected_simu_counts(p1_K40_PMT_process, var_simu, 0.12, bins = binning, timeMeas = (24*3600)) * 0.8
+    simu_h_p1_radon = get_expected_simu_counts(p1_radon_process, var_simu, 0.12, bins = binning, timeMeas = (24*3600)) * 0.8
+
+
+
 
     # tot_duration = p1_duration_seconds + p2_duration_seconds + p3_duration_seconds
-    tot_duration = p2_duration_seconds + p3_duration_seconds
-    tot_duration_days = tot_duration / (3600*24)
     let 
         eff_bb = length(simu_p1_processes_roi_1[1].data) / simu_p1_processes_roi_1[1].nTotalSim
-        f = Figure(size = (1600, 800), fontsize = 30)
-        a1 = Axis(f[1,1], xlabel = "sumE", ylabel = "counts per 100keV", title = "phase 2+3 data vs simu, duration = $(round(tot_duration_days, digits=2)) days")
+        f = Figure(size = (1600, 1200), fontsize = 30)
+        a1 = Axis(f[1,1], xlabel = "sumE", ylabel = "counts / 100keV / day", title = "phase 1 data vs simu", limits = (binning[1], binning[end], 0, nothing))
 
-        p1 = stephist!(a1, h_data_tot, label = "data, n = $(round(integral(h_data_tot)))", color = :black)
-        errorbars!(a1, h_data_tot, whiskerwidth = 8, color = :black)
-        p2 = stephist!(a1, h2_simu_bb_roi_1, label = "2nubb simu, n = $(round(integral(h2_simu_bb_roi_1))), eff = $(round(eff_bb, digits=2))", color = :blue)
+        p1 = scatter!(a1, h_data_tot, label = L"data, n = %$(round(integral(h_data_tot))) evt/day $$", color = :black, markersize = 12)
+        errorbars!(a1, h_data_tot, whiskerwidth = 10, color = :black)
+        p2 = stephist!(a1, simu_h_p1_K40, label = L"MC $^{40}$K, a = 58.7 mBq/kg", color = :orange,linewidth =3)
+        p3 = stephist!(a1, simu_h_p1_Pa234m, label = L"MC $^{234\text{m}}$Pa, a = 17.3 mBq/kg", color = :green,linewidth =3)
+        p4 = stephist!(a1, simu_h_p1_bb, label = L"MC $2\nu\beta\beta$, $T^{1/2} = 8.69 \times 10^{19}$ yr", color = :blue, linewidth =3)
+        p5 = stephist!(a1, simu_h_p1_radon, label = L"MC radon, a= 95 mBq/$\textrm{m^3}$", color = :purple, linewidth =3)
+        # p6 = stephist!(a1, simu_h_p1_K40_PMT, label = "K40 PMT simu, n = $(round(integral(simu_h_p1_K40_PMT)))", color = :cyan, linewidth =3)
+        h_simu_total = simu_h_p1_K40 + simu_h_p1_Pa234m + simu_h_p1_bb + simu_h_p1_radon # + simu_h_p1_K40_PMT
+        
+        stephist!(a1, h_simu_total, label = L"MC total $$", color = :red, linewidth = 4)
+        errorbars!(a1, h_simu_total, whiskerwidth = 10, color = :red)
 
-        axislegend(a1)
+        axislegend(a1, nbands = 2, position = :rt)
+
+        grid = GridLayout(f[1, 2], tellheight = false)
+
+        chi_ndf = get_chi2_ndf(h_data_tot, h_simu_total, 0)
 
         el = [PolyElement(color = :transparent, strokewidth = 0)]
         cuts = join(sort(string.(keys(data_cuts)) .* " in " .* string.(values(data_cuts))), "\n")
-        Legend(f[1,2], el, [cuts])
+        Legend(grid[1,1], el, [cuts])
+
+        chistring = L"$\chi^2$ / ndf = \n %$(round(chi_ndf[2], digits=2)) / %$(round(chi_ndf[3], digits=2)) = \n %$(round(chi_ndf[1], digits=2))"
+
+        Legend(grid[2,1], [PolyElement(color = :transparent, strokewidth = 0)], [chistring])
+        
+        # vspan!(a1, [2600], [3100], color=:black)
+
+        a2 = Axis(f[2,1], xlabel = "sumE", ylabel = "(data - simu)", title = "residuals", limits = (binning[1], binning[end], nothing, nothing))
+        
+        xs = bincenters(h_data_tot)
+        ys = bincounts(h_data_tot .- h_simu_total)
+        
+        scatter!(a2, xs, ys, label = "residuals", color = :black, markersize = 12)
+        errorbars!(a2, xs, ys, binerrors(h_data_tot .- h_simu_total),whiskerwidth = 10, color = :black)
+        hlines!(a2, [0], color = :red, linestyle = :dash, linewidth = 2, label = "zero line")
+        axislegend(a2)
+
+        # vspan!(a2, [2600], [3100], color=:black)
+
+        rowsize!(f.layout, 2, Relative(0.25))
         safesave("scripts/phd_final/08_data/figs/sim_vs_data.png", f)
         f
     end
