@@ -166,10 +166,10 @@ prior = NamedTupleDist(
 )   
 
 t_halfs = Float64[]
-while(time() - t0 < 3600*12) # do this for n hours
+# while(time() - t0 < 3600*12) # do this for n hours
 # for _ in 1:100 # do this for n hours
 # while(time() - t0 < 3600*12) # do this for n hours
-# for _ in 1:1 # do this for n hours
+for _ in 1:1 # do this for n hours
     # GC.gc()
     t1 = time()
     try 
@@ -182,8 +182,11 @@ while(time() - t0 < 3600*12) # do this for n hours
         @warn "failed fit" 
         continue
     end
-end
+
+end 
 
 # histogram(t_halfs, bins = 20, xlabel = "Sensitivity (years)", ylabel = "Frequency", title = "Bayesian Sensitivity Estimates for $(analysisDict[:signal]) with prior $(analysisDict[:prior]) and ROI [$(Bin_low), $(Bin_high)]")
 save_name = savename(analysisDict)
 CSV.write(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/nu0bb/sensitivities_$(save_name)_$(rand(1:1000000)).csv"), DataFrame(thalf= t_halfs))
+
+

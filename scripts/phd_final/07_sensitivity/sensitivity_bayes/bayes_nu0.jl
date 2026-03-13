@@ -263,7 +263,7 @@ W = SNparams["W"]
 eff= lookup(signal, Bin_low, Bin_high)
 Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
 
-# Plots.plot(samples, size = (2000, 1600))
+Plots.plot(samples, size = (2000, 1600))
 Plots.plot(samples, :As)
 # savefig("notebooks/Sensitivity_exotic_Bayes_nDim/samples_As.png")
 
