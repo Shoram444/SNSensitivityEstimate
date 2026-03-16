@@ -69,7 +69,7 @@ function get_chi2_ndf(data, fit, nparams)
 
         s = binerrors_data[i]^2 + binerrors_fit[i]^2
 
-        if E > 0          # avoid division by zero
+        if E > 5         # avoid division by zero
             chi2 += (O - E)^2 / s
             ndf += 1
         end
@@ -77,4 +77,47 @@ function get_chi2_ndf(data, fit, nparams)
 
     ndf = ndf - nparams
     return chi2 / ndf, chi2, ndf
+end
+
+
+function make_hist_likelihood_free(data_hist, bkg_hists)
+
+    data_counts = bincounts(data_hist)
+    bkg_counts = [bincounts(h) for h in bkg_hists]
+
+    nbins = length(data_counts)
+
+    logfuncdensity(function(p)
+
+        # --- Compute μ from physics ---
+
+        μ_K40   = p.μ_K40   
+        μ_Pa    = p.μ_Pa
+        μ_bb    = p.μ_bb
+        μ_radon = p.μ_radon
+        # μ_flat  = p.μ_flat
+
+        μ_internal = p.μ_internal
+        μ_Bi210 = p.μ_Bi210
+        μ_detector = p.μ_detector
+        μ_external = p.μ_external
+
+        μ_vec = (μ_bb,μ_K40, μ_Pa, μ_internal, μ_radon,  μ_Bi210, μ_detector, μ_external)
+
+        ll = 0.0
+
+        for k in 1:nbins
+
+            λk = 0.0
+
+            for i in 1:length(bkg_hists)
+                λk += μ_vec[i] * bkg_counts[i][k]
+            end
+
+            λk = max(λk, eps())
+            ll += log_pdf_poisson(λk, data_counts[k])
+        end
+
+        return ll
+    end)
 end
