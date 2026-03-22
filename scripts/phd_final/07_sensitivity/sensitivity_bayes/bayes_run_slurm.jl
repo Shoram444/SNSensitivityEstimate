@@ -174,13 +174,13 @@ prior = NamedTupleDist(
 
 t_halfs = Float64[]
 while(time() - t0 < 3600* %HOUR) # do this for n hours
-# for _ in 1:100 # do this for n hours
+# for _ in 1:10 # do this for n hours
 # while(time() - t0 < 3600*12) # do this for n hours
 # for _ in 1:1 # do this for n hours
     # GC.gc()
     t1 = time()
     try 
-        sens = get_sens_bayes_uniform(bkg_hist, signal, prior; ROI_a = Bin_low, ROI_b = Bin_high, nsteps = 5*10^4, nchains = 4)
+        sens = get_sens_bayes_uniform(bkg_hist, signal, prior; ROI_a = Bin_low, ROI_b = Bin_high, nsteps = 5*10^4, nchains = 4, smallest_interval = true)
         println("time to fit, t = $(time() - t1) s")
         println(sens)
         push!(t_halfs, sens)

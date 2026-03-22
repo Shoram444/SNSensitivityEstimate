@@ -237,10 +237,7 @@ my_likelihood = make_hist_likelihood_uniform(
 
 
 burnin = MCMCMultiCycleBurnin(max_ncycles = 30, nsteps_final=1000)
-mcmcalgo = MetropolisHastings(
-    weighting = RepetitionWeighting(),
-    tuning = AdaptiveMHTuning()
-)
+mcmcalgo = RandomWalk()
 
 
 posterior = PosteriorMeasure(my_likelihood, prior)
@@ -255,7 +252,8 @@ binned_unshaped_samples, f_flatten = bat_transform(Vector, samples)
 nDataPoints = integral(data_hist)
 muS = [par[1] for par in binned_unshaped_samples.v]
 
-@show exp_mu_signal_90 = quantile( muS,0.9) * nDataPoints 
+@show exp_mu_signal_90 = BAT.smallest_credible_intervals(muS, nsigma_equivalent= 1.65)[1].right * nDataPoints
+
 Na = SNparams["Nₐ"]
 m = SNparams["foilMass"] * SNparams["a"]
 t = SNparams["tYear"]
