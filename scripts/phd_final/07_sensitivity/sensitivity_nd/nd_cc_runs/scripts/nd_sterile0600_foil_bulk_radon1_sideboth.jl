@@ -16,7 +16,7 @@ include(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/helper_functions.jl"
 
 
 analysisDict = Dict(
-    :signal => "sterile0500_foil_bulk",
+    :signal => "sterile0600_foil_bulk",
     :radon_tag => 1,
     :hours => 24,
     :side => "both",
@@ -80,7 +80,7 @@ for p in neutron_processes
 end
 
 
-# signal_name = "sterile0500_foil_bulk"
+# signal_name = "sterile0600_foil_bulk"
 signal_name = analysisDict[:signal]
 signal = get_process(signal_name, processes) |> first
 # signal = get_process("RH037_foil_bulk", processes) |> first

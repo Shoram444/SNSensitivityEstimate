@@ -163,8 +163,8 @@ searchRange = make_stepRange(signal)
 
 # manual bounds
 if analysisDict[:side] == "both"
-    lb = float.([0, 140, 300, 2000, 0, 50, 0, 50, 0, 0, 0, 50 ])
-    ub = float.([80, 180, 1600, 2800, 10, 150, 10, 150, 0, 10, 10, 50])
+    lb = float.([0, 140, 300, 2800, 0, 50, 0, 50, 0, 0, 0, 50 ])
+    ub = float.([80, 180, 600, 3000, 10, 150, 10, 150, 0, 10, 10, 50])
 elseif analysisDict[:side] == "sameSide"
     lb = float.([0, 0, 300, 2000, 0, 50, 0, 50, 0,2, 0, 0, 0, 50 ])
     ub = float.([180, 180, 1600, 2800, 10, 150, 10, 150,  0,2,0, 10, 10, 50])

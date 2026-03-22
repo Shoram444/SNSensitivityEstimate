@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # SLURM options:
-#SBATCH --partition=htc
-#SBATCH --job=rh050
+#SBATCH --partition=flash
+#SBATCH --job=bb
 #SBATCH --licenses=sps
-#SBATCH --array=0-9
+#SBATCH --array=0-0
 #SBATCH --time=0-1 #1-6
 #SBATCH --mem=24G
 #SBATCH --cpus-per-task=4
@@ -16,7 +16,7 @@ SCRIPTDIR="/sps/nemo/scratch/mpetro/Projects/PhD/SNSensitivityEstimate/scripts/p
 
 # bb0nu_foil_bulk, bb0nuM1_foil_bulk, bb0nuM2_foil_bulk, RH050_foil_bulk, Nnubb1500keV_foil_bulk
 
-SIGNAL="RH050_foil_bulk"
+SIGNAL="sterile0500_foil_bulk"
 echo "signal process: $SIGNAL"
 BINLOW=300
 echo "BINLOW: $BINLOW"
@@ -24,13 +24,13 @@ BINHIGH=3500
 echo "BINHIGH: $BINHIGH"
 BINWIDTH=100
 echo "BINWIDTH: $BINWIDTH"
-MODE=phi
+MODE=sumE
 echo "MODE: $MODE"
-PRIOR=1e-3
+PRIOR=1e-1
 echo "PRIOR: $PRIOR"
 RADON_TAG=1
 echo "RADON_TAG: $RADON_TAG"
-HOUR=0.85
+HOUR=0.1
 echo "HOUR: $HOUR"
 
 echo "sending job for signal: $SIGNAL"
