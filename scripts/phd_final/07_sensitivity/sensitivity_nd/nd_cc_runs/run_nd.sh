@@ -16,13 +16,13 @@ SCRIPTDIR=/Users/maros.petro/Work/Phd/SNSensitivityEstimate/scripts/phd_final/07
 
 # bb0nu_foil_bulk, bb0nuM1_foil_bulk, bb0nuM2_foil_bulk, RH050_foil_bulk, _foil_bulk, Nnubb1500keV_foil_bulk
 
-SIGNAL="bb0nu_foil_bulk"
+SIGNAL="sterile0500_foil_bulk"
 echo "signal process: $SIGNAL"
-HOURS=2
+HOURS=0.1
 echo "HOURS: $HOURS"
-RADON_TAG=2
+RADON_TAG=1
 echo "RADON_TAG: $RADON_TAG"
-SIDE="sameSide" # "both" or "sameSide", "oppositeSide" 
+SIDE="both" # "both" or "sameSide", "oppositeSide" 
 
 echo "sending job for signal: $SIGNAL"
 

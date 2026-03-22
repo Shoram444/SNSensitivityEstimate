@@ -80,18 +80,18 @@ all_standard_processes = load_data_processes(
     roi  = roi,
 )
 
-signal = get_process("bb0nuM1_foil_bulk", all_standard_processes) |> first
+signal = get_process("bb0nu_foil_bulk", all_standard_processes) |> first
 background = [get_process(b, all_standard_processes) |> first for b in backgrounds]
 
 set_signal!(background[1], false)
-# set_activity!(background[7], 2/1e3) # radon to 2mBq/kg
+set_activity!(background[7], 2/1e3) # radon to 2mBq/kg
 # set_activity!(background[7], 150/1e6) # radon to 150uBq/kg
 # set_activity!(background[7], 0.6/1e3) # radon to 0.6mBq/kg
 # set_activity!(background[7], 0.2/1e3) # radon to 0.2mBq/kg
 
 Q_keV = SNparams["Q"]
 α = 1.64485362695147
-constants_to_scale_thalf_to_s_to_b = inv(log2(2)*SNparams["Nₐ"]*SNparams["a"]*SNparams["foilMass"]*SNparams["t"]/SNparams["W"])
+# constants_to_scale_thalf_to_s_to_b = inv(log2(2)*SNparams["Nₐ"]*SNparams["a"]*SNparams["foilMass"]*SNparams["t"]/SNparams["W"])
 
 # additionally read neutron processes
 
@@ -182,10 +182,10 @@ with_theme(theme_latexfonts()) do
         "$(signal.isotopeName)_mode_$(mode)_efficiency_1D.png"), f)
     f
 end
-# using Measurements
+using Measurements
 
-# bkgs = [restrict(get_bkg_counts_1D(b), best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]) for b in background]
-bkgs = [restrict(get_bkg_counts_1D(b), 300, 3500) for b in background]
+bkgs = [restrict(get_bkg_counts_1D(b), best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge]) for b in background]
+# bkgs = [restrict(get_bkg_counts_1D(b), 0, 3500) for b in background]
 measurements = [
     sum(measurement.(bincounts(b), binerrors(b))) for b in bkgs
 ][1:18] # exclude neutrons individually will be added together
@@ -200,8 +200,8 @@ function sum_neutron_contributions(neutron_processes, a,b)
     return fast_neutrons, thermal_neutrons, h_fast, h_thermal, fast_sum, thermal_sum
 end
 
-# p_fast, p_thermal, h_fast, h_thermal, fast_individual, thermal_individual = sum_neutron_contributions(neutron_processes, best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge])
-p_fast, p_thermal, h_fast, h_thermal, fast_individual, thermal_individual = sum_neutron_contributions(neutron_processes, 300, 3500)
+p_fast, p_thermal, h_fast, h_thermal, fast_individual, thermal_individual = sum_neutron_contributions(neutron_processes, best_t12ESum[:minBinEdge], best_t12ESum[:maxBinEdge])
+# p_fast, p_thermal, h_fast, h_thermal, fast_individual, thermal_individual = sum_neutron_contributions(neutron_processes, 0, 3500)
 fast_sum = sum(fast_individual)
 thermal_sum = sum(thermal_individual)
 push!(measurements, fast_sum)
@@ -240,13 +240,13 @@ for row in eachrow(df)
     print(row.source, ",", row.counts_in_ROI, ",", row.percentage_of_total, "\n")
 end
 
-# open(scriptsdir("phd_final/07_sensitivity/sensitivity_1D/","nu0bb_mode_$(mode)bkgs_table.md"), "w") do io
-#     pretty_table(
-#         io,
-#         df,
-#         # backend = Val(:markdown),
-#     )
-# end
+open(scriptsdir("phd_final/07_sensitivity/sensitivity_1D/","nu0bb_mode_$(mode)bkgs_table.md"), "w") do io
+    pretty_table(
+        io,
+        df,
+        backend = Val(:markdown),
+    )
+end
 
 # h = Hist1D(signal.dataVector; binedges = signal.bins)
 # h = h * inv(signal.nTotalSim)

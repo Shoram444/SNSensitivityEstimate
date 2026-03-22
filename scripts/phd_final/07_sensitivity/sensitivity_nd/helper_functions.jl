@@ -21,12 +21,12 @@ function get_roi_bkg_counts_hist(
             data = filter(x -> getproperty(x, Symbol(n)) > roi[i][1] && getproperty(x, Symbol(n)) < roi[i][2], data)
         end
     end
-    p.data = data
+    # p.data = data
     d = getproperty.(data, mode)
 
     bkg_hist = normalize(Hist1D(d;binedges = bins); width = false)
 
-    ε = get_roi_effciencyND(p, roi).eff
+    ε = length(data) / p.nTotalSim
     # @show p.isotopeName, ε
 
     bkg_hist.bincounts .= bkg_hist.bincounts .* p.amount * ε * p.activity * p.timeMeas 

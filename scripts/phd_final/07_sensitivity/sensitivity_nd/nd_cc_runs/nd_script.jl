@@ -218,4 +218,7 @@ best = get_best_ROI_ND(res, signal)
 best_sens = get_sensitivityND(SNparams, α_, PROCESSES, best; approximate="table")
 print(best_sens)
 
+df = DataFrame(thalf=[best_sens.tHalf], signal=[signal_name], radon_tag=[radon_tag], side=[analysisDict[:side]], roi=[best_sens.roi], bkg_cts=[best_sens.bkgCounts], eff=[best_sens.signalEff])
 
+CSV.write(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/nd_cc_runs/results/$(signal_name)_radon$(radon_tag)_side$(analysisDict[:side])_result.csv"), DataFrame(res=res))
+    

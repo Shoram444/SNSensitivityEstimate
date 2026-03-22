@@ -11,6 +11,7 @@ using CairoMakie
 using FHist
 using ColorSchemes
 using StatsBase
+using Measurements
 
 ###############################
 # Configuration helpers
@@ -74,13 +75,13 @@ vertex_lenfth_energy_tof_roi = Dict(
 
 
 nemo3_roi = Dict(
-    :r => (0,50), 
+    :r => (0,100), 
     :sumE => (0, 3500),
     :phi => (0, 180),
     :Pint => (0.04, 1),
     :Pext => (0, 0.01),
-    :trackLength1 => (0, 1500),
-    :trackLength2 => (0, 1500),
+    :trackLength1 => (0, 5000),
+    :trackLength2 => (0, 5000),
 )
 
 
@@ -165,7 +166,7 @@ end
 
 function stacked_hist!(ax, hists; labels, colors, fill_area)
     if fill_area
-        hist!(ax, sum(hists),
+        CairoMakie.hist!(ax, sum(hists),
             label = isnothing(labels) ? nothing : labels[1],
             color = colors[1],
             strokewidth = 2,
@@ -173,7 +174,7 @@ function stacked_hist!(ax, hists; labels, colors, fill_area)
         errorbars!(ax, sum(hists); whiskerwidth=7, color = :black, clamp_bincounts=true)
         
     else
-        stephist!(ax, sum(hists),
+        CairoMakie.stephist!(ax, sum(hists),
             label = isnothing(labels) ? nothing : labels[1],
             color = colors[1],
             linewidth = 4)        
@@ -183,7 +184,7 @@ function stacked_hist!(ax, hists; labels, colors, fill_area)
 
     for i in 2:length(hists)
         if fill_area
-            hist!(ax, sum(hists[i:end]),
+            CairoMakie.hist!(ax, sum(hists[i:end]),
                 label = isnothing(labels) ? nothing : labels[i],
                 color = colors[i],
                 strokewidth = 2,
@@ -192,7 +193,7 @@ function stacked_hist!(ax, hists; labels, colors, fill_area)
             errorbars!(ax, nonzero_hists; whiskerwidth=7, color = :black, clamp_bincounts=true)
 
         else
-            stephist!(ax, sum(hists[i:end]),
+            CairoMakie.stephist!(ax, sum(hists[i:end]),
                 label = isnothing(labels) ? nothing : labels[i],
                 color = colors[i],
                 linewidth = 4)
@@ -206,13 +207,13 @@ end
 function all_individual_hist!(ax, hists; labels, colors, fill_area)
     for i in 1:length(hists)
         if fill_area
-            hist!(ax, hists[i],
+            CairoMakie.hist!(ax, hists[i],
                 label = isnothing(labels) ? nothing : labels[i],
                 color = colors[i],
                 strokewidth = 1,
                 strokecolor = :black)
         else
-            stephist!(ax, hists[i],
+            CairoMakie.stephist!(ax, hists[i],
                 label = isnothing(labels) ? nothing : labels[i],
                 color = colors[i],
                 linewidth = 4)
@@ -224,7 +225,7 @@ end
 
 
 function single_hist!(ax, hist; label, color)
-    hist!(ax, hist,
+    CairoMakie.hist!(ax, hist,
           label = label,
           color = color,
           strokewidth = 1,
@@ -270,7 +271,7 @@ function plot_stacked(
 
     stacked_hist!(ax, hists; labels, colors = colors, fill_area = fill_area)
 
-    ylims!(ax, min_cts, scale == :log ? 1e4 * max_cts : max_cts)
+    CairoMakie.ylims!(ax, min_cts, scale == :log ? 1e4 * max_cts : max_cts)
 
     axislegend(ax, position = :lt, orientation = :horizontal, nbanks = 5)
 
@@ -303,7 +304,7 @@ function plot_individual(
     min_cts, max_cts = find_min_bincounts([hist]), find_max_bincounts([hist])
 
     if scale == :log
-        ylims!(ax, max(min_cts, 1e-1), 1e2 * max_cts)
+        CairoMakie.ylims!(ax, max(min_cts, 1e-1), 1e2 * max_cts)
     end
 
     axislegend(ax, position = :rt)
@@ -424,7 +425,7 @@ backgrounds = [
 
 
 
-analysisDict    = Dict(:mode => "sumE", :cuts => "vertex_energy_tof_roi")
+analysisDict    = Dict(:mode => "sumE", :cuts => "topology_roi")
 
 if( analysisDict[:cuts] == "nemo3_roi" )
     roi = nemo3_roi
@@ -491,19 +492,23 @@ categories = [
 ]
 
 
+
+
+
 # let 
 begin
     
     begin
-        binning = (300, 3500, 100)
+        binning = (0, 3500, 100)
         # binning = (0, 180, 5)
         simdir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41")
         mode = analysisDict[:mode] 
         fill_area = false
-        stacked = true
+        stacked = false
         roi = roi
+        roi2 = topology_roi
         scale = :log10
-        # cat_colors = ["#4E79A7","#C7E6E3","#9AD0CB","#76B7B2","#4E8F8B","#F28E2B","#C66A00","#E15759","#B22222", "#7BC36D", "#59A14F", "#3F7F3A", "#AA40FC"]
+        cat_colors = ["#4E79A7","#C7E6E3","#9AD0CB","#76B7B2","#4E8F8B","#F28E2B","#C66A00","#E15759","#B22222", "#7BC36D", "#59A14F", "#3F7F3A", "#AA40FC"]
         # cat_colors = [
         #     "#041E42",
         #     "#0B3A66",
@@ -520,33 +525,42 @@ begin
         #     "#000000"
         #     ]
         # cat_colors = [STACK_COLORS[1], STACK_COLORS[2], STACK_COLORS[3]]
-        cat_colors = ColorSchemes.tableau_20
+        # cat_colors = ColorSchemes.tableau_20
     end
     
     low, high, bw = binning
     # low, high, bw = 2800:100:3200
     bins = make_bins(binning) # 0:100:3200
 
-    # all_processes = load_data_processes(
+    # processes_no_cuts = load_data_processes(
     #     simdir,
     #     String(mode);
     #     fwhm = 0.0,
-    #     roi  = roi,
+    #     roi  = roi2,
     # )
+
+    all_processes = load_data_processes(
+        simdir,
+        String(mode);
+        fwhm = 0.0,
+        roi  = roi,
+    )
 
     bkgs = [get_process(b, all_processes) |> first for b in backgrounds]
 
     # hack for neutrons
     # hack for neutrons
     # hack for neutrons
+
     data_dir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41/neutrons_jan_2026")
     include(joinpath(data_dir, "read_neutrons_1D.jl"))
-    bins = signal.bins
+    # bins = signal.bins
     neutron_processes = load_neutron_process1D(data_dir, mode; roi=roi, isotopes=DEFAULT_ISOTOPES, bins = bins)
     for p in neutron_processes
         set_activity!(p, p.activity / 3) # activity is supposed to be 1/3 by Sam's measurements
         println("Neutron process: ", p.isotopeName, " nTotalSim: ", p.nTotalSim, " activity: ", p.activity)
     end
+
     # hack for neutrons
     # hack for neutrons
 
@@ -562,7 +576,8 @@ begin
     tot = 0
 
     
-    hists = get_bkg_counts_1D.(bkgs) # .* inv(2.8)  # normalize to counts / yr
+    hists = get_bkg_counts_1D.(bkgs) .* inv(2.8)  # normalize to counts / yr
+
     for (i,h) in enumerate(hists)
         if isnan(integral(h))
             replace!(hists[i].bincounts, NaN => 0.0)
@@ -599,6 +614,7 @@ begin
         end
     end
 
+
     sum_hists = vcat(
         hists[1:5],   # source foil
         hists[6:7],   # radon
@@ -608,8 +624,25 @@ begin
         sum(hists[19:end]) # neutrons
     )
 
-    min_cts = max(1e-3,find_min_bincounts(sum_hists))
-    max_cts = find_max_bincounts(sum(sum_hists))
+    ## uprava PMT a scnit histogramov s vacsiou statistikou
+    # bkgs_no_cut = [get_process(b, processes_no_cuts) |> first for b in backgrounds]
+    # for b in bkgs_no_cut
+    #     set_bins!(b, bins)
+    # end
+
+    # n_PMT = integral(sum_hists[8]) / 8
+    # n_scin = integral(sum_hists[9])
+    # hists_no_cut = get_bkg_counts_1D.(bkgs_no_cut) .* inv(2.8)  # normalize to counts / yr
+    # h_PMT = normalize(sum(hists_no_cut[8:13]), width = false) * n_PMT
+    # h_scin = normalize(sum(hists_no_cut[14:15]), width = false) * n_scin
+
+    # sum_hists[8] = h_PMT
+    # sum_hists[9] = h_scin
+
+    # min_cts = max(1e-3,find_min_bincounts(sum_hists))
+    # max_cts = find_max_bincounts(sum(sum_hists))
+    ## uprava PMT a scnit histogramov s vacsiou statistikou
+
 
     f = Figure(size = (1900, 1100), fontsize = 36, figure_padding = 16)
 
@@ -684,17 +717,17 @@ begin
     legend_master.tellwidth = true
 
     title = if analysisDict[:cuts] == "nemo3_roi"
-        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \nNEMO-3 like cuts"
+        "SuperNEMO: Simulated background for 1 yr of exposure \nNEMO-3 like cuts"
     elseif analysisDict[:cuts] == "topology_roi"
-        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \ntopology only cuts"
+        "SuperNEMO: Simulated background for 1 yr of exposure \ntopology only cuts"
     elseif analysisDict[:cuts] == "tof_roi"
-        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \ntopology + ToF cuts"
+        "SuperNEMO: Simulated background for 1 yr of exposure \ntopology + ToF cuts"
     elseif analysisDict[:cuts] == "vertex_tof_roi"
-        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \nvertex + ToF cuts"
+        "SuperNEMO: Simulated background for 1 yr of exposure \nvertex + ToF cuts"
     elseif analysisDict[:cuts] == "vertex_energy_tof_roi"
-        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \ntopology + ToF + vertex + energy cuts"
+        "SuperNEMO: Simulated background for 1 yr of exposure \ntopology + ToF + vertex + energy cuts"
     elseif analysisDict[:cuts] == "vertex_length_energy_tof_roi"
-        "SuperNEMO: Simulated background for 17.5 kg.yr of exposure \nvertex + length + energy + ToF cuts"
+        "SuperNEMO: Simulated background for 1 yr of exposure \nvertex + length + energy + ToF cuts"
     end
 
     ax = Axis(
@@ -708,7 +741,7 @@ begin
         yminorticksvisible = true, 
         yminorticksize = 4
     )
-    hist!(ax, sum(sum_hists), color = (:black, 0.15), label = "Total background")
+    CairoMakie.hist!(ax, sum(sum_hists), color = (:black, 0.15), label = "Total background")
     axislegend(ax, position = :rt, padding = (20,20,20,20))
 
     if stacked
@@ -719,7 +752,7 @@ begin
 
 
     if scale == :log10
-        ylims!(ax, 10^-3, 1e2 * max_cts)
+        CairoMakie.ylims!(ax, 10^-3, 1e2 * max_cts)
         decades = -3:ceil(log10(1e2*max_cts)) .|> Int
         ticks   = 10.0 .^ decades 
         labels_  = [L"10^{%$d}" for d in decades]
@@ -727,10 +760,10 @@ begin
         
 
     else
-        ylims!(ax, 0, 1.2*max_cts)  
+        CairoMakie.ylims!(ax, 0, 1.2*max_cts)  
     end
 
-    xlims!(ax, binning[1], binning[2])
+    CairoMakie.xlims!(ax, binning[1], binning[2])
     # ax.xticks = binning[1]:binning[3]:binning[2]
     # ax2 = Axis(f, bbox=BBox(1400*0.75, 1400*0.95, 900*0.5,900*0.85), limits = (2600, 4000, 0, 10), title = "Zoomed-in view")
     # stacked_hist!(ax2, sum_hists; labels = nothing, colors = cat_colors)
@@ -769,8 +802,8 @@ sum_hists = vcat(
 f = Figure()
 ax1 = Axis(f[1,1], yscale = log10, )
 stacked_hist!(ax1, sum_hists; labels = nothing, colors = cat_colors, fill_area = fill_area)
-# ylims!(ax1, min_cts, 1e2 * max_cts)
-ylims!(ax1, 10^-2, 10^2)
+# CairoMakie.ylims!(ax1, min_cts, 1e2 * max_cts)
+CairoMakie.ylims!(ax1, 10^-2, 10^2)
 decades = -2:2
 ticks   = 10.0 .^ decades
 labels  = [L"10^{%$d}" for d in decades]
@@ -778,7 +811,7 @@ ax1.yticks = ( ticks,labels )
 f
 
 
-ylims!(ax1, 10^-3, 1e2 * max_cts)
+CairoMakie.ylims!(ax1, 10^-3, 1e2 * max_cts)
 decades = -2:ceil(log10(1e2*max_cts)) .|> Int
 ticks   = 10.0 .^ decades 
 labels  = [L"10^{%$d}" for d in decades]
@@ -791,14 +824,14 @@ f
 nonzero_hist = sum_hists[1]
 f = Figure()
 ax = Axis(f[1,1], yscale = identity, )
-# stephist!(ax, nonzero_hist)
+# CairoMakie.stephist!(ax, nonzero_hist)
 errorbars!(ax, nonzero_hist; whiskerwidth=7, color = :red, clamp_bincounts = true, clamp_errors=true)
 
 edges = binedges(nonzero_hist) |> midpoints
 errs = binerrors(nonzero_hist)
 bc = bincounts(sum(sum_hists[9:end]))
 errorbars!(ax, edges, bc, errs, errs; whiskerwidth=7, color = :black)
-stephist!(ax, sum(sum_hists[9:end]), color = :black, linewidth=2)
+CairoMakie.stephist!(ax, sum(sum_hists[9:end]), color = :black, linewidth=2)
 f
 
 errorbars!(ax, nonzero_hist; whiskerwidth=7, color = :red, clamp_bincounts=true)

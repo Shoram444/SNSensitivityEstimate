@@ -3,7 +3,7 @@ using DrWatson
 
 using Revise
 using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random, FHist, Distributions
-using UnROOT
+using UnROOT, ColorSchemes
 
 println("loaded pkgs")
 
@@ -23,21 +23,29 @@ d3 = LazyTree(f3, "tree", keys(f3["tree"])) |> DataFrame
 
 fit_results_exp = []
 
+
+labels = [
+    rich("2νββ"),
+    rich(superscript("40"), "K"),
+    rich(superscript("234m"), "Pa"),
+    rich("radon"),
+]
+
 for p =1:3
     phase = p
     var_data = :sumE
     var_simu = :sumEsimu
     binning = (0:100:4000)
-    fwhm = 0.12
+    fwhm = 0.14
     data_cuts = Dict(
-        :sumE => (700, 3000),
-        :e1 => (350, 5000),
-        :e2 => (350, 5000),
+        :sumE => (500, 3000),
+        :e1 => (250, 5000),
+        :e2 => (250, 5000),
         :dy => (0, 100),
         :dz => (0, 100),
         :trackLength1 => (300, 1100),
         :trackLength2 => (300, 1100),
-        :deltaCaloTime => (0, 1.5),
+        :deltaCaloTime => (0, 2.0),
         :phi => (0,180)
     )
 
@@ -112,23 +120,23 @@ for p =1:3
     set_activity!(p3_Pa234m_process, 2.85e-3) # 2.85 vs 17.3
     
 
-    simu_h_p1_K40 = get_expected_simu_counts(p1_K40_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) *1.0
-    simu_h_p1_Pa234m = get_expected_simu_counts(p1_Pa234m_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) *1.0
-    simu_h_p1_bb = get_expected_simu_counts(p1_bb_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) *1.0
-    # simu_h_p1_K40_PMT = get_expected_simu_counts(p1_K40_PMT_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) * 1.0
-    simu_h_p1_radon = get_expected_simu_counts(p1_radon_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) *1.0
+    simu_h_p1_K40 = get_expected_simu_counts(p1_K40_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) *1.00
+    simu_h_p1_Pa234m = get_expected_simu_counts(p1_Pa234m_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) *1.00
+    simu_h_p1_bb = get_expected_simu_counts(p1_bb_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) *1.00
+    # simu_h_p1_K40_PMT = get_expected_simu_counts(p1_K40_PMT_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) * 1.00
+    simu_h_p1_radon = get_expected_simu_counts(p1_radon_process, var_simu, fwhm, bins = binning, e_range = (e1_min, e1_max)) *1.00
 
-    simu_h_p2_K40 = get_expected_simu_counts(p2_K40_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) *1.0
-    simu_h_p2_Pa234m = get_expected_simu_counts(p2_Pa234m_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) *1.0
-    simu_h_p2_bb = get_expected_simu_counts(p2_bb_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) *1.0
-    # simu_h_p2_K40_PMT = get_expected_simu_counts(p2_K40_PMT_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) * 1.0
-    simu_h_p2_radon = get_expected_simu_counts(p2_radon_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) *1.0
+    simu_h_p2_K40 = get_expected_simu_counts(p2_K40_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) *1.00
+    simu_h_p2_Pa234m = get_expected_simu_counts(p2_Pa234m_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) *1.00
+    simu_h_p2_bb = get_expected_simu_counts(p2_bb_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) *1.00
+    # simu_h_p2_K40_PMT = get_expected_simu_counts(p2_K40_PMT_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) * 1.00
+    simu_h_p2_radon = get_expected_simu_counts(p2_radon_process, var_simu, fwhm, bins = binning, timeMeas = p2_duration_seconds, e_range = (e1_min, e1_max)) *1.00
 
-    simu_h_p3_K40 = get_expected_simu_counts(p3_K40_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) *1.0
-    simu_h_p3_Pa234m = get_expected_simu_counts(p3_Pa234m_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) *1.0
-    simu_h_p3_bb = get_expected_simu_counts(p3_bb_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) *1.0
-    # simu_h_p3_K40_PMT = get_expected_simu_counts(p3_K40_PMT_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) * 1.0
-    simu_h_p3_radon = get_expected_simu_counts(p3_radon_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) *1.0
+    simu_h_p3_K40 = get_expected_simu_counts(p3_K40_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) *1.00
+    simu_h_p3_Pa234m = get_expected_simu_counts(p3_Pa234m_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) *1.00
+    simu_h_p3_bb = get_expected_simu_counts(p3_bb_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) *1.00
+    # simu_h_p3_K40_PMT = get_expected_simu_counts(p3_K40_PMT_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) * 1.00
+    simu_h_p3_radon = get_expected_simu_counts(p3_radon_process, var_simu, fwhm, bins = binning, timeMeas = p3_duration_seconds, e_range = (e1_min, e1_max)) *1.00
 
     radon_level1 = p1_radon_process.activity * 1000 # in mBq/m3
     radon_level2 = p2_radon_process.activity * 1000 # in mBq/m3
@@ -191,12 +199,6 @@ for p =1:3
     simu_h_total = K40 + Pa + bb + radon #+ h_flat #+ K40_PMT
     simu_combined = [bb, K40, Pa, radon] #+ h_flat #+ K40_PMT
 
-    labels = [
-        rich("2νββ"),
-        rich(superscript("40"), "K"),
-        rich(superscript("234m"), "Pa"),
-        rich("radon"),
-    ]
 
     activities = (
         bb = p1_bb_process.activity,
@@ -239,11 +241,47 @@ f_full = plot_fit(
     fitted_hists = fit_combined,
     fit_params = nothing,
     outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_combined_expected.png"),
-    component_labels = proc_labels,
+    component_labels = labels,
     main_limits = (0, 4000, 0, nothing),
     ratio_limits = (0, 4000, 0.2, 1.8),
     blinded_roi = (2700, 3000),
     chi2_nparams = length(fit_combined),
     title = "Combined Expected phase 1+2+3",
     include_component_counts = true,
+)
+
+
+
+logy_plot = plot_fit(
+    phase = 0,
+    data_hist = data_combined,
+    fitted_hists = fit_combined,
+    fit_params = nothing,
+    outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_combined_expected_logy.png"),
+    component_labels = labels,
+    main_limits = (0, 4000, 0, nothing),
+    ratio_limits = (0, 4000, 0.2, 1.8),
+    blinded_roi = (2700, 3000),
+    chi2_nparams = length(fit_combined),
+    title = "Combined Expected phase 1+2+3",
+    include_component_counts = true,
+    logy = true,
+)
+
+filled_plot = plot_fit(
+    phase = 0,
+    data_hist = data_combined,
+    fitted_hists = fit_combined,
+    fit_params = nothing,
+    outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_combined_expected_lines.png"),
+    component_labels = labels,
+    main_limits = (0, 4000, 0, nothing),
+    ratio_limits = (0, 4000, 0.2, 1.8),
+    blinded_roi = (2700, 3000),
+    chi2_nparams = length(fit_combined),
+    title = "Combined Expected phase 1+2+3",
+    include_component_counts = true,
+    logy = false,
+    stacked = false,
+    filled = false,
 )

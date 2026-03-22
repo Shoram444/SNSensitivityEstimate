@@ -114,6 +114,92 @@ function get_combined_bkg_hists(processes, binning)
 end
 
 
+function plot_lognormal_prior_comparison(;
+    mean,
+    relerr,
+    outputpath = nothing,
+    title = nothing,
+    show_underlying_normal = false,
+    lognormal_title = "Prior distribution",
+    lognormal_xlabel = "x",
+    ylabel = "Density",
+    figure_size = show_underlying_normal ? (1800, 700) : (950, 700),
+    fontsize = 28,
+    color_lognormal = "#9A3A06",
+    band_color_lognormal = (color_lognormal, 0.18),
+    n_sigma = 4,
+    n_points = 1200,
+    px_per_unit = 3,
+)
+
+    σ_log = sqrt(log(1 + relerr^2))
+    μ_log = log(mean) - 0.5 * σ_log^2
+
+    normal_dist = Normal(μ_log, σ_log)
+    lognormal_dist = LogNormal(μ_log, σ_log)
+
+
+    lo_lognorm = max(eps(), quantile(lognormal_dist, 1e-4))
+    hi_lognorm = quantile(lognormal_dist, 1 - 1e-4)
+    x_lognorm = range(lo_lognorm, hi_lognorm, length = n_points)
+    y_lognorm = pdf.(lognormal_dist, x_lognorm)
+
+    lo68_lognorm, hi68_lognorm = quantile(lognormal_dist, [0.16, 0.84])
+    lo95_lognorm, hi95_lognorm = quantile(lognormal_dist, [0.025, 0.975])
+
+    fig = Figure(size = figure_size, fontsize = fontsize, figure_padding = 25)
+
+    ax_lognorm = Axis(
+        fig[1, 1],
+        title = lognormal_title,
+        xlabel = lognormal_xlabel,
+        ylabel = ylabel,
+    )
+
+    if !isnothing(title)
+        Label(fig[0, 1], title, fontsize = fontsize + 4, tellwidth = false)
+    end
+
+    band!(ax_lognorm, x_lognorm, zero.(y_lognorm), y_lognorm, color = band_color_lognormal)
+    lines!(ax_lognorm, x_lognorm, y_lognorm, color = color_lognormal, linewidth = 4)
+    vlines!(ax_lognorm, [mean], color = :black, linestyle = :dash, linewidth = 3)
+    vlines!(ax_lognorm, [lo68_lognorm, hi68_lognorm], color = color_lognormal, linestyle = :dot, linewidth = 2)
+    vlines!(ax_lognorm, [lo95_lognorm, hi95_lognorm], color = color_lognormal, linestyle = :dashdot, linewidth = 2)
+    text!(
+        ax_lognorm,
+        0.03,
+        0.95,
+        space = :relative,
+        align = (:left, :top),
+        text = "mean = $(round(mean, sigdigits = 4))\nrel. err. = $(round(100 * relerr, digits = 1))%",
+        fontsize = fontsize - 4,
+    )
+
+    axislegend(
+        ax_lognorm,
+        [
+            LineElement(color = color_lognormal, linewidth = 4),
+            LineElement(color = :black, linestyle = :dash, linewidth = 3),
+            LineElement(color = color_lognormal, linestyle = :dot, linewidth = 2),
+            LineElement(color = color_lognormal, linestyle = :dashdot, linewidth = 2),
+        ],
+        ["prior density", "input mean", "68% interval", "95% interval"],
+        position = :rt,
+    )
+
+    if show_underlying_normal
+        colgap!(fig.layout, 30)
+    end
+
+    if !isnothing(outputpath)
+        save(outputpath, fig, px_per_unit = px_per_unit)
+    end
+
+    return fig, normal_dist, lognormal_dist
+end
+
+
+
 
 function plot_fit(;
     phase,
@@ -122,6 +208,8 @@ function plot_fit(;
     fit_params,
     outputpath,
     component_labels,
+    component_count_uncertainties = nothing,
+    show_component_uncertainties = false,
     main_limits = (0, 4000, 0, nothing),
     ratio_limits = (0, 4000, 0.2, 1.8),
     blinded_roi = (2700, 3000),
@@ -132,7 +220,7 @@ function plot_fit(;
     ratio_ylabel = "Data / Fit",
     figure_size = (2000, 1400),
     fontsize = 28,
-    colors = ColorSchemes.tab10.colors,
+    colors = ["#003865", "#FFB948", "#52473B", "#9A3A06", "#951272", "#006630", "#005C8A", "#FFB948"],
     px_per_unit = 3,
     chi2_nparams = nothing,
     show_chi2 = true,
@@ -143,6 +231,9 @@ function plot_fit(;
     component_linewidth = 3,
     total_fit_color = :red,
     total_fit_linewidth = 4,
+    stacked = false,
+    logy = false,
+    filled = false,
     legend_patchsize = (30, 40, 100, 0),
     legend_rowgap = 20,
     legend_tellheight = false,
@@ -150,9 +241,15 @@ function plot_fit(;
     ratio_reference = 1.0,
 )
 
+    use_stacked = stacked 
     total_fit = sum(fitted_hists)
     n_data = sum(bincounts(data_hist))
     n_mc_total = sum(bincounts(total_fit))
+    main_axis_limits = if logy && !isnothing(main_limits[3]) && main_limits[3] <= 0
+        (main_limits[1], main_limits[2], 0.1, main_limits[4])
+    else
+        main_limits
+    end
 
     f = Figure(size = figure_size, fontsize = fontsize)
 
@@ -160,7 +257,8 @@ function plot_fit(;
         xlabel = xlabel,
         ylabel = ylabel,
         title = isnothing(title) ? "Phase $phase" : title,
-        limits = main_limits,
+        limits = main_axis_limits,
+        yscale = logy ? log10 : identity,
     )
 
     ax_ratio = Axis(f[2, 1],
@@ -169,6 +267,70 @@ function plot_fit(;
         limits = ratio_limits,
     )
 
+    legend_entries = []
+    legend_labels = []
+    component_count_unc = (show_component_uncertainties && !isnothing(component_count_uncertainties)) ?
+        collect(component_count_uncertainties) :
+        nothing
+
+    plot_component_hist! = function (hist, color)
+        if filled
+            CairoMakie.hist!(
+                ax,
+                hist,
+                color = color,
+                strokewidth = component_linewidth,
+                strokecolor = color,
+            )
+        else
+            CairoMakie.stephist!(
+                ax,
+                hist,
+                color = color,
+                linewidth = component_linewidth,
+            )
+        end
+    end
+
+    for i in eachindex(fitted_hists)
+        c = colors[mod1(i, length(colors))]
+
+        hist_to_plot = use_stacked ? sum(fitted_hists[i:end]) : fitted_hists[i]
+        plot_component_hist!(hist_to_plot, c)
+
+        n_fit = sum(bincounts(fitted_hists[i]))
+        lbl = if include_component_counts
+            if !isnothing(component_count_unc) && i <= length(component_count_unc)
+                rich(component_labels[i], "\n \n n = $(round(n_fit, digits = 1)) ± $(round(component_count_unc[i], digits = 1))")
+            else
+                rich(component_labels[i], "\n \n n = $(round(n_fit, digits = 1))")
+            end
+        else
+            component_labels[i]
+        end
+
+        el = filled ? PolyElement(color = c, strokecolor = c) : LineElement(color = c, linewidth = component_linewidth)
+        push!(legend_entries, el)
+        push!(legend_labels, lbl)
+    end
+
+    if use_stacked
+        CairoMakie.hist!(
+            ax,
+            total_fit,
+            color = (total_fit_color, 0.15),
+            strokewidth = 0,
+            label = "Total Fit",
+        )
+    else
+        CairoMakie.stephist!(
+            ax,
+            total_fit,
+            color = total_fit_color,
+            linewidth = total_fit_linewidth,
+            label = "Total Fit",
+        )
+    end
     CairoMakie.scatter!(ax, data_hist,
         color = :black,
         markersize = data_markersize,
@@ -179,37 +341,6 @@ function plot_fit(;
         color = :black,
         whiskerwidth = data_whiskerwidth,
     )
-
-    legend_entries = []
-    legend_labels = []
-
-    for i in eachindex(fitted_hists)
-        c = colors[mod1(i, length(colors))]
-
-        CairoMakie.stephist!(
-            ax,
-            fitted_hists[i],
-            color = c,
-            linewidth = component_linewidth,
-        )
-
-        n_fit = sum(bincounts(fitted_hists[i]))
-        lbl = include_component_counts ?
-            rich(component_labels[i], "\n \n n = $(round(n_fit, digits = 1))") :
-            component_labels[i]
-
-        push!(legend_entries, LineElement(color = c, linewidth = 4))
-        push!(legend_labels, lbl)
-    end
-
-    CairoMakie.stephist!(
-        ax,
-        total_fit,
-        color = total_fit_color,
-        linewidth = total_fit_linewidth,
-        label = "Total Fit",
-    )
-
     CairoMakie.vspan!(ax, [blinded_roi[1]], [blinded_roi[2]], color = :black)
     CairoMakie.vspan!(ax_ratio, [blinded_roi[1]], [blinded_roi[2]], color = :black)
 
@@ -254,13 +385,20 @@ function plot_fit(;
     )
     CairoMakie.hlines!(ax_ratio, [ratio_reference], linestyle = :dash, color = total_fit_color)
 
+    total_legend_element = use_stacked ?
+        PolyElement(color = (total_fit_color, 0.35), strokecolor = :transparent) :
+        LineElement(color = total_fit_color, linewidth = total_fit_linewidth)
+
     legend_summary_entries = Any[
         MarkerElement(color = :black, marker = :circle, markersize = data_markersize),
-        LineElement(color = total_fit_color, linewidth = total_fit_linewidth),
+        total_legend_element,
     ]
+    total_unc = isnothing(component_count_unc) ? nothing : sqrt(sum(component_count_unc .^ 2))
     legend_summary_labels = [
         "data, n = $(round(n_data, digits = 1))",
-        "MC total, n = $(round(n_mc_total, digits = 1))",
+        isnothing(total_unc) ?
+            "MC total, n = $(round(n_mc_total, digits = 1))" :
+            "MC total, n = $(round(n_mc_total, digits = 1)) ± $(round(total_unc, digits = 1))",
     ]
 
     legend_grid = GridLayout()
@@ -271,6 +409,7 @@ function plot_fit(;
         patchsize = legend_patchsize,
         rowgap = legend_rowgap,
         tellwidth = legend_tellwidth,
+
     )
 
     Legend(legend_grid[2, 1], legend_entries, legend_labels,
@@ -278,7 +417,7 @@ function plot_fit(;
         patchsize = legend_patchsize,
         rowgap = legend_rowgap,
         tellwidth = legend_tellwidth,
-        width = 300
+        width = 350
     )
 
     rowsize!(f.layout, 2, Relative(0.25))

@@ -395,15 +395,55 @@ end
 
 colors = ["#041E42","#BE4D00","#951272","#006630","#005C8A","#FFB948","#605643","#302D23"]
 
-roi
-set_activity!(background[7], 2/1e3) # radon to 2mBq/kg
+# roi
+# set_activity!(background[7], 0.15/1e3) # radon to 2mBq/kg
 
 # total background figure
+
+# get scalings for full hists
+begin
+    nemo_roi = (
+        phi= (0, 180),
+        sumE= (300, 3500),
+        r= (0, 100),
+        singleE = (0, 3500),
+        dy= (0, 100),
+        dz= (0, 100),
+        Pint = (0.04, 1),
+        Pext = (0, 0.01),
+        lPint= (0.0, 50), #prob_to_lprob(0.04)),
+        lPext= (0, 50), #(prob_to_lprob(0.01), 50.0),
+        trackLength1= (0, 2500),
+        trackLength2= (0, 2500),
+        caloTime1 = (0, 100),
+        caloTime2 = (0, 100),
+    )
+    binning = 0:100:3500
+    var = :sumE
+    h_bb_, h_internal_, h_radon_, h_Bi210_, h_detector_, h_external_ = get_background_counts_hists(background, nemo_roi, binning, var)
+    n_bb, n_internal, n_radon, n_Bi210, n_detector, n_external =  integral.([ h_bb_, h_internal_, h_radon_, h_Bi210_, h_detector_, h_external_])
+
+    m_bb = sum(measurement.(bincounts(h_bb_), binerrors(h_bb_)))
+    m_internal = sum(measurement.(bincounts(h_internal_), binerrors(h_internal_)))
+    m_radon = sum(measurement.(bincounts(h_radon_), binerrors(h_radon_)))
+    m_Bi210 = sum(measurement.(bincounts(h_Bi210_), binerrors(h_Bi210_)))
+    m_detector = sum(measurement.(bincounts(h_detector_), binerrors(h_detector_)))
+    m_external = sum(measurement.(bincounts(h_external_), binerrors(h_external_)))
+
+    d= DataFrame(
+        p = ["bb", "internal", "radon", "Bi210", "detector", "external"],
+        n = [m_bb, m_internal, m_radon, m_Bi210, m_detector, m_external]
+    )
+    open(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/bkg_table_radon_$(radon_tag).md"), "w") do io
+        pretty_table(io, d, backend = Val(:markdown))
+    end
+end
+
 begin
     begin
-        binning = 300:100:3500
+        # binning = 0:100:3500
         bw = step(binning)
-        var = :sumE
+        # var = :sumE
         fill_area = true
         stacked = true
         roi = (
@@ -413,8 +453,8 @@ begin
             singleE = (0, 3500),
             dy= (0, 100),
             dz= (0, 100),
-            Pint = (0, 1),
-            Pext = (0, 1),
+            Pint = (0.0, 1),
+            Pext = (0, 50),
             lPint= (0.0, 50), #prob_to_lprob(0.04)),
             lPext= (0, 50), #(prob_to_lprob(0.01), 50.0),
             trackLength1= (0, 2500),
@@ -422,15 +462,21 @@ begin
             caloTime1 = (0, 100),
             caloTime2 = (0, 100),
         )
-        scale = :identity
+        scale = :log10
         colors = colors
     end
 
-    h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external = get_background_counts_hists(background, roi, binning, var)
 
-    @show integral.([ h_bb,h_internal, h_radon, h_Bi210, h_detector, h_external])
 
     f = Figure(size = (1900, 1100), fontsize = 36, figure_padding = 16)
+
+    h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external = normalize.(get_background_counts_hists(background, roi, binning, var), width = false)
+    h_bb = h_bb * n_bb
+    h_internal = h_internal * n_internal
+    h_radon = h_radon * n_radon
+    h_Bi210 = h_Bi210 * n_Bi210
+    h_detector = h_detector * n_detector
+    h_external = h_external * n_external
 
     sum_hists = [h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external]
    
@@ -457,21 +503,21 @@ begin
     legend_master.tellheight = false
     legend_master.tellwidth = true
 
-    title = "Stacked histogram\nSuperNEMO expected background for 17.5kg.yr exposure\nvariable: $var"
+    title = "Stacked histogram\nSuperNEMO expected background for 17.5kg.yr exposure" #\nvariable: $var"
 
 
     ax = Axis(
         f[1, 1];
         xlabel = L"Summed 2-electron energy (keV)$$",
         # xlabel = L"$\varphi$ (°)$$",
-        ylabel = L"Counts / (\mathrm{yr} \cdot %$bw \mathrm{keV})$$",
+        ylabel = L"Counts / (17.5\mathrm{kg \cdot yr} \cdot %$bw \mathrm{keV})$$",
         title  = title,
         yscale = scale == :log10 ? log10 : identity,
         yminorticks=IntervalsBetween(10), 
         yminorticksvisible = true, 
         yminorticksize = 4
     )
-    hist!(ax, sum(sum_hists), color = (:black, 0.15), label = "Total background")
+    CairoMakie.hist!(ax, sum(sum_hists), color = (:black, 0.15), label = "Total background")
     if !fill_area
         axislegend(ax, position = :rt, padding = (20,20,20,20))
     end
@@ -486,7 +532,7 @@ begin
     max_cts = find_max_bincounts(sum(sum_hists))
 
     if scale == :log10
-        ylims!(ax, 10^-3, 1e2 * max_cts)
+        CairoMakie.ylims!(ax, 10^-3, 1e2 * max_cts)
         decades = -3:ceil(log10(1e2*max_cts)) .|> Int
         ticks   = 10.0 .^ decades 
         labels_  = [L"10^{%$d}" for d in decades]
@@ -494,15 +540,15 @@ begin
         
 
     else
-        ylims!(ax, 0, 1.2*max_cts)  
+        CairoMakie.ylims!(ax, 0, 1.2*max_cts)  
     end
 
-    xlims!(ax, first(binning), last(binning))
+    CairoMakie.xlims!(ax, first(binning), last(binning))
 
     f[1, 2] = legend_master
 
     save(joinpath(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/figs"),
-        "bad_radon_mode_$(var)_background_categories_$(scale)_fill_$(fill_area)_stacked_$(stacked).png"), f)
+        "radon_$(radon_tag)_mode_$(var)_background_categories_$(scale)_fill_$(fill_area)_stacked_$(stacked).png"), f)
 
     f
 end

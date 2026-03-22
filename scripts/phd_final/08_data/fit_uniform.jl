@@ -28,7 +28,7 @@ d3 = LazyTree(f3, "tree", keys(f3["tree"])) |> DataFrame
 var_data = :sumE
 var_simu = :sumEsimu
 binning = (500:100:3000)
-fwhm = 0.12
+fwhm = 0.14
 data_cuts = Dict(
     :sumE => (700, 3000),
     :e1 => (350, 5000),
@@ -42,15 +42,14 @@ data_cuts = Dict(
 )
 
 
-
 simu_roi_1 = (
     sumEsimu = data_cuts[:sumE],
     simulatedEnergy1 = data_cuts[:e1],
     simulatedEnergy2 = data_cuts[:e2],
-    # dy = data_cuts[:dy],
-    # dz = data_cuts[:dz],
-    # trackLength1 = data_cuts[:trackLength1],
-    # trackLength2 = data_cuts[:trackLength2],
+    dy = data_cuts[:dy],
+    dz = data_cuts[:dz],
+    trackLength1 = data_cuts[:trackLength1],
+    trackLength2 = data_cuts[:trackLength2],
     # deltaCaloTime = data_cuts[:deltaCaloTime],
     # phi = data_cuts[:phi]
 )
@@ -58,10 +57,10 @@ simu_roi_2 = (
     sumE = data_cuts[:sumE],
     reconstructedEnergy1 = data_cuts[:e1],
     reconstructedEnergy2 = data_cuts[:e2],
-    # dy = data_cuts[:dy],
-    # dz = data_cuts[:dz],
-    # trackLength1 = data_cuts[:trackLength1],
-    # trackLength2 = data_cuts[:trackLength2],
+    dy = data_cuts[:dy],
+    dz = data_cuts[:dz],
+    trackLength1 = data_cuts[:trackLength1],
+    trackLength2 = data_cuts[:trackLength2],
     # deltaCaloTime = data_cuts[:deltaCaloTime],
     # phi = data_cuts[:phi]
 )
@@ -83,7 +82,7 @@ data_roi_1 = (
 simu_varNames_1 = keys(simu_roi_1) |> collect .|> string
 simu_p1_processes_roi_1 = load_sim_processes_ND(p1_dir, simu_varNames_1, simu_roi_1; timeMeas = p1_duration_seconds)
 simu_p2_processes_roi_1 = load_sim_processes_ND(p2_dir, simu_varNames_1, simu_roi_1; timeMeas = p2_duration_seconds)
-simu_p3_processes_roi_1 = load_sim_processes_ND(p1_dir, simu_varNames_1, simu_roi_1; timeMeas = p3_duration_seconds)
+simu_p3_processes_roi_1 = load_sim_processes_ND(p3_dir, simu_varNames_1, simu_roi_1; timeMeas = p3_duration_seconds)
 
 processes_old = load_data_processes( datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41"), "sumE"; roi = simu_roi_2 )
 neutron_data_dir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41/neutrons_jan_2026/")
@@ -204,6 +203,9 @@ proc_labels = [
 ]
 
 fit_results_free = []
+fit_component_stds = Vector{Vector{Float64}}()
+
+samples_by_phase = []
 
 for p in 1:3
     println("Fitting phase $p")
@@ -280,10 +282,10 @@ for p in 1:3
         )
     ) 
 
-    binned_unshaped_samples, _ = bat_transform(Vector, samples)
+    push!(samples_by_phase, samples)
 
-    # Plots.plot(samples, vsel = (1:10),size = (6000, 6000), thickness_scaling = 1.3, margin= 6Plots.mm, dpi = 300)
-    # savefig(current(), scriptsdir("phd_final/08_data/figs/parameter_cor_phase$(phase).png"))
+    Plots.plot(samples, vsel = (1:10),size = (8000, 8000), xrotation=45, thickness_scaling = 1.5,fontsize = 90, margin= 10Plots.mm, dpi = 120)
+    savefig(current(), scriptsdir("phd_final/08_data/figs/unconstrained_parameter_cor_phase$(phase).png"))
 
     post_mean = mean(samples)
 
@@ -296,6 +298,16 @@ for p in 1:3
     μ_detector = post_mean.μ_detector
     μ_external = post_mean.μ_external
 
+    std_post = std(samples)
+    σ_bb = std_post.μ_bb
+    σ_K40 = std_post.μ_K40
+    σ_Pa = std_post.μ_Pa
+    σ_internal = std_post.μ_internal
+    σ_radon = std_post.μ_radon
+    σ_Bi210 = std_post.μ_Bi210
+    σ_detector = std_post.μ_detector
+    σ_external = std_post.μ_external
+
     μ_vec = [
         μ_bb,
         μ_K40,
@@ -305,6 +317,17 @@ for p in 1:3
         μ_Bi210,
         μ_detector,
         μ_external
+    ]
+
+    σ_vec = [
+        σ_bb,
+        σ_K40,
+        σ_Pa,
+        σ_internal,
+        σ_radon,
+        σ_Bi210,
+        σ_detector,
+        σ_external,
     ]
 
     function build_fit_histograms(bkg_hists_normed, μ)
@@ -328,6 +351,7 @@ for p in 1:3
             proc_labels
         )
     )
+    push!(fit_component_stds, σ_vec)
 
 
     activities = [
@@ -347,6 +371,8 @@ for p in 1:3
         data_hist = data_hist,
         fitted_hists = fit_hists,
         fit_params = post_mean,
+        component_count_uncertainties = σ_vec,
+        show_component_uncertainties = true,
         outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_phase$(phase)_free.png"),
         component_labels = proc_labels,
         main_limits = (0, 4000, 0, nothing),
@@ -372,6 +398,7 @@ fit_p3 = fit_results_free[3].fitted_hists
 
 fit_combined = sum([fit_p1, fit_p2, fit_p3])
 fit_total = sum([sum(fit_p1), sum(fit_p2), sum(fit_p3)])
+combined_component_stds = sqrt.(fit_component_stds[1].^2 .+ fit_component_stds[2].^2 .+ fit_component_stds[3].^2)
 
 
 
@@ -380,7 +407,9 @@ f_full = plot_fit(
     data_hist = full_data,
     fitted_hists = fit_combined,
     fit_params = nothing,
-    outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_combined_free.png"),
+    component_count_uncertainties = combined_component_stds,
+    show_component_uncertainties = true,
+    outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_combined_free_lines.png"),
     component_labels = proc_labels,
     main_limits = (0, 4000, 0, nothing),
     ratio_limits = (0, 4000, 0.2, 1.8),
@@ -388,7 +417,37 @@ f_full = plot_fit(
     chi2_nparams = length(fit_combined),
     title = "Combined Fit phase 1+2+3",
     include_component_counts = true,
+    stacked = false,
+    filled = false,
 )
 
 
 
+
+
+#### plot samples corrplot
+
+
+p0 = StatsPlots.plot(
+    samples_by_phase[1],
+    margin = 2Plots.mm,
+    size = (3600, 3600),
+    dpi =60,
+    thickness_scaling = 2,
+)
+
+p1 = StatsPlots.plot(
+    samples_by_phase[1],
+    vsel = (:μ_bb, :μ_radon),
+    margin = 10Plots.mm,
+    figure_title = "Posterior samples of μ_bb vs μ_radon for phase 1",
+)
+savefig(p1, scriptsdir("phd_final/08_data/figs/unconstrained_parameter_cor_phase1_bb_radon.png"))
+
+p2 = StatsPlots.plot(
+    samples_by_phase[1],
+    vsel = (:μ_radon, :μ_internal),
+    margin = 10Plots.mm,
+    figure_title = "Posterior samples of μ_radon vs μ_internal for phase 1",
+)
+savefig(p2, scriptsdir("phd_final/08_data/figs/unconstrained_parameter_cor_phase1_radon_internal.png"))
