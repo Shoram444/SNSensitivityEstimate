@@ -208,3 +208,21 @@ best ROI:
 # RH050 partitioned
 
 bkg = 
+
+
+
+# Sterile all
+
+| **signal**<br>`String31` | **res**<br>`Float64` |
+|-------------------------:|---------------------:|
+| sterile0500\_foil\_bulk  | 1.4098e22            |
+| sterile0600\_foil\_bulk  | 1.31734e22           |
+| sterile0700\_foil\_bulk  | 1.23507e22           |
+| sterile0800\_foil\_bulk  | 1.13267e22           |
+| sterile0900\_foil\_bulk  | 1.03185e22           |
+| sterile1000\_foil\_bulk  | 9.22494e21           |
+| sterile1100\_foil\_bulk  | 8.17927e21           |
+| sterile1200\_foil\_bulk  | 7.04577e21           |
+| sterile1300\_foil\_bulk  | 5.96985e21           |
+| sterile1400\_foil\_bulk  | 4.96392e21           |
+| sterile1500\_foil\_bulk  | 3.98008e21           |
