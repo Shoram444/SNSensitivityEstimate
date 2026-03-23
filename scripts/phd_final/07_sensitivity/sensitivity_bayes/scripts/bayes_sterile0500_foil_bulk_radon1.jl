@@ -218,3 +218,21 @@ save_name_combined = "bayes_sterile_scan_radon$(radon_tag)_$(n_samples_per_mass)
 CSV.write(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/sensitivities_$(save_name_combined)_$(rand(1:1000000)).csv"), df_combined)
 
 println("\nResults saved.")
+
+
+# read saved results into one df
+d = []
+for f in readdir(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/"))
+    if occursin("foil_bulk_radon$(radon_tag)_$(n_samples_per_mass)samples", f)
+        df = CSV.read(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/results/$(f)"), DataFrame)
+        push!(d, df)
+    end
+end
+df_all = vcat(d...)
+df_all = @chain df_all begin
+    @groupby :mass_keV
+    @combine :mean_sensitivity = mean(:sensitivity_yr)
+    @orderby :mass_keV
+end
+
+df_all.mean_sensitivity
