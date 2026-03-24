@@ -5,7 +5,7 @@ using Revise
 using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random, FHist, Distributions
 using UnROOT
 using BAT, SpecialFunctions, DensityInterface, IntervalSets, ValueShapes
-using StatsPlots, ColorSchemes
+using StatsPlots, ColorSchemes, Measurements
 # using LaTeXStrings
 using MakieTeX
 
@@ -333,7 +333,7 @@ for p in 1:3
     function build_fit_histograms(bkg_hists_normed, μ)
         hists = Hist1D[]
         for i in 1:length(bkg_hists_normed)
-            push!(hists, μ[i] * bkg_hists_normed[i])
+            push!(hists, Measurements.value(μ[i]) * bkg_hists_normed[i])
         end
         return hists
     end

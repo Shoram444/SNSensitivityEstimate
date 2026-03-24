@@ -5,7 +5,7 @@ using Revise
 using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random, FHist, Distributions
 using UnROOT
 using BAT, SpecialFunctions, DensityInterface, IntervalSets, ValueShapes
-using StatsPlots, ColorSchemes
+using StatsPlots, ColorSchemes, Measurements
 # using LaTeXStrings
 using MakieTeX
 
@@ -343,31 +343,33 @@ for p in 1:3
         )
     )
 
-    StatsPlots.plot(samples, vsel = (1:10),size = (8000, 8000), xrotation=45,thickness_scaling = 1.6, margin= 1Plots.mm, dpi = 100)
-    savefig(current(), scriptsdir("phd_final/08_data/figs/informed_parameter_cor_phase$(phase).png"))
+    # StatsPlots.plot(samples, vsel = (1:10),size = (8000, 8000), xrotation=45,thickness_scaling = 1.6, margin= 1Plots.mm, dpi = 100)
+    # savefig(current(), scriptsdir("phd_final/08_data/figs/informed_parameter_cor_phase$(phase).png"))
 
     push!(samples_by_phase, samples)
 
-    post_mean = mean(samples)
+    post_mean = mode(samples) #mean(samples)
     std_post = std(samples)
 
-    μ_bb = C_bb * a_bb_fixed * post_mean.eff_bb
-    μ_K40 = C_K40 * post_mean.a_K40 * post_mean.eff_K40
-    μ_Pa = C_Pa * post_mean.a_Pa * post_mean.eff_Pa
-    μ_internal = post_mean.μ_internal
-    μ_radon = C_radon * a_radon_fixed * post_mean.eff_radon
-    μ_Bi210 = post_mean.μ_Bi210
-    μ_detector = post_mean.μ_detector
-    μ_external = post_mean.μ_external
+    mm = map(measurement, post_mean, std_post)
 
-    σ_bb = μ_bb * (std_post.eff_bb / post_mean.eff_bb)
-    σ_K40 = μ_K40 * sqrt((std_post.a_K40 / post_mean.a_K40)^2 + (std_post.eff_K40 / post_mean.eff_K40)^2)
-    σ_Pa = μ_Pa * sqrt((std_post.a_Pa / post_mean.a_Pa)^2 + (std_post.eff_Pa / post_mean.eff_Pa)^2)
-    σ_internal = std_post.μ_internal
-    σ_radon = μ_radon * sqrt((std_post.eff_radon / post_mean.eff_radon)^2)
-    σ_Bi210 = std_post.μ_Bi210
-    σ_detector = std_post.μ_detector
-    σ_external = std_post.μ_external
+    μ_bb = C_bb * a_bb_fixed * mm.eff_bb
+    μ_K40 = C_K40 * mm.a_K40 * mm.eff_K40
+    μ_Pa = C_Pa * mm.a_Pa * mm.eff_Pa
+    μ_internal = mm.μ_internal
+    μ_radon = C_radon * a_radon_fixed * mm.eff_radon
+    μ_Bi210 = mm.μ_Bi210
+    μ_detector = mm.μ_detector
+    μ_external = mm.μ_external
+
+    σ_bb = Measurements.uncertainty(μ_bb)
+    σ_K40 = Measurements.uncertainty(μ_K40)
+    σ_Pa = Measurements.uncertainty(μ_Pa)
+    σ_internal = Measurements.uncertainty(μ_internal)
+    σ_radon = Measurements.uncertainty(μ_radon)
+    σ_Bi210 = Measurements.uncertainty(μ_Bi210)
+    σ_detector = Measurements.uncertainty(μ_detector)
+    σ_external = Measurements.uncertainty(μ_external)
 
     μ_vec = [
         μ_bb,
@@ -391,7 +393,9 @@ for p in 1:3
         σ_external,
     ]
 
-    fit_hists = build_fit_histograms(bkg_hist_normed, μ_vec)
+    n_vec = measurement.(μ_vec, σ_vec)
+
+    fit_hists = build_fit_histograms(bkg_hist_normed, Measurements.value.(μ_vec))
 
     push!(
         fit_results_informed,
@@ -400,6 +404,7 @@ for p in 1:3
             data_hist,
             fit_hists,
             post_mean,
+            n_vec,
             proc_labels,
         )
     )
@@ -410,7 +415,7 @@ for p in 1:3
         data_hist = data_hist,
         fitted_hists = fit_hists,
         fit_params = post_mean,
-        component_count_uncertainties = σ_vec,
+        component_count_uncertainties = n_vec,
         show_component_uncertainties = true,
         outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_phase$(phase)_informed.png"),
         component_labels = proc_labels,

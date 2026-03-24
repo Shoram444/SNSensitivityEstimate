@@ -1,9 +1,12 @@
 
+using Measurements
+
 mutable struct fit_result
     phase::Int
     data_hist::Hist1D
     fitted_hists::Vector{Hist1D}
     params::NamedTuple
+    fit_n::Vector{Measurement{Float64}}
     components
 end
 
@@ -269,9 +272,17 @@ function plot_fit(;
 
     legend_entries = []
     legend_labels = []
-    component_count_unc = (show_component_uncertainties && !isnothing(component_count_uncertainties)) ?
-        collect(component_count_uncertainties) :
-        nothing
+    component_count_vals = nothing
+    component_count_unc = nothing
+    if show_component_uncertainties && !isnothing(component_count_uncertainties)
+        raw_component_counts = collect(component_count_uncertainties)
+        if all(x -> x isa Measurement, raw_component_counts)
+            component_count_vals = Measurements.value.(raw_component_counts)
+            component_count_unc = Measurements.uncertainty.(raw_component_counts)
+        else
+            component_count_unc = Float64.(raw_component_counts)
+        end
+    end
 
     plot_component_hist! = function (hist, color)
         if filled
@@ -298,7 +309,9 @@ function plot_fit(;
         hist_to_plot = use_stacked ? sum(fitted_hists[i:end]) : fitted_hists[i]
         plot_component_hist!(hist_to_plot, c)
 
-        n_fit = sum(bincounts(fitted_hists[i]))
+        n_fit = isnothing(component_count_vals) ?
+            sum(bincounts(fitted_hists[i])) :
+            component_count_vals[i]
         lbl = if include_component_counts
             if !isnothing(component_count_unc) && i <= length(component_count_unc)
                 rich(component_labels[i], "\n \n n = $(round(n_fit, digits = 1)) ± $(round(component_count_unc[i], digits = 1))")
@@ -393,12 +406,13 @@ function plot_fit(;
         MarkerElement(color = :black, marker = :circle, markersize = data_markersize),
         total_legend_element,
     ]
+    n_mc_total_disp = isnothing(component_count_vals) ? n_mc_total : sum(component_count_vals)
     total_unc = isnothing(component_count_unc) ? nothing : sqrt(sum(component_count_unc .^ 2))
     legend_summary_labels = [
         "data, n = $(round(n_data, digits = 1))",
         isnothing(total_unc) ?
-            "MC total, n = $(round(n_mc_total, digits = 1))" :
-            "MC total, n = $(round(n_mc_total, digits = 1)) ± $(round(total_unc, digits = 1))",
+            "MC total, n = $(round(n_mc_total_disp, digits = 1))" :
+            "MC total, n = $(round(n_mc_total_disp, digits = 1)) ± $(round(total_unc, digits = 1))",
     ]
 
     legend_grid = GridLayout()

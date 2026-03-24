@@ -1,5 +1,6 @@
 
 using BAT, SpecialFunctions
+using Measurements
 
 function log_pdf_poisson(λ::Real, k::Real)
     if λ > 0 && k ≥ 0
@@ -45,7 +46,8 @@ function build_fit_histograms(bkg_hists_normed, μ)
 
 
     for i in 1:length(bkg_hists_normed)
-        h = μ[i] * bkg_hists_normed[i]
+        # FHist stores Float64 bincounts, so we scale with nominal values.
+        h = Measurements.value(μ[i]) * bkg_hists_normed[i]
         push!(hists, h)
     end
 
