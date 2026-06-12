@@ -11,11 +11,11 @@ global t0 = time()
 
 
 analysisDict = Dict(
-    :signal => "RH050_foil_bulk", #"%SIGNAL",
-    :bining => (0, 180),#(%BINLOW, %BINHIGH),
-    :bin_width => 2, #%BINWIDTH,
-    :mode => "phi", #"%MODE",
-    :prior => 1,#%PRIOR # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
+    :signal => "bb0nu_foil_bulk", #"%SIGNAL",
+    :bining => (300, 3500),#(%BINLOW, %BINHIGH),
+    :bin_width => 100, #%BINWIDTH,
+    :mode => "sumE", #"%MODE",
+    :prior => 1e-4,#%PRIOR # 1e-4 0nu, 1e-4 RH, 1e-3 M1, 1e-2 M2
     :radon_tag => 1
 )
 
@@ -252,7 +252,8 @@ binned_unshaped_samples, f_flatten = bat_transform(Vector, samples)
 nDataPoints = integral(data_hist)
 muS = [par[1] for par in binned_unshaped_samples.v]
 
-@show exp_mu_signal_90 = BAT.smallest_credible_intervals(muS, nsigma_equivalent= 1.65)[1].right * nDataPoints
+# @show exp_mu_signal_90 = BAT.smallest_credible_intervals(muS, nsigma_equivalent= 1.65)[1].right * nDataPoints
+@show exp_mu_signal_90 = quantile(muS, 0.9) * nDataPoints
 
 Na = SNparams["Nₐ"]
 m = SNparams["foilMass"] * SNparams["a"]
@@ -261,7 +262,7 @@ W = SNparams["W"]
 eff= lookup(signal, Bin_low, Bin_high)
 Thalf = log(2) * (Na * m * t * eff / W) / exp_mu_signal_90
 
-Plots.plot(samples, size = (2000, 1600))
+# Plots.plot(samples, size = (2000, 1600))
 Plots.plot(samples, :As)
 # savefig("notebooks/Sensitivity_exotic_Bayes_nDim/samples_As.png")
 
@@ -270,15 +271,15 @@ xs = Bin_low:bin_width_new:Bin_high-bin_width_new/2
 # b_amps = [x for x in mean(samples)][2:end] 
 amps = mean(samples) 
 
-# ys = [f2(amps, x) for x in xs]
-# Plots.plot(data_hist, label = "data",fillrange = 1e-5, fillcolor = :match)
-# Plots.plot!(xs, ys .* integral(data_hist) .* bin_width_new * bin_width, linewidth = 4,  label = "fit")
-# # # Plots.plot!(xlims = (2000, 3200), ylims = (1e-5, 100))
+ys = [f2(amps, x) for x in xs]
+Plots.plot(data_hist, label = "data",fillrange = 1e-5, fillcolor = :match)
+Plots.plot!(xs, ys .* integral(data_hist) .* bin_width_new * bin_width, linewidth = 4,  label = "fit")
+# # Plots.plot!(xlims = (2000, 3200), ylims = (1e-5, 100))
 
 
-# sig_amps = (As = quantile( muS,0.9), Ab = amps[2])
-# ys_signal = [f2(sig_amps, x) for x in xs]
-# Plots.plot!(xs, ys_signal .* integral(data_hist) .* bin_width_new * bin_width, linewidth = 4, label = "signal fit")
+sig_amps = (As = quantile( muS,0.9), Ab = amps[2])
+ys_signal = [f2(sig_amps, x) for x in xs]
+Plots.plot!(xs, ys_signal .* integral(data_hist) .* bin_width_new * bin_width, linewidth = 4, label = "signal fit")
 # Plots.plot!(yscale = :log10, ylims = (1.7e-2, 1e4))
 # Plots.plot!(ylims = (0, 2))
 # savefig("scripts/0nu/Bayes_hist_models/fit.svg")
@@ -286,19 +287,22 @@ amps = mean(samples)
 # # SensitivityModule.stackedhist(bkg_hist)
 
 
-using CairoMakie
+using CairoMakie, LaTeXStrings
 
-colors = Makie.wong_colors()
-f = Figure(size = (1200,800), fontsize = 26)
-a = Axis(f[1,1], xlabel = L"\Theta_1", ylabel = L"Posterior density $$", title = L"Posterior density of signal fraction $\Theta_1$ \n for a single pseudo-experiment", limits = (0,nothing, 0, nothing))
-CairoMakie.stephist!(a, muS, bins = range(0, maximum(muS)*1.1, length = 80), color = colors[1], label = "Posterior density", linewidth = 4, normalization = :pdf)
-CairoMakie.vlines!(a, [quantile(muS, 0.9)], color = :red, linewidth = 4, linestyle= :dash, label = L"$\Theta_1$= %$(round(quantile(muS, 0.9), sigdigits = 3)) (90% C.I. upper limit)")
-axislegend(a; position = :rt, patchsize = (45,35), labelsize = 20)
-save(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/figs/nu0bb_radon1_posterior_signal_fraction.png"), f, px_per_unit = 4)
-f
+with_theme(theme_latexfonts()) do
+    colors = Makie.wong_colors()
+    f = Figure(size = (1200,800), fontsize = 36, figure_padding = (10,70, 10,10))
+    a = Axis(f[1,1], xlabel = L"\Theta_1", titlesize= 48, xlabelsize = 42, ylabelsize = 42,ylabel = L"Posterior density $$", title = L"Posterior density of signal fraction $\Theta_1$ \n for a single pseudo-experiment", limits = (0,nothing, 0, nothing))
+    CairoMakie.stephist!(a, muS, bins = range(0, maximum(muS)*1.1, length = 80), color = colors[1], label = "Posterior density", linewidth = 4, normalization = :pdf)
+    CairoMakie.vlines!(a, [quantile(muS, 0.9)], color = :red, linewidth = 4, linestyle= :dash, label = L"$\Theta_1$= %$(round(quantile(muS, 0.9), sigdigits = 3)) (90% C.I. upper limit)")
+    axislegend(a; position = :rt, patchsize = (45,35), labelsize = 38, fontsize = 16)
+    save(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/figs/nu0bb_radon1_posterior_signal_fraction.png"), f, px_per_unit = 4)
+    f
+end
 
 
 let 
+    colors = Makie.wong_colors()
     bkg_amps = amps[2] ./ sum(amps[2])
     labels = [L"2\nu\beta\beta", "Internal", "Radon", "Bi-210", "Detector", "External"]
     f = Figure(size = (1200,800), fontsize = 26)
@@ -320,6 +324,7 @@ end
 
 
 begin 
+    colors = Makie.wong_colors()
     bin_width_new = 1
     xs = Bin_low:bin_width_new:Bin_high-bin_width_new/2
     # b_amps = [x for x in mean(samples)][2:end] 
@@ -358,3 +363,9 @@ begin
     save(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/figs/nu0bb_radon1_fit.png"), f, px_per_unit = 4)
     f
 end
+
+
+
+CairoMakie.stephist(signal.dataVector, bins = 0:50:3000, normalization = :pdf) 
+CairoMakie.stephist!(background[1].dataVector, bins = 0:50:3000, normalization = :pdf) 
+current_figure()

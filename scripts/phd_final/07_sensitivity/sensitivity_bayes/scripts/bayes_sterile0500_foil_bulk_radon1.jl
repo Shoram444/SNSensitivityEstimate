@@ -1,6 +1,7 @@
 using DrWatson
 @quickactivate "SNSensitivityEstimate"
 
+using Revise
 using SNSensitivityEstimate
 using Random, LinearAlgebra, Statistics, Distributions, BAT, BinnedModels, StatsBase, DensityInterface, IntervalSets, FHist, SpecialFunctions, ValueShapes
 using DataFramesMeta, CSV
@@ -8,18 +9,21 @@ using DataFramesMeta, CSV
 global t0 = time()
 
 # Configuration for sterile neutrino mass scan
-sterile_masses = 800:100:1500  # 800, 900, 1000, 1100, 1200, 1300, 1400, 1500
-n_samples_per_mass = 300
+sterile_masses = 500:100:1500  # 1000, 1100, 1200, 1300, 1400, 1500
+n_samples_per_mass = 20
 
 # Standard analysis parameters
-bin_width = 100
-Bin_low, Bin_high = 300, 3500
+bin_width = 50
+Bin_low, Bin_high = 0, 2500
 mode = "sumE"
 prior_value = 1
 radon_tag = 1
 
 # Include ROI definitions
 include(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/nd_cc_runs/results/20260123_results/best_rois.jl"))
+roi = bb0nuM1_roi_radon1
+roi[Symbol(mode)] = (Bin_low, Bin_high)
+roi[:sumE] = (Bin_low, Bin_high)  # Ensure sumE ROI is set for consistency
 
 # Background processes (defined once, reused for all masses)
 backgrounds = [    
@@ -92,7 +96,7 @@ end
 
 # Load processes once
 @info "Loading data processes..."
-all_processes = load_data_processes(datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41"), mode, fwhm=0.0, roi = ())
+all_processes = load_data_processes(datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41"), mode, fwhm=0.0, roi = roi)
 
 neutron_data_dir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41/neutrons_jan_2026/")
 include(joinpath(neutron_data_dir, "read_neutrons_1D.jl"))
@@ -117,9 +121,9 @@ for mass in sterile_masses
     
     signal_name = sname
     
-    # Set up ROI based on signal type
-    roi_sumE = (Bin_low, Bin_high)
-    roi = Dict(:sumE => roi_sumE)
+    # # Set up ROI based on signal type
+    # roi_sumE = (Bin_low, Bin_high)
+    # roi = Dict(Symbol(mode) => roi_sumE)
     
     # Get signal process
     try
@@ -131,7 +135,7 @@ for mass in sterile_masses
     
     # Get background processes
     global background = [get_process(b, all_processes) |> first for b in backgrounds]
-    background = vcat(background, neutron_processes)
+    # background = vcat(background, neutron_processes)
     
     # Set radon activity
     if radon_tag == 1

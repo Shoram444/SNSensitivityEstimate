@@ -8,6 +8,7 @@ prob_to_lprob(x) = abs(log10(x))
 
 using Revise
 using SNSensitivityEstimate, CairoMakie, DataFramesMeta, CSV, Random, FHist
+using Printf
 
 println("loaded pkgs")
 
@@ -285,11 +286,34 @@ colors = ColorSchemes.tab20
 
 d_signal = (abs.((getproperty.(signal.data, :caloTime2) .- getproperty.(signal.data, :caloTime1))) ./ sqrt.((getproperty.(signal.data, :sumE))))
 
+function format_axis_y_as_mantissa_power!(ax, counts; nticks = 3)
+    cmax = maximum(counts)
+
+    if !isfinite(cmax) || cmax <= 0
+        ax.yticks = ([0.0], ["0.00"])
+        return 0
+    end
+
+    z = floor(Int, log10(cmax))
+    scale = 10.0^z
+    top_mantissa = max(1.0, ceil(cmax / scale; digits = 2))
+
+    mantissa_ticks = collect(range(0.0, top_mantissa; length = nticks))
+    ytick_values = mantissa_ticks .* scale
+    ytick_labels = [@sprintf("%.2f", t) for t in mantissa_ticks]
+
+    ax.yticks = (ytick_values, ytick_labels)
+    ylims!(ax, 0.0, top_mantissa * scale * 1.02)
+
+    return z
+end
+
 
 # plots of different variable distributions for each process
 begin
-    var = :lPint
-    binning = 0:0.1:50
+    var = :sumE
+    binning = 0:100:3500
+    # binning = 0:5:180
     roi = (
         phi= (0, 180),
         sumE= (300, 3500),
@@ -307,21 +331,21 @@ begin
         caloTime2 = (0, 100),
     )
 
-    h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external = get_background_counts_hists(background, roi, binning, var)
+    # h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external = get_background_counts_hists(background, roi, binning, var)
 
-    f = Figure(size = (900, 1400), fontsize = 16)
-    a1 = Axis(f[1,1], title = L"$$signal", ylabel = "counts (a.u.)",tellwidth = false, width = 650) 
-    a2 = Axis(f[2,1], title = L"2\nu\beta\beta", ylabel = "counts / (17.5 kgy)", tellwidth = false, width = 650)
-    a3 = Axis(f[3,1], title = L"$$internal", ylabel = "counts / (17.5 kgy) ", tellwidth = false, width = 650) 
-    a4 = Axis(f[4,1], title = L"$$radon", ylabel = "counts / (17.5 kgy) ", tellwidth = false, width = 650, ) 
-    a5 = Axis(f[5,1], title = L"${}^{210}$Bi", ylabel = "counts / (17.5 kgy) ", tellwidth = false, width = 650, ) 
-    a6 = Axis(f[6,1], title = L"$$detector", ylabel = "counts / (17.5 kgy) ", tellwidth = false, width = 650) 
-    a7 = Axis(f[7,1], title = L"$$external", ylabel = "counts / (17.5 kgy) "
+    f = Figure(size = (900, 1400), fontsize = 22)
+    a1 = Axis(f[1,1], title = L"$$signal", ylabel = "cts (a.u.)",tellwidth = false, width = 650, ) 
+    a2 = Axis(f[2,1], title = L"2\nu\beta\beta", ylabel = "cts / (17.5 kgy)", tellwidth = false, width = 650)
+    a3 = Axis(f[3,1], title = L"$$internal", ylabel = "cts / (17.5 kgy) ", tellwidth = false, width = 650) 
+    a4 = Axis(f[4,1], title = L"$$radon", ylabel = "cts / (17.5 kgy) ", tellwidth = false, width = 650, ) 
+    a5 = Axis(f[5,1], title = L"${}^{210}$Bi", ylabel = "cts / (17.5 kgy) ", tellwidth = false, width = 650, ) 
+    a6 = Axis(f[6,1], title = L"$$detector", ylabel = "cts / (17.5 kgy) ", tellwidth = false, width = 650) 
+    a7 = Axis(f[7,1], title = L"$$external", ylabel = "cts / (17.5 kgy) "
         # , xlabel = L"$\varphi$ (°)", 
-        # , xlabel = L"$E_{sum}$ (keV)", 
+        , xlabel = L"$E_{sum}$ (keV)", 
         # , xlabel = L"$r$ (mm)", 
-        # , xlabel = L"$log(P_{int})$", 
-        , xlabel = L"$log(P_{ext})$", 
+        # , xlabel = L"$-log(P_{int})$", 
+        # , xlabel = L"$-log(P_{ext})$", 
         tellwidth = false, width = 650, ) 
     ps = []
     Label(f[0,1], "distributions for variable: $var", fontsize = 26)
@@ -331,6 +355,7 @@ begin
 
     # d_signal = (abs.((getproperty.(signal.data, :caloTime2) .- getproperty.(signal.data, :caloTime1))) ./ sqrt.((getproperty.(signal.data, :sumE))))
     d_signal = getproperty.(signal.data, var) 
+    h_signal = Hist1D(d_signal; binedges = binning)
     # p = stephist!(a, d_signal, bins=binning, label = "signal", color =colors[1], offset = 0, scale_to = 0.7)
     p = hist!(a1, d_signal, bins=binning,  color =colors[1])
 
@@ -381,6 +406,13 @@ begin
         # p6,
         stephist!(a7, h_external; color = colors[11], linewidth = 4)
     )
+
+    hs = vcat([h_signal], [h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external])
+    # Show y ticks as mantissa (x.yy) with an axis scale factor x10^z.
+    for (i,ax) in enumerate([a1, a2, a3, a4, a5, a6, a7])
+        z = format_axis_y_as_mantissa_power!(ax, bincounts(hs[i]))
+        Label(f[i, 1, Top()], halign = :left, L"\times 10^{%$z}", tellwidth = false, padding = (-150, 0, 0, 0))
+    end
 
 
     # vlines!.([a1, a2, a3, a4, a5, a6], [2.0],color = :black, linestyle = :solid, label = "data-cut line", linewidth = 5)
@@ -558,13 +590,13 @@ end
 
 
 # 2D figure for multidim roi
-# begin
+begin
     var1 = :sumE
     # var2 = :lPint
     var2 = :phi
-    binning1 = 0:10:3500
+    binning1 = 0:100:3500
     # binning2 = 0:0.5:35.0
-    binning2 = 0:0.1:180
+    binning2 = 0:1:180
     # roi = (
     #     phi= (0, 180),
     #     sumE= (0, 3500),
@@ -585,32 +617,32 @@ end
     roi = (
         phi = (0, 180), 
         sumE = (0, 3500), 
-        dy = (0, 135), 
-        dz = (0, 140), 
-        lPint = (0.0, 4.5), 
-        lPext = (2.4, 50.0)
+        dy = (0, 200), 
+        dz = (0, 200), 
+        lPint = (0.0, 50), 
+        lPext = (0.0, 50.0)
     )
 
-    # h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external = get_background_counts_hists(background, roi, binning1, var1)
+    h_bb, h_internal, h_radon, h_Bi210, h_detector, h_external = get_background_counts_hists(background, roi, binning1, var1)
 
     # sum(integral.([ restrict(b, 2700, 300) for b in [h_bb,h_internal, h_radon, h_Bi210, h_detector, h_external]]))
 
-    # tot_bkg = sum(integral.([ h_bb,h_internal, h_radon, h_Bi210, h_detector, h_external]))
-    function apply_roi_to_process!(p, roi)
-        data = p.data
-        varNames = keys(roi)
-        if roi !== nothing
-            for (i,n) in enumerate(varNames)
-                data = filter(x -> getproperty(x, Symbol(n)) > roi[i][1] && getproperty(x, Symbol(n)) < roi[i][2], data)
-            end
-        end
-        p.data = data
-        return p
-    end
+    tot_bkg = sum(integral.([ h_bb,h_internal, h_radon, h_Bi210, h_detector, h_external]))
+    # function apply_roi_to_process!(p, roi)
+    #     data = p.data
+    #     varNames = keys(roi)
+    #     if roi !== nothing
+    #         for (i,n) in enumerate(varNames)
+    #             data = filter(x -> getproperty(x, Symbol(n)) > roi[i][1] && getproperty(x, Symbol(n)) < roi[i][2], data)
+    #         end
+    #     end
+    #     p.data = data
+    #     return p
+    # end
 
-    for p in vcat(signal, background)
-        apply_roi_to_process!(p, roi)
-    end
+    # for p in vcat(signal, background)
+    #     apply_roi_to_process!(p, roi)
+    # end
 
     tot_signal_eff = length(signal.data) / signal.nTotalSim
 
@@ -619,32 +651,32 @@ end
     h_signal = Hist2D(( d1_s, d2_s ); binedges = (binning1, binning2)) |> normalize
     h_signal = h_signal * tot_signal_eff
 
-    h_background = Hist2D(; binedges = (binning1, binning2)) 
+    # h_background = Hist2D(; binedges = (binning1, binning2)) 
 
-    # figure out wtf is wrong with externals! 
-    for b in background
-        d1_b = getproperty.(b.data, var1)
-        d2_b = getproperty.(b.data, var2)
-        h_b = Hist2D(( d1_b, d2_b ); binedges = (binning1, binning2)) |> normalize
+    # # figure out wtf is wrong with externals! 
+    # for b in background
+    #     d1_b = getproperty.(b.data, var1)
+    #     d2_b = getproperty.(b.data, var2)
+    #     h_b = Hist2D(( d1_b, d2_b ); binedges = (binning1, binning2)) |> normalize
 
-        b_cts = integral(get_roi_bkg_counts_hist(b, roi, binning1, var1))
-        isotope = b.isotopeName
-        println("Background process: $isotope total counts in ROI: $b_cts")
-        h_b = h_b * b_cts
-        b_cts > 0 && (h_background += h_b)
-    end
+    #     b_cts = integral(get_roi_bkg_counts_hist(b, roi, binning1, var1))
+    #     isotope = b.isotopeName
+    #     println("Background process: $isotope total counts in ROI: $b_cts")
+    #     h_b = h_b * b_cts
+    #     b_cts > 0 && (h_background += h_b)
+    # end
 
 
-    # d1_b = vcat([getproperty.(b.data, var1) for b in background]...)
-    # d2_b = vcat([getproperty.(b.data, var2) for b in background]...)
-    # h_background = Hist2D(( d1_b, d2_b ); binedges = (binning1, binning2)) |> normalize
-    # h_background = h_background * tot_bkg
+    d1_b = vcat([getproperty.(b.data, var1) for b in background]...)
+    d2_b = vcat([getproperty.(b.data, var2) for b in background]...)
+    h_background = Hist2D(( d1_b, d2_b ); binedges = (binning1, binning2)) |> normalize
+    h_background = h_background * tot_bkg
 
-    f = Figure(size = (2400,800), fontsize = 38)
-    # a1 = Axis(f[1,1], xlabel = L"Summed 2-electron energy (keV) $$", ylabel = L"$\varphi$ (°) $$", title = L"signal: $0\nu\beta\beta$", )
-    a1 = Axis(f[1,1], xlabel = L"Summed 2-electron energy (keV) $$", ylabel = L"$-log(P_\mathrm{int})$", title = L"signal: $0\nu\beta\beta$", )
-    # a2 = Axis(f[1,3], xlabel = L"Summed 2-electron energy (keV) $$", ylabel = L"$\varphi$ (°) $$", title = L"total background $$", )
-    a2 = Axis(f[1,3], xlabel = L"Summed 2-electron energy (keV) $$", ylabel = L"$-log(P_\mathrm{int})$", title = L"total background $$", )
+    f = Figure(size = (2400,800), fontsize = 46)
+    a1 = Axis(f[1,1], xlabel = L"Summed 2-electron energy (keV) $$", ylabel = L"$\varphi$ (°) $$", title = L"signal: $0\nu\beta\beta$", )
+    # a1 = Axis(f[1,1], xlabel = L"Summed 2-electron energy (keV) $$", ylabel = L"$-log(P_\mathrm{int})$", title = L"signal: $0\nu\beta\beta$", )
+    a2 = Axis(f[1,3], xlabel = L"Summed 2-electron energy (keV) $$", ylabel = L"$\varphi$ (°) $$", title = L"total background $$", )
+    # a2 = Axis(f[1,3], xlabel = L"Summed 2-electron energy (keV) $$", ylabel = L"$-log(P_\mathrm{int})$", title = L"total background $$", )
 
     # colorscale = cgrad(:viridis, 1, scale = :log10)
     colormap = [Makie.to_color(:transparent); Makie.to_colormap(:viridis)]
@@ -656,7 +688,8 @@ end
     poly!(
 		a1,
 		[2700,2700,3000,3000],
-		[0,4,4,0],
+		[15,180,180,15],
+		# [0,4,4,0],
 		color = (:black,0),
 		strokewidth = 5,
 		strokecolor = :red,
@@ -664,18 +697,19 @@ end
 	poly!(
 		a2,
 		[2700,2700,3000,3000],
-		[0,4,4,0],
+		# [0,4,4,0],
+		[15,180,180,15],
 		color = (:black,0),
 		strokewidth = 5,
 		strokecolor = :red,
 	 )
     colgap!(f.layout, 2, Relative(0.05))
-    # save( joinpath(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/figs"),
-    #     "ND_2Dhist_signal_background_$(var1)_vs_$(var2).png"), f, px_per_unit = 2)
+    save( joinpath(scriptsdir("phd_final/07_sensitivity/sensitivity_nd/figs"),
+        "ND_2Dhist_signal_background_$(var1)_vs_$(var2).png"), f, px_per_unit = 2)
     f
 
 
-# end
+end
 
 # extract from the signal histogram a list of midpoints for binedge1, binedge2 and corresponding counts
 binedges1 = midpoints(binedges(h_signal)[1]) |> collect

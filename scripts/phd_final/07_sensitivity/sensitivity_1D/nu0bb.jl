@@ -49,7 +49,7 @@ backgrounds = [
 
 
 
-analysisDict    = Dict(:mode => "sumE", :cuts => "vertex_energy_tof_roi")
+analysisDict    = Dict(:mode => "phi", :cuts => "vertex_energy_tof_roi")
 
 if( analysisDict[:cuts] == "nemo3_roi" )
     roi = nemo3_roi
@@ -67,7 +67,8 @@ elseif( analysisDict[:cuts] == "simple_roi_no_tof" )
     roi = simple_roi_no_tof
 end
 
-binning = (0, 3500, 100)
+# binning = (0, 3500, 100)
+binning = (0, 180, 5)
 simdir = datadir("sims/final_phd/fal5_12perc_Boff_Cimrman_J41")
 mode = analysisDict[:mode] 
 cat_colors = ["#4E79A7","#C7E6E3","#9AD0CB","#76B7B2","#4E8F8B","#F28E2B","#C66A00","#E15759","#B22222", "#7BC36D", "#59A14F", "#3F7F3A"]
@@ -84,7 +85,7 @@ signal = get_process("bb0nu_foil_bulk", all_standard_processes) |> first
 background = [get_process(b, all_standard_processes) |> first for b in backgrounds]
 
 set_signal!(background[1], false)
-set_activity!(background[7], 2/1e3) # radon to 2mBq/kg
+# set_activity!(background[7], 2/1e3) # radon to 2mBq/kg
 # set_activity!(background[7], 150/1e6) # radon to 150uBq/kg
 # set_activity!(background[7], 0.6/1e3) # radon to 0.6mBq/kg
 # set_activity!(background[7], 0.2/1e3) # radon to 0.2mBq/kg
@@ -114,57 +115,58 @@ ThalfbbESum = round(get_tHalf(SNparams, effbb, expBkgESum, α; approximate="tabl
 
 
 
-# with_theme(theme_latexfonts()) do
-#     f = Figure(size = (1400, 900),  fontsize = 36, figure_padding = 16)
-#     a = Axis(
-#         f[1,1], 
-#         # xlabel = L"$\varphi_l$ (°) $$", 
-#         # ylabel = L"$\varphi_u$ (°) $$", 
-#         xlabel = L"$E_{l}$ (keV) $$", 
-#         ylabel = L"$E_{u}$ (keV) $$", 
-#         # title = L"2D sensitivity map for $0\nu\beta\beta$ for $17.5$kgyr exposure, using $\varphi$ channel", 
-#         title = L"2D sensitivity map for $0\nu\beta\beta$ for $17.5$kgyr exposure, using $E_{sum}$ channel", 
-#         )
-#     p = plot!(a, t12MapESum)
-#     # text!(a, 2000, 500, text=lbl)
-#     Colorbar(f[1,2], p, label=L"sensitivity (yr) $$", scale=identity)
-#     # save(joinpath(scriptsdir("phd_final/07_sensitivity/sensitivity_1D/figs"),
-#     #     "nu0bb_mode_$(mode)_cuts_$(analysisDict[:cuts])_ThalfbbESum_$(ThalfbbESum)_kgyr.png"), f)
-#     f
-# end
-
-# with_theme(theme_latexfonts()) do
-#     f = Figure(size = (1400, 900),  fontsize = 36, figure_padding = 16)
-#     a = Axis(
-#         f[1,1], 
-#         # xlabel = L"$\varphi_l$ (°) $$", 
-#         # ylabel = L"$\varphi_u$ (°) $$", 
-#         xlabel = L"$E_{l}$ (keV) $$", 
-#         ylabel = L"$E_{u}$ (keV) $$", 
-#         # title = L"2D efficiency map for $0\nu\beta\beta$, using $\varphi$ channel", 
-#         title = L"2D efficiency map for $0\nu\beta\beta$, using $E_{sum}$ channel", 
-#         )
-#     p = plot!(a, signal.efficiency)
-#     # text!(a, 2000, 500, text=lbl)
-#     Colorbar(f[1,2], p, label=L"$\varepsilon$(ROI)", scale=identity)
-#     # save(joinpath(scriptsdir("phd_final/07_sensitivity/sensitivity_1D/figs"),
-#     #     "nu0bb_mode_$(mode)_efficiency_map.png"), f)
-#     f
-# end
-
-
-signal = get_process("RH040_foil_bulk", all_standard_processes) |> first
-
 with_theme(theme_latexfonts()) do
-    f = Figure(size = (1400, 900),  fontsize = 36, figure_padding = 26)
+    f = Figure(size = (1400, 900),  fontsize = 44, figure_padding = 10)
     a = Axis(
         f[1,1], 
-        # xlabel = L"$\varphi$ (°) $$", 
-        xlabel = L"$E_{sum}$ (keV) $$", 
-        # ylabel = L"efficiency (%/$5^{\circ}$)", 
-        ylabel = L"efficiency (%/$100~$keV)", 
-        # title = L"$\varepsilon(ROI)$ of $0\nu\beta\beta$ in SuperNEMO", 
-        title = L"$\varepsilon(ROI)$ of $\nu_R\nu_L\beta\beta$ in SuperNEMO", 
+        xlabel = L"$\varphi_l$ (°) $$", 
+        ylabel = L"$\varphi_u$ (°) $$", 
+        # xlabel = L"$E_{l}$ (keV) $$", 
+        # ylabel = L"$E_{u}$ (keV) $$", 
+        title = L"2D sensitivity map for $0\nu\beta\beta$ for $17.5$kgyr exposure, \\ using $\varphi$ channel", 
+        # title = L"2D sensitivity map for $0\nu\beta\beta$ for $17.5$kgyr exposure, using $E_{sum}$ channel", 
+        # title = L"2D sensitivity map for $0\nu\beta\beta$ for $17.5$kgyr exposure", 
+        )
+    p = plot!(a, t12MapESum)
+    # text!(a, 2000, 500, text=lbl)
+    Colorbar(f[1,2], p, label=L"sensitivity (yr) $$", scale=identity)
+    save(joinpath(scriptsdir("phd_final/07_sensitivity/sensitivity_1D/figs"),
+        "nu0bb_mode_$(mode)_cuts_$(analysisDict[:cuts])_ThalfbbESum_$(ThalfbbESum)_kgyr.png"), f)
+    f
+end
+
+with_theme(theme_latexfonts()) do
+    f = Figure(size = (1400, 900),  fontsize = 52, figure_padding = 12)
+    a = Axis(
+        f[1,1], 
+        xlabel = L"$\varphi_l$ (°) $$", 
+        ylabel = L"$\varphi_u$ (°) $$", 
+        # xlabel = L"$E_{l}$ (keV) $$", 
+        # ylabel = L"$E_{u}$ (keV) $$", 
+        title = L"2D efficiency map for $0\nu\beta\beta$, using $\varphi$ channel", 
+        # title = L"2D efficiency map for $0\nu\beta\beta$", 
+        )
+    p = plot!(a, signal.efficiency)
+    # text!(a, 2000, 500, text=lbl)
+    Colorbar(f[1,2], p, label=L"$\varepsilon$(ROI)", scale=identity)
+    save(joinpath(scriptsdir("phd_final/07_sensitivity/sensitivity_1D/figs"),
+        "nu0bb_mode_$(mode)_efficiency_map.png"), f)
+    f
+end
+
+
+# signal = get_process("RH040_foil_bulk", all_standard_processes) |> first
+
+with_theme(theme_latexfonts()) do
+    f = Figure(size = (1400, 900),  fontsize = 52, figure_padding = 26)
+    a = Axis(
+        f[1,1], 
+        xlabel = L"$\varphi$ (°) $$", 
+        # xlabel = L"$E_{sum}$ (keV) $$", 
+        ylabel = L"efficiency (%/$5^{\circ}$)", 
+        # ylabel = L"efficiency (%/$100~$keV)", 
+        title = L"$\varepsilon(ROI)$ of $0\nu\beta\beta$ in SuperNEMO", 
+        # title = L"$\varepsilon(ROI)$ of $\nu_R\nu_L\beta\beta$ in SuperNEMO", 
         # title = L"$\varepsilon(ROI)$ of $0\nu\beta\beta\chi^2\chi^2$ in SuperNEMO", 
         # limits = (0, 180, 0, nothing),
     )
@@ -174,7 +176,7 @@ with_theme(theme_latexfonts()) do
 
     # mark Q-value at Q_keV
     # vlines!(a, [Q_keV]; color = :red, linestyle = :dash, linewidth = 3,
-        # label = L"$Q_{\beta\beta}$ = %$(Q_keV) keV")
+    #     label = L"$Q_{\beta\beta}$ = %$(Q_keV) keV")
     axislegend(a; position = :lt, patchsize = (45,30), fontsize = 24)
     
     # text!(a, 2000, 500, text=lbl)

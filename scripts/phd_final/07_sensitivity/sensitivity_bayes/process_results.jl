@@ -97,13 +97,13 @@ with_theme(theme_latexfonts()) do
 end
 
 with_theme(theme_latexfonts()) do
-    f = Figure(size = (1200, 800), fontsize = 34,)
+    f = Figure(size = (1400, 800), fontsize = 42,)
     a = Axis(f[1, 1], title = L"Bayesian sensitivity to $0\nu\beta\beta$", xlabel = L"90% C.I. sensitivity (yr)$$", ylabel = L"number of pseudo-experiments $$", limits=(nothing, maximum(vcat(d_nu0bb_tag1.thalf, d_nu0bb_tag2.thalf))*1.3, 0, nothing))
-    stephist!(a, d_nu0bb_tag1.thalf, bins = 100, color = colors[1], linewidth = 4)
-    vlines!(a, [median(d_nu0bb_tag1.thalf)], color = :red, linewidth = 4, linestyle = :dash, label = L"median $T^{0\nu} \geq %$(round(median(d_nu0bb_tag1.thalf), sigdigits = 3)) \, \mathrm{yr}$ \n $(a_{Rn}=150 \, \mathrm{\mu Bq/m^3} )$")
-    stephist!(a, d_nu0bb_tag2.thalf, bins = 100, color = colors[2], linewidth = 4)
-    vlines!(a, [median(d_nu0bb_tag2.thalf)], color = :black, linewidth = 4, linestyle = :dash, label = L"median $T^{0\nu} \geq %$(round(median(d_nu0bb_tag2.thalf), sigdigits = 3)) \, \mathrm{yr}$ \n $(a_{Rn}=2 \, \mathrm{mBq/m^3} )$")
-    axislegend(a, position = :rt, patchsize = (45, 35))
+    CairoMakie.stephist!(a, d_nu0bb_tag1.thalf, bins = 100, color = colors[1], linewidth = 4)
+    CairoMakie.vlines!(a, [median(d_nu0bb_tag1.thalf)], color = :red, linewidth = 4, linestyle = :dash, label = L"median $T^{0\nu} \geq 4.67\times10^{24} \, \mathrm{yr}$ \n $(a_{Rn}=150 \, \mathrm{\mu Bq/m^3} )$")
+    CairoMakie.stephist!(a, d_nu0bb_tag2.thalf, bins = 100, color = colors[2], linewidth = 4)
+    CairoMakie.vlines!(a, [median(d_nu0bb_tag2.thalf)], color = :black, linewidth = 4, linestyle = :dash, label = L"median $T^{0\nu} \geq 3.17\times10^{24} \, \mathrm{yr}$ \n $(a_{Rn}=2 \, \mathrm{mBq/m^3} )$")
+    CairoMakie.axislegend(a, position = :rt, patchsize = (65, 35), rowgap = 30, patchlabelgap = 20)
 
     
     save(scriptsdir("phd_final/07_sensitivity/sensitivity_bayes/figs/nu0bb_sensitivities_together.png"), f, px_per_unit = 2)

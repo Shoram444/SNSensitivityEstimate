@@ -539,12 +539,12 @@ begin
     #     roi  = roi2,
     # )
 
-    all_processes = load_data_processes(
-        simdir,
-        String(mode);
-        fwhm = 0.0,
-        roi  = roi,
-    )
+    # all_processes = load_data_processes(
+    #     simdir,
+    #     String(mode);
+    #     fwhm = 0.0,
+    #     roi  = roi,
+    # )
 
     bkgs = [get_process(b, all_processes) |> first for b in backgrounds]
 
@@ -578,6 +578,7 @@ begin
     
     hists = get_bkg_counts_1D.(bkgs) .* inv(2.8)  # normalize to counts / yr
 
+    neutron_tot = 0
     for (i,h) in enumerate(hists)
         if isnan(integral(h))
             replace!(hists[i].bincounts, NaN => 0.0)
@@ -592,10 +593,16 @@ begin
         eff_err = npass/nsim
 
         
-        measure_cts = measurement.(bincounts(h), binerrors(h))
-        # println(backgrounds[i], ", eff = ", eff_err, ", counts = ", sum(measure_cts))
-        # tot += sum(measure_cts)
+        measure_cts = measurement.(bincounts(h), binerrors(h)) 
+        if i <= 18
+            println(backgrounds[i], ", eff = ", eff_err, ", counts = ", sum(measure_cts))
+        else 
+            neutron_tot += sum(measure_cts)
+        end
+
+        tot += sum(measure_cts)
     end
+    println("Neutron total counts = ", neutron_tot)
     println("Total cts = ", tot)
 
 
@@ -606,7 +613,7 @@ begin
         if (roi != "topology_roi" && mode == "sumE")
             # zero out bins outside 2.8-3.2 MeV for better visibility
             for (j,edge) in enumerate(midpoints(binedges(h)))
-                if edge > 2700
+                if edge > 3500# 2700
                     h.bincounts[j] = 0.0
                     h.sumw2[j] = 0.0
                 end
@@ -640,7 +647,7 @@ begin
     # sum_hists[9] = h_scin
 
     # min_cts = max(1e-3,find_min_bincounts(sum_hists))
-    # max_cts = find_max_bincounts(sum(sum_hists))
+    max_cts = find_max_bincounts(sum(sum_hists))
     ## uprava PMT a scnit histogramov s vacsiou statistikou
 
 

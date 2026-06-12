@@ -15,6 +15,7 @@ include(datadir("sims/final_phd/data_sims_mul95_alpha_veto_curved_pcd/load_nd_si
 include(scriptsdir("phd_final/08_data/bayes_fit_models.jl"))
 include(scriptsdir("phd_final/08_data/helper_functions.jl"))
 
+begin
 data_dir = datadir("data/final_phd/data_no_gamma_alpha_veto_nonan_fixed_us_window")
 f1 = ROOTFile(joinpath(data_dir, "phase1_data.root"))
 d1 = LazyTree(f1, "tree", keys(f1["tree"])) |> DataFrame
@@ -27,8 +28,8 @@ d3 = LazyTree(f3, "tree", keys(f3["tree"])) |> DataFrame
 
 var_data = :sumE
 var_simu = :sumEsimu
-binning = (500:100:3000)
-fwhm = 0.14
+binning = (0:50:3000)
+fwhm = 0.15
 data_cuts = Dict(
     :sumE => (700, 3000),
     :e1 => (350, 5000),
@@ -51,7 +52,7 @@ simu_roi_1 = (
     trackLength1 = data_cuts[:trackLength1],
     trackLength2 = data_cuts[:trackLength2],
     # deltaCaloTime = data_cuts[:deltaCaloTime],
-    # phi = data_cuts[:phi]
+    phi = data_cuts[:phi]
 )
 simu_roi_2 = (
     sumE = data_cuts[:sumE],
@@ -190,6 +191,7 @@ function get_combined_bkg_hists(processes, binning)
 end
 
 h_internal, h_Bi210, h_detector, h_external = get_combined_bkg_hists(background, binning)
+end
 
 proc_labels = [
     rich("2νββ"),
@@ -288,25 +290,27 @@ for p in 1:3
     savefig(current(), scriptsdir("phd_final/08_data/figs/unconstrained_parameter_cor_phase$(phase).png"))
 
     post_mean = mean(samples)
-
-    μ_K40 = post_mean.μ_K40
-    μ_Pa = post_mean.μ_Pa
-    μ_bb = post_mean.μ_bb
-    μ_radon = post_mean.μ_radon
-    μ_internal = post_mean.μ_internal
-    μ_Bi210 = post_mean.μ_Bi210
-    μ_detector = post_mean.μ_detector
-    μ_external = post_mean.μ_external
-
     std_post = std(samples)
-    σ_bb = std_post.μ_bb
-    σ_K40 = std_post.μ_K40
-    σ_Pa = std_post.μ_Pa
-    σ_internal = std_post.μ_internal
-    σ_radon = std_post.μ_radon
-    σ_Bi210 = std_post.μ_Bi210
-    σ_detector = std_post.μ_detector
-    σ_external = std_post.μ_external
+
+    mm = map(measurement, post_mean, std_post)
+
+    μ_K40 = mm.μ_K40
+    μ_Pa = mm.μ_Pa
+    μ_bb = mm.μ_bb
+    μ_radon = mm.μ_radon
+    μ_internal = mm.μ_internal
+    μ_Bi210 = mm.μ_Bi210
+    μ_detector = mm.μ_detector
+    μ_external = mm.μ_external
+
+    σ_bb = Measurements.uncertainty(μ_bb)
+    σ_K40 = Measurements.uncertainty(μ_K40)
+    σ_Pa = Measurements.uncertainty(μ_Pa)
+    σ_internal = Measurements.uncertainty(μ_internal)
+    σ_radon = Measurements.uncertainty(μ_radon)
+    σ_Bi210 = Measurements.uncertainty(μ_Bi210)
+    σ_detector = Measurements.uncertainty(μ_detector)
+    σ_external = Measurements.uncertainty(μ_external)
 
     μ_vec = [
         μ_bb,
@@ -348,6 +352,7 @@ for p in 1:3
             data_hist,
             fit_hists,
             post_mean,
+            μ_vec,
             proc_labels
         )
     )
@@ -371,15 +376,20 @@ for p in 1:3
         data_hist = data_hist,
         fitted_hists = fit_hists,
         fit_params = post_mean,
-        component_count_uncertainties = σ_vec,
+        component_count_uncertainties = μ_vec,
         show_component_uncertainties = true,
         outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_phase$(phase)_free.png"),
         component_labels = proc_labels,
         main_limits = (0, 4000, 0, nothing),
-        ratio_limits = (0, 4000, 0.2, 1.8),
+        ratio_limits = (0, 4000, 0., 2.0),
         blinded_roi = (2700, 3000),
         chi2_nparams = length(μ_vec),
         include_component_counts = true,
+        figure_size = (2400, 1250),
+        chi2_text_pos = (0.77, 0.7),
+        fontsize = 42,
+        legend_tellheight=true,
+        legend_width = 650
     )
 
 end
@@ -400,6 +410,8 @@ fit_combined = sum([fit_p1, fit_p2, fit_p3])
 fit_total = sum([sum(fit_p1), sum(fit_p2), sum(fit_p3)])
 combined_component_stds = sqrt.(fit_component_stds[1].^2 .+ fit_component_stds[2].^2 .+ fit_component_stds[3].^2)
 
+n_tot = fit_results_free[1].fit_n + fit_results_free[2].fit_n + fit_results_free[3].fit_n
+combined_component_stds_free = Measurements.uncertainty.(n_tot)
 
 
 f_full = plot_fit(
@@ -407,21 +419,24 @@ f_full = plot_fit(
     data_hist = full_data,
     fitted_hists = fit_combined,
     fit_params = nothing,
-    component_count_uncertainties = combined_component_stds,
+    component_count_uncertainties = combined_component_stds_free,
     show_component_uncertainties = true,
     outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_combined_free_lines.png"),
     component_labels = proc_labels,
     main_limits = (0, 4000, 0, nothing),
-    ratio_limits = (0, 4000, 0.2, 1.8),
+    ratio_limits = (0, 4000, 0., 2.),
     blinded_roi = (2700, 3000),
     chi2_nparams = length(fit_combined),
-    title = "Combined Fit phase 1+2+3",
+    title = "Combined unconstrained fit phase 1+2+3",
     include_component_counts = true,
     stacked = false,
     filled = false,
+    figure_size = (2400, 1250),
+    chi2_text_pos = (0.77, 0.7),
+    fontsize = 42,
+    legend_tellheight=true,
+    legend_width = 650
 )
-
-
 
 
 
@@ -439,15 +454,66 @@ p0 = StatsPlots.plot(
 p1 = StatsPlots.plot(
     samples_by_phase[1],
     vsel = (:μ_bb, :μ_radon),
-    margin = 10Plots.mm,
+    margin = 5Plots.mm,
     figure_title = "Posterior samples of μ_bb vs μ_radon for phase 1",
+    thickness_scaling = 1.3,
+    size = (1200, 800),
+    tickfontsize = 16,
+    labelfontsize = 18,
+    xrotation = 45,
 )
 savefig(p1, scriptsdir("phd_final/08_data/figs/unconstrained_parameter_cor_phase1_bb_radon.png"))
 
 p2 = StatsPlots.plot(
     samples_by_phase[1],
-    vsel = (:μ_radon, :μ_internal),
-    margin = 10Plots.mm,
-    figure_title = "Posterior samples of μ_radon vs μ_internal for phase 1",
+    vsel = (:μ_Pa, :μ_K40),
+    margin = 5Plots.mm,
+    figure_title = "Posterior samples of μ_Pa vs μ_K40 for phase 1",
+    thickness_scaling = 1.3,
+    size = (1200, 800),
+    tickfontsize = 16,
+    labelfontsize = 18,
+    xrotation = 45,
 )
-savefig(p2, scriptsdir("phd_final/08_data/figs/unconstrained_parameter_cor_phase1_radon_internal.png"))
+savefig(p2, scriptsdir("phd_final/08_data/figs/unconstrained_parameter_cor_phase1_Pa_K40.png"))
+
+
+
+### activities
+function get_activity_from_exp_n(a_exp, n_exp, n_fit)
+    a_exp * n_fit / n_exp
+end
+
+total_duration = p1_duration_seconds + p2_duration_seconds + p3_duration_seconds
+radon_a_exp = (p1_radon_process.activity * p1_duration_seconds + p2_radon_process.activity * p2_duration_seconds + p3_radon_process.activity * p3_duration_seconds) / total_duration
+n_exp_radon = fit_results_exp[1].exp_n[4] + fit_results_exp[2].exp_n[4] + fit_results_exp[3].exp_n[4]
+n_fit_radon = fit_results_free[1].fit_n[5] + fit_results_free[2].fit_n[5] + fit_results_free[3].fit_n[5]
+a_radon_combined = get_activity_from_exp_n(radon_a_exp, n_exp_radon, n_fit_radon)
+
+bb_a_exp = p1_bb_process.activity
+n_exp_bb = fit_results_exp[1].exp_n[1] + fit_results_exp[2].exp_n[1] + fit_results_exp[3].exp_n[1]
+n_fit_bb = fit_results_free[1].fit_n[1] + fit_results_free[2].fit_n[1] + fit_results_free[3].fit_n[1]
+a_bb_combined = get_activity_from_exp_n(bb_a_exp, n_exp_bb, n_fit_bb)
+
+K40_a_exp = p1_K40_process.activity
+n_exp_K40 = fit_results_exp[1].exp_n[2] + fit_results_exp[2].exp_n[2] + fit_results_exp[3].exp_n[2]
+n_fit_K40 = fit_results_free[1].fit_n[2] + fit_results_free[2].fit_n[2] + fit_results_free[3].fit_n[2]
+a_K40_combined = get_activity_from_exp_n(K40_a_exp, n_exp_K40, n_fit_K40)
+
+Pa_a_exp = 2.85e-3
+n_exp_Pa = fit_results_exp[1].exp_n[3] + fit_results_exp[2].exp_n[3] + fit_results_exp[3].exp_n[3]
+n_fit_Pa = fit_results_free[1].fit_n[3] + fit_results_free[2].fit_n[3] + fit_results_free[3].fit_n[3]
+a_Pa_combined = get_activity_from_exp_n(Pa_a_exp, n_exp_Pa, n_fit_Pa)
+
+
+
+using PrettyTables
+d = CSV.File(scriptsdir("phd_final/08_data/data_mc_numbers.csv")) |> DataFrame
+
+@transform! d :a_unconstrained = measurement.(d.a_unconstrained)
+@transform! d :a_constrained = measurement.(d.a_constrained)
+
+pretty_table(d, backend = Val(:latex), header = ["Process", "Expected activity (Bq)", "Unconstrained fit activity (Bq)", "Constrained fit activity (Bq)"], alignment = :l, title = "Comparison of expected and fitted activities for different processes. The unconstrained fit allows all components to vary freely, while the constrained fit incorporates prior information on the activities. The values are given with their uncertainties.", title_alignment = :c)
+
+@transform! d :diff_unconstrained = :a_unconstrained .- :a_exp
+@transform! d :diff_constrained = :a_constrained .- :a_exp

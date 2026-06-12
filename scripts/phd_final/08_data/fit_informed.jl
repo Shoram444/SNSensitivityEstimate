@@ -15,6 +15,7 @@ include(datadir("sims/final_phd/data_sims_mul95_alpha_veto_curved_pcd/load_nd_si
 include(scriptsdir("phd_final/08_data/bayes_fit_models.jl"))
 include(scriptsdir("phd_final/08_data/helper_functions.jl"))
 
+begin
 data_dir = datadir("data/final_phd/data_no_gamma_alpha_veto_nonan_fixed_us_window")
 f1 = ROOTFile(joinpath(data_dir, "phase1_data.root"))
 d1 = LazyTree(f1, "tree", keys(f1["tree"])) |> DataFrame
@@ -27,8 +28,8 @@ d3 = LazyTree(f3, "tree", keys(f3["tree"])) |> DataFrame
 
 var_data = :sumE
 var_simu = :sumEsimu
-binning = (500:100:3000)
-fwhm = 0.14
+binning = (500:100:3500)
+fwhm = 0.12
 data_cuts = Dict(
     :sumE => (700, 3000),
     :e1 => (350, 5000),
@@ -245,6 +246,7 @@ function lognormal_from_mean_relerr(mean, relerr)
     μ_log = log(mean) - 0.5 * σ_log^2
     return LogNormal(μ_log, σ_log)
 end
+end
 
 fit_results_informed = []
 fit_component_stds_informed = Vector{Vector{Float64}}()
@@ -307,9 +309,9 @@ for p in 1:3
         eff_bb = lognormal_from_mean_relerr(eff_bb_ref, 0.1),
         eff_radon = lognormal_from_mean_relerr(eff_radon_ref, 0.1),
         a_K40 = Uniform(0.0, 2 * nData),
-        eff_K40 = lognormal_from_mean_relerr(eff_K40_ref, 0.3),
+        eff_K40 = lognormal_from_mean_relerr(eff_K40_ref, 0.1),
         a_Pa = Uniform(0.0, 2 * nData),
-        eff_Pa = lognormal_from_mean_relerr(eff_Pa_ref, 0.3),
+        eff_Pa = lognormal_from_mean_relerr(eff_Pa_ref, 0.1),
         μ_internal = Uniform(0.0, 2 * nData),
         μ_Bi210 = Uniform(0.0, 2 * nData),
         μ_detector = Uniform(0.0, 2 * nData),
@@ -348,7 +350,7 @@ for p in 1:3
 
     push!(samples_by_phase, samples)
 
-    post_mean = mode(samples) #mean(samples)
+    post_mean = mean(samples)
     std_post = std(samples)
 
     mm = map(measurement, post_mean, std_post)
@@ -393,7 +395,6 @@ for p in 1:3
         σ_external,
     ]
 
-    n_vec = measurement.(μ_vec, σ_vec)
 
     fit_hists = build_fit_histograms(bkg_hist_normed, Measurements.value.(μ_vec))
 
@@ -404,7 +405,7 @@ for p in 1:3
             data_hist,
             fit_hists,
             post_mean,
-            n_vec,
+            μ_vec,
             proc_labels,
         )
     )
@@ -415,7 +416,7 @@ for p in 1:3
         data_hist = data_hist,
         fitted_hists = fit_hists,
         fit_params = post_mean,
-        component_count_uncertainties = n_vec,
+        component_count_uncertainties = μ_vec,
         show_component_uncertainties = true,
         outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_phase$(phase)_informed.png"),
         component_labels = proc_labels,
@@ -424,6 +425,11 @@ for p in 1:3
         blinded_roi = (2700, 3000),
         chi2_nparams = length(μ_vec),
         include_component_counts = true,
+        figure_size = (2000, 1200),
+        chi2_text_pos = (0.77, 0.7),
+        fontsize = 42,
+        legend_tellheight=true,
+        legend_width = 650
     )
 end
 
@@ -439,7 +445,9 @@ fit_p2 = fit_results_informed[2].fitted_hists
 fit_p3 = fit_results_informed[3].fitted_hists
 
 fit_combined = sum([fit_p1, fit_p2, fit_p3])
-combined_component_stds_informed = sqrt.(fit_component_stds_informed[1].^2 .+ fit_component_stds_informed[2].^2 .+ fit_component_stds_informed[3].^2)
+
+n_tot = fit_results_informed[1].fit_n + fit_results_informed[2].fit_n + fit_results_informed[3].fit_n
+combined_component_stds_informed = Measurements.uncertainty.(n_tot)
 
 f_full_informed = plot_fit(
     phase = 0,
@@ -451,13 +459,18 @@ f_full_informed = plot_fit(
     outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_combined_informed.png"),
     component_labels = proc_labels,
     main_limits = (0, 4000, 0, nothing),
-    ratio_limits = (0, 4000, 0.2, 1.8),
+    ratio_limits = (0, 4000, 0., 2.0),
     blinded_roi = (2700, 3000),
     chi2_nparams = length(fit_combined),
-    title = "Combined informed fit phase 1+2+3",
+    title = "Combined constrained fit phase 1+2+3",
     include_component_counts = true,
     stacked = false,
     filled = false,
+    figure_size = (2400, 1250),
+    chi2_text_pos = (0.77, 0.7),
+    fontsize = 42,
+    legend_tellheight=true,
+    legend_width = 650
 )
 
 
@@ -548,30 +561,62 @@ function get_activity_from_n(n, t, m, e)
     return n / (t * m * e)
 end
 
-n1_radon = measurement(256.7,22.2)
-n2_radon = measurement(642.6,58.8)
-n3_radon = measurement(16.9, 1.7)
+function get_activity(processes, fit_results, component_index, efficiencies; d1=p1_duration_seconds, d2=p2_duration_seconds, d3=p3_duration_seconds)
+    n1 = fit_results[1].fit_n[component_index]
+    n2 = fit_results[2].fit_n[component_index]
+    n3 = fit_results[3].fit_n[component_index]
 
-a1_radon = get_activity_from_n(n1_radon, p1_duration_seconds, p1_radon_process.amount, fit_results_informed[1].params.eff_radon)
-a2_radon = get_activity_from_n(n2_radon, p2_duration_seconds, p2_radon_process.amount, fit_results_informed[2].params.eff_radon)
-a3_radon = get_activity_from_n(n3_radon, p3_duration_seconds, p3_radon_process.amount, fit_results_informed[3].params.eff_radon)
-a_radon_combined = ( a1_radon * p1_duration_seconds + a2_radon * p2_duration_seconds + a3_radon * p3_duration_seconds ) / (p1_duration_seconds + p2_duration_seconds + p3_duration_seconds)
+    a1 = get_activity_from_n(n1, d1, processes[1].amount, efficiencies[1])
+    a2 = get_activity_from_n(n2, d2, processes[2].amount, efficiencies[2])
+    a3 = get_activity_from_n(n3, d3, processes[3].amount, efficiencies[3])
+
+    total_duration = d1 + d2 + d3
+    a_combined = (a1 * d1 + a2 * d2 + a3 * d3) / total_duration
+
+    return a_combined
+end
+
+a_radon_combined = get_activity(
+    [p1_radon_process, p2_radon_process, p3_radon_process],
+    fit_results_informed,
+    5,
+    [fit_results_informed[1].params.eff_radon, fit_results_informed[2].params.eff_radon, fit_results_informed[3].params.eff_radon];
+    d1 = p1_duration_seconds,
+    d2 = p2_duration_seconds,
+    d3 = p3_duration_seconds
+)
+
+a_bb_combined = get_activity(
+    [p1_bb_process, p2_bb_process, p3_bb_process],
+    fit_results_informed,
+    1,
+    [fit_results_informed[1].params.eff_bb, fit_results_informed[2].params.eff_bb, fit_results_informed[3].params.eff_bb];
+    d1 = p1_duration_seconds,
+    d2 = p2_duration_seconds,
+    d3 = p3_duration_seconds
+)
+
+a_K40_combined = get_activity(
+    [p1_K40_process, p2_K40_process, p3_K40_process],
+    fit_results_informed,
+    2,
+    [fit_results_informed[1].params.eff_K40, fit_results_informed[2].params.eff_K40, fit_results_informed[3].params.eff_K40];
+    d1 = p1_duration_seconds,
+    d2 = p2_duration_seconds,
+    d3 = p3_duration_seconds
+)
+
+a_Pa234m_combined = get_activity(
+    [p1_Pa234m_process, p2_Pa234m_process, p3_Pa234m_process],
+    fit_results_informed,
+    3,
+    [fit_results_informed[1].params.eff_Pa, fit_results_informed[2].params.eff_Pa, fit_results_informed[3].params.eff_Pa];
+    d1 = p1_duration_seconds,
+    d2 = p2_duration_seconds,
+    d3 = p3_duration_seconds
+)
 
 total_duration = p1_duration_seconds + p2_duration_seconds + p3_duration_seconds
-mean_eff_pa = mean([fit_results_informed[1].params.eff_Pa, fit_results_informed[2].params.eff_Pa, fit_results_informed[3].params.eff_Pa])
-n_pa = measurement(125.8, 72.7)
-a_pa234m = get_activity_from_n(n_pa, total_duration, p1_Pa234m_process.amount, mean_eff_pa)
-
-mean_eff_k40 = mean([fit_results_informed[1].params.eff_K40, fit_results_informed[2].params.eff_K40, fit_results_informed[3].params.eff_K40])
-n_K40 = measurement(47.2,27.3)
-a_K40 = get_activity_from_n(n_K40, total_duration, p1_K40_process.amount, mean_eff_k40)
-
-p_Bi210_process = get_process("Bi210_wire_surface", background) |> first
-n_bi210 = measurement(40.3, 16.6)
-n_bi210_exp = total_duration * p_Bi210_process.amount * (h_Bi210 |> integral) / p_Bi210_process.nTotalSim * p_Bi210_process.activity
-r_bi210 = n_bi210 / n_bi210_exp
-a_bi210 = r_bi210 * p_Bi210_process.activity
-
 
 
 #### 
@@ -653,16 +698,26 @@ p0 = StatsPlots.plot(
 p1 = StatsPlots.plot(
     samples_by_phase[1],
     vsel = (:eff_bb, :eff_radon),
-    margin = 10Plots.mm,
+    margin = 5Plots.mm,
     figure_title = "Posterior samples of ε_bb vs ε_radon for phase 1",
+    thickness_scaling = 1.3,
+    size = (1200, 700),
+    tickfontsize = 16,
+    labelfontsize = 18,
+    xrotation = 45,
 )
 savefig(p1, scriptsdir("phd_final/08_data/figs/constrained_parameter_cor_phase1_bb_radon.png"))
 
 p2 = StatsPlots.plot(
     samples_by_phase[1],
     vsel = (:eff_radon, :μ_internal),
-    margin = 10Plots.mm,
+    margin = 6Plots.mm,
     figure_title = "Posterior samples of ε_radon vs μ_internal for phase 1",
+    thickness_scaling = 1.3,
+    size = (1200, 700),
+    tickfontsize = 16,
+    labelfontsize = 18,
+    xrotation = 45,
 )
 savefig(p2, scriptsdir("phd_final/08_data/figs/constrained_parameter_cor_phase1_radon_internal.png"))
 

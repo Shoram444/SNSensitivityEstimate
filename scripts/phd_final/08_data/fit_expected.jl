@@ -10,7 +10,6 @@ println("loaded pkgs")
 include(datadir("sims/final_phd/data_sims_mul95_alpha_veto_curved_pcd/load_nd_sim_files.jl"))
 include(scriptsdir("phd_final/08_data/helper_functions.jl"))
 
-
 data_dir = datadir("data/final_phd/data_no_gamma_alpha_veto_nonan_fixed_us_window")
 f1 = ROOTFile(joinpath(data_dir, "phase1_data.root"))
 d1 = LazyTree(f1, "tree", keys(f1["tree"])) |> DataFrame
@@ -36,16 +35,16 @@ for p =1:3
     var_data = :sumE
     var_simu = :sumEsimu
     binning = (0:100:4000)
-    fwhm = 0.14
+    fwhm = 0.12
     data_cuts = Dict(
-        :sumE => (500, 3000),
-        :e1 => (250, 5000),
-        :e2 => (250, 5000),
+        :sumE => (700, 3000),
+        :e1 => (350, 5000),
+        :e2 => (350, 5000),
         :dy => (0, 100),
         :dz => (0, 100),
         :trackLength1 => (300, 1100),
         :trackLength2 => (300, 1100),
-        :deltaCaloTime => (0, 2.0),
+        :deltaCaloTime => (0, 1.5),
         :phi => (0,180)
     )
 
@@ -207,7 +206,10 @@ for p =1:3
         radon = radon_level1 / 1000,
     )
 
-    res = fit_result(phase, data_hist, simu_combined, activities, labels)
+    n_exp = [measurement(sum(bincounts(h)), sum(binerrors(h))) for h in simu_combined]
+
+
+    res = fit_exp(phase, data_hist, simu_combined, n_exp, labels)
     push!(fit_results_exp, res)
 
     plot_fit(
@@ -215,13 +217,20 @@ for p =1:3
         data_hist = data_hist,
         fitted_hists = simu_combined,
         fit_params = nothing,
+        component_count_uncertainties = n_exp,
         outputpath = scriptsdir("phd_final/08_data/figs/expected_phase_$(phase).png"),
         component_labels = labels,
         main_limits = (0, 4000, 0, nothing),
-        ratio_limits = (0, 4000, 0.2, 1.8),
+        ratio_limits = (0, 4000, 0.0, 2.0),
         blinded_roi = (2700, 3000),
         chi2_nparams = length(simu_combined),
         include_component_counts = true,
+        show_component_uncertainties = true,
+        figure_size = (2400, 1250),
+        chi2_text_pos = (0.77, 0.7),
+        fontsize = 42,
+        legend_tellheight=true,
+        legend_width = 650
     )
 
 end
@@ -234,20 +243,28 @@ fit_p3 = fit_results_exp[3].fitted_hists
 
 fit_combined = sum([fit_p1, fit_p2, fit_p3])
 fit_total = sum([sum(fit_p1), sum(fit_p2), sum(fit_p3)])
+n_exp_total = fit_results_exp[1].exp_n .+ fit_results_exp[2].exp_n .+ fit_results_exp[3].exp_n
 
 f_full = plot_fit(
     phase = 0,
     data_hist = data_combined,
     fitted_hists = fit_combined,
     fit_params = nothing,
+    component_count_uncertainties = n_exp_total,
     outputpath = scriptsdir("phd_final/08_data/figs/bayes_fit_combined_expected.png"),
     component_labels = labels,
     main_limits = (0, 4000, 0, nothing),
-    ratio_limits = (0, 4000, 0.2, 1.8),
+    ratio_limits = (0, 4000, 0.0, 2.0),
     blinded_roi = (2700, 3000),
     chi2_nparams = length(fit_combined),
     title = "Combined Expected phase 1+2+3",
     include_component_counts = true,
+    show_component_uncertainties = true,
+    figure_size = (2400, 1250),
+    chi2_text_pos = (0.77, 0.7),
+    fontsize = 42,
+    legend_tellheight=true,
+    legend_width = 650
 )
 
 

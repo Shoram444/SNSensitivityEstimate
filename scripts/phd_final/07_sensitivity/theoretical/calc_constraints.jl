@@ -125,7 +125,7 @@ let
     colors = ["#003865", "#FFB948", "#52473B", "#9A3A06", "#5B1A18", "#3B0A45", "#1B0033"]
 
     with_theme(theme_latexfonts()) do
-        fig = Figure(size = (900, 600), fontsize = 18)
+        fig = Figure(size = (900, 600), fontsize = 30)
         ax = Axis(
             fig[1, 1],
             xlabel = L"m_N \ \mathrm{(MeV)}",
@@ -136,94 +136,118 @@ let
             yminorticksvisible = true,
             yminorgridvisible  = true,
             yminorticks = IntervalsBetween(9),
-            limits = ((0.4, 1.6), (3e-3, 1e1))
+            limits = ((0.5, 1.5), (3e-3, 4e-1))
         )
 
         lines!(ax, masses, df_sterile.sin2_SuperNEMO_Ovidiu_freq;
-            label     = L"\textrm{SuperNEMO (Ovidiu PSFs)}",
+            label     = L"\textrm{SuperNEMO}",
             linewidth = 3.5,
             color     = colors[1],
         )
         CairoMakie.scatter!(ax, masses, df_sterile.sin2_SuperNEMO_Ovidiu_freq;
-            label     = L"\textrm{SuperNEMO (Ovidiu PSFs)}",
+            label     = L"\textrm{SuperNEMO}",
             color      = colors[1],
             markersize = 15,
         )
-
-        CairoMakie.lines!(ax, masses, df_sterile.sin2_SuperNEMO_Ovidiu_bay;
-            label     = L"\textrm{SuperNEMO (Ovidiu PSFs, Bayes)}",
-            linewidth = 3.5,
-            linestyle = :dash,
-            color     = colors[2],
-        )
-        CairoMakie.scatter!(ax, masses, df_sterile.sin2_SuperNEMO_Ovidiu_bay;
-            label     = L"\textrm{SuperNEMO (Ovidiu PSFs, Bayes)}",
-            color      = colors[2],
-            markersize = 15,
-            # marker     = :cross,
+        band!(
+            ax, 
+            masses, 
+            df_sterile.sin2_SuperNEMO_Ovidiu_freq, 
+            ones(length(masses));
+            color = (colors[1], 0.2),
         )
 
-        lines!(ax, masses, df_sterile.sin2_SuperNEMO_CUPID0PSF_freq;
-            label     = L"\textrm{SuperNEMO (CUPID-0 PSFs)}",
-            linewidth = 3.5,
-            # linestyle = :dash,
-            color     = colors[3],
-        )
-        CairoMakie.scatter!(ax, masses, df_sterile.sin2_SuperNEMO_CUPID0PSF_freq;
-            label     = L"\textrm{SuperNEMO (CUPID-0 PSFs)}",
-            color      = colors[3],
-            markersize = 15,
-            marker     = :rect,
-        )
+        # CairoMakie.lines!(ax, masses, df_sterile.sin2_SuperNEMO_Ovidiu_bay;
+        #     label     = L"\textrm{SuperNEMO (Ovidiu PSFs, Bayes)}",
+        #     linewidth = 3.5,
+        #     linestyle = :dash,
+        #     color     = colors[2],
+        # )
+        # CairoMakie.scatter!(ax, masses, df_sterile.sin2_SuperNEMO_Ovidiu_bay;
+        #     label     = L"\textrm{SuperNEMO (Ovidiu PSFs, Bayes)}",
+        #     color      = colors[2],
+        #     markersize = 15,
+        #     # marker     = :cross,
+        # )
 
-        CairoMakie.lines!(ax, masses, df_sterile.sin2_SuperNEMO_CUPID0PSF_bay;
-            label     = L"\textrm{SuperNEMO (CUPID-0 PSFs, Bayes)}",
-            linewidth = 3.5,
-            linestyle = :dash,
-            color     = colors[4],
-        )
-        CairoMakie.scatter!(ax, masses, df_sterile.sin2_SuperNEMO_CUPID0PSF_bay;
-            label     = L"\textrm{SuperNEMO (CUPID-0 PSFs, Bayes)}",
-            color      = colors[4],
-            markersize = 15,
-            marker     = :rect,
-        )
+        # lines!(ax, masses, df_sterile.sin2_SuperNEMO_CUPID0PSF_freq;
+        #     label     = L"\textrm{SuperNEMO (CUPID-0 PSFs)}",
+        #     linewidth = 3.5,
+        #     linestyle = :dash,
+        #     color     = colors[2],
+        # )
+        # CairoMakie.scatter!(ax, masses, df_sterile.sin2_SuperNEMO_CUPID0PSF_freq;
+        #     label     = L"\textrm{SuperNEMO (CUPID-0 PSFs)}",
+        #     color      = colors[2],
+        #     markersize = 15,
+        #     marker     = :rect,
+        # )
+
+        # CairoMakie.lines!(ax, masses, df_sterile.sin2_SuperNEMO_CUPID0PSF_bay;
+        #     label     = L"\textrm{SuperNEMO (CUPID-0 PSFs, Bayes)}",
+        #     linewidth = 3.5,
+        #     linestyle = :dash,
+        #     color     = colors[4],
+        # )
+        # CairoMakie.scatter!(ax, masses, df_sterile.sin2_SuperNEMO_CUPID0PSF_bay;
+        #     label     = L"\textrm{SuperNEMO (CUPID-0 PSFs, Bayes)}",
+        #     color      = colors[4],
+        #     markersize = 15,
+        #     marker     = :rect,
+        # )
 
         lines!(ax, masses, df_sterile.sin2_CUPID0_published;
             label     = L"\textrm{CUPID-0 (published)}",
             linewidth = 3.5,
             linestyle = :dot,
-            color     = colors[5],
+            color     = colors[2],
         )
         CairoMakie.scatter!(ax, masses, df_sterile.sin2_CUPID0_published;
             label     = L"\textrm{CUPID-0 (published)}",
-            color      = colors[5],
+            color      = colors[2],
             markersize = 15,
             marker     = :diamond,
         )
+
+        # band!(
+        #     ax, 
+        #     masses, 
+        #     df_sterile.sin2_CUPID0_published, 
+        #     ones(length(masses));
+        #     color = (colors[2], 0.2),
+        # )
 
         CairoMakie.lines!(ax, masses, df_sterile.sin2_CUPIDMo_published;
             label     = L"\textrm{CUPID-Mo (published)}",
             linewidth = 3.5,
             linestyle = :dashdot,
-            color     = colors[6],
+            color     = colors[3],
         )
         CairoMakie.scatter!(ax, masses, df_sterile.sin2_CUPIDMo_published;
             label     = L"\textrm{CUPID-Mo (published)}",
-            color      = colors[6],
+            color      = colors[3],
             markersize = 15,
             marker     = :utriangle,
         )
+
+        # band!(
+        #     ax, 
+        #     masses, 
+        #     df_sterile.sin2_CUPIDMo_published, 
+        #     ones(length(masses));
+        #     color = (colors[3], 0.2),
+        # )
 
         axislegend(
             ax, 
             position = :lt, 
             framevisible = true, 
-            labelsize = 18,
+            labelsize = 22,
             merge = true, 
             patchsize = (45, 30), 
             patchlabelgap = 15,
-            nbanks =2
+            nbanks =2,
+
             )
 
         save(scriptsdir("phd_final/07_sensitivity/theoretical/sterile_sensitivity.png"), fig, px_per_unit = 5)
@@ -234,15 +258,15 @@ end
 
 
 df_psfs = DataFrame(
-    mass_MeV = masses,
+    # mass_MeV = masses,
     mass_label = p_new,
     GN_Ovidiu = GN_ovidiu,
-    Gsm_Ovidiu = Gsm_ovidiu,
-    GN_CUPID0PSF = GN_cupid_psf,
-    Gsm_CUPID0PSF = Gsm_cupid_psf
+    # Gsm_Ovidiu = Gsm_ovidiu,
+    # GN_CUPID0PSF = GN_cupid_psf,
+    # Gsm_CUPID0PSF = Gsm_cupid_psf
 )
 
-pretty_table(df_psfs)
+pretty_table(df_psfs, backend = Val(:latex))
 
 df_tNs = DataFrame(
     mass_MeV = masses,
@@ -251,3 +275,20 @@ df_tNs = DataFrame(
     tN_Ovidiu_bay = tN_ovidiu_bay,
 )
 pretty_table(df_tNs)
+
+
+# RH
+
+function get_eps_XR(thalf_RH, gamma_SM )
+    gamma_RH = log(2) / thalf_RH
+    gamma_tot = gamma_SM + gamma_RH
+    
+    eps_XR = sqrt(  (gamma_tot/ gamma_SM - 1) / 6.07  )
+
+    return eps_XR
+end
+
+thalf_RH = [1.52e22, 6.27e22]
+gamma_SM = log(2) / 8.69e19
+
+eps_XR = [get_eps_XR(thalf_RH[i], gamma_SM) for i in 1:length(thalf_RH)]
